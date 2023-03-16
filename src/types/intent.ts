@@ -36,60 +36,21 @@ export interface PaymentMethod extends AbstractPaymentMethod {
 
 export interface AbstractIntent {
   id: string;
-  amount_currency: string;
-  secret: string;
-  is_live: boolean;
-  hide_amount_sidebar: boolean;
-  hide_header: boolean;
-  hide_navigation_to_payment_methods: boolean;
-  form_only: boolean;
   status: IntentStatus;
-  show_steps: boolean;
-  hide_retry_button: boolean;
-  expiration_date: string | null;
-  hide_try_different_method_button?: boolean;
-  back_url?: string;
-  formatted_amount?: number;
-  payment_methods?: PaymentMethod[];
-}
-
-export interface AbstractTransaction {
-  status: TransactionStatus;
-  localized_status: string;
-  id: string;
-  amount_currency: string;
-  billing_data: {
-    apartment: string | null;
-    building: string | null;
-    city: string | null;
-    country: string | null;
-    email: string | null;
-    first_name: string | null;
-    floor: string | null;
-    last_name: string | null;
-    name: string | null;
-    phone_number: string | null;
-    postal_code: string | null;
-    state: string | null;
-    street: string | null;
+  amount: {
+    value: number;
+    currency: string;
   };
-  external_action_message: string[];
-  created: Date;
-  custom_message: string;
-  custom_fields?: Record<string, string | number | boolean>;
+  method: PaymentMethodSlugs;
 }
 
 export interface PaymentIntent extends AbstractIntent {
-  amount: string;
-  subtotal_amount: string;
-  formatted_amount: number;
-  payment_methods: PaymentMethod[];
-  hide_retry_button: boolean;
-  hide_try_different_method_button: boolean;
-  back_url?: string;
-  hide_loader_message?: boolean;
-  hide_form_header_message?: boolean;
-  template?: IntentTemplate;
+  expirationDate: string | null;
+  totals: {
+    subTotal: number;
+    donation?: Record<string, number>;
+    tipping?: Record<string, number>;
+  };
 }
 
 export interface IntentTemplate {
@@ -118,10 +79,4 @@ export interface PayoutMethod extends AbstractPaymentMethod {
   payout_method: PaymentMethodSlugs;
 }
 
-export interface PayoutIntent extends AbstractIntent {
-  max_payout_amount: number;
-  amount: number;
-  payout_methods: PayoutMethod[];
-  hide_loader_message?: boolean;
-  hide_form_header_message?: boolean;
-}
+export interface PayoutIntent extends AbstractIntent {}
