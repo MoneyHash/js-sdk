@@ -88,4 +88,8 @@ export default class MoneyHash {
       data: { locale },
     });
   }
+
+  removeEventListeners() {
+    this.messagingService?.abortService();
+  }
 }

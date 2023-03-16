@@ -79,15 +79,6 @@ export interface AbstractTransaction {
   custom_fields?: Record<string, string | number | boolean>;
 }
 
-export interface PaymentTransaction extends AbstractTransaction {
-  amount: number;
-  payment_method: string;
-  payment_method_name: PaymentMethodSlugs;
-  moneyhash_signature: string;
-  service_provider: string;
-  account: string;
-}
-
 export interface PaymentIntent extends AbstractIntent {
   amount: string;
   subtotal_amount: string;
@@ -133,11 +124,4 @@ export interface PayoutIntent extends AbstractIntent {
   payout_methods: PayoutMethod[];
   hide_loader_message?: boolean;
   hide_form_header_message?: boolean;
-}
-
-export interface PayoutTransaction extends AbstractTransaction {
-  max_payout_amount?: number;
-  amount: string;
-  payout_method_name: PaymentMethodSlugs;
-  pay_out_method: string;
 }

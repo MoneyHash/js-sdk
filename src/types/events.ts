@@ -1,30 +1,30 @@
-import type {
-  PaymentIntent,
-  PaymentTransaction,
-  PayoutIntent,
-  PayoutTransaction,
-} from "./intent";
+import type { PaymentIntent, PayoutIntent, TransactionStatus } from "./intent";
+
+type Transaction = {
+  id: string | null;
+  status: TransactionStatus | null;
+};
 
 export type OnSuccessEventOptions =
   | {
       type: "payment";
       intent: PaymentIntent;
-      actionData: PaymentTransaction;
+      transaction: Transaction;
     }
   | {
       type: "payout";
       intent: PayoutIntent;
-      actionData: PayoutTransaction;
+      transaction: Transaction;
     };
 
 export type OnFailureEventOptions =
   | {
       type: "payment";
       intent: PaymentIntent;
-      actionData: PaymentTransaction;
+      transaction: Transaction;
     }
   | {
       type: "payout";
       intent: PayoutIntent;
-      actionData: PayoutTransaction;
+      transaction: Transaction;
     };
