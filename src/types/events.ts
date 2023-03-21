@@ -20,12 +20,12 @@ type PayoutIntentEventOptions = {
   transaction: Transaction;
 };
 
-export type OnSuccessEventOptions<TType extends IntentType> =
+export type OnCompleteEventOptions<TType extends IntentType> =
   TType extends "payment"
     ? PaymentIntentEventOptions
     : PayoutIntentEventOptions;
 
-export type OnFailureEventOptions<TType extends IntentType> =
+export type OnFailEventOptions<TType extends IntentType> =
   TType extends "payment"
     ? PaymentIntentEventOptions
     : PayoutIntentEventOptions;

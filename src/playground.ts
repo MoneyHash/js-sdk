@@ -1,7 +1,6 @@
 import MoneyHash from ".";
 
-const paymentIntentId = "Z0v7xoL";
-// const payoutIntentId = "ZGAK2eL";
+const paymentIntentId = "ZDd3PaZ";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -9,13 +8,13 @@ document.getElementById("start")?.addEventListener("click", () => {
   moneyHash?.removeEventListeners();
   moneyHash = new MoneyHash({
     type: "payment",
-    onSuccess: ({ intent, transaction }) => {
+    onComplete: ({ intent, transaction }) => {
       // eslint-disable-next-line no-console
-      console.log("onSuccess", { intent, transaction });
+      console.log("onComplete", { intent, transaction });
     },
-    onFailure: ({ intent, transaction }) => {
+    onFail: ({ intent, transaction }) => {
       // eslint-disable-next-line no-console
-      console.log("onFailure", { intent, transaction });
+      console.log("onFail", { intent, transaction });
     },
     styles: {
       submitButton: {
@@ -55,15 +54,6 @@ document.getElementById("start")?.addEventListener("click", () => {
     intentId: paymentIntentId,
   });
 });
-
-// document.getElementById("start-payout")?.addEventListener("click", () => {
-//   moneyHash?.removeEventListeners();
-//   moneyHash = new MoneyHash({ type: "payout", locale: "ar" });
-//   moneyHash.start({
-//     selector: "#app",
-//     intentId: payoutIntentId,
-//   });
-// });
 
 document.getElementById("en")?.addEventListener("click", () => {
   moneyHash?.setLocale("en");

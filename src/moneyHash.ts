@@ -1,8 +1,8 @@
 import MessagingService, { type MessagePayload } from "./messagingService";
 
 import type {
-  OnFailureEventOptions,
-  OnSuccessEventOptions,
+  OnFailEventOptions,
+  OnCompleteEventOptions,
   ButtonStyle,
   InputStyle,
   IntentType,
@@ -11,8 +11,8 @@ import type {
 export interface MoneyHashOptions<TType extends IntentType> {
   type: TType;
   locale?: string;
-  onSuccess?(event: OnSuccessEventOptions<TType>): void;
-  onFailure?(event: OnFailureEventOptions<TType>): void;
+  onComplete?(event: OnCompleteEventOptions<TType>): void;
+  onFail?(event: OnFailEventOptions<TType>): void;
   styles?: {
     submitButton?: ButtonStyle;
     input?: InputStyle;
@@ -55,16 +55,16 @@ export default class MoneyHash<TType extends IntentType> {
     });
 
     this.messagingService.onReceive(event => {
-      if (event.data.type === "onSuccess") {
-        this.options.onSuccess?.({
+      if (event.data.type === "onComplete") {
+        this.options.onComplete?.({
           type: this.options.type,
           ...event.data.data,
-        } as unknown as OnSuccessEventOptions<TType>);
+        } as unknown as OnCompleteEventOptions<TType>);
       } else if (event.data.type === "onFailure") {
-        this.options.onFailure?.({
+        this.options.onFail?.({
           type: this.options.type,
           ...event.data.data,
-        } as unknown as OnSuccessEventOptions<TType>);
+        } as unknown as OnFailEventOptions<TType>);
       }
     });
 
