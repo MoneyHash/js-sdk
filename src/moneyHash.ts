@@ -5,42 +5,38 @@ import type {
   OnSuccessEventOptions,
   ButtonStyle,
   InputStyle,
+  IntentType,
 } from "./types";
 
-export interface MoneyHashOptions {
+export interface MoneyHashOptions<TType extends IntentType> {
+  type: TType;
   locale?: string;
-  onSuccess?(event: OnSuccessEventOptions): void;
-  onFailure?(event: OnFailureEventOptions): void;
+  onSuccess?(event: OnSuccessEventOptions<TType>): void;
+  onFailure?(event: OnFailureEventOptions<TType>): void;
   styles?: {
     submitButton?: ButtonStyle;
     input?: InputStyle;
   };
 }
 
-export default class MoneyHash {
-  options: MoneyHashOptions;
+export default class MoneyHash<TType extends IntentType> {
+  options: MoneyHashOptions<TType>;
 
   private messagingService: MessagingService<MessagePayload[]> | null = null;
 
-  constructor(options: MoneyHashOptions = {}) {
+  constructor(options: MoneyHashOptions<TType>) {
     this.options = options;
   }
 
-  start({
-    selector,
-    intentId,
-    type,
-  }: {
-    selector: string;
-    intentId: string;
-    type: "payment" | "payout";
-  }) {
+  start({ selector, intentId }: { selector: string; intentId: string }) {
     // cleanup previous listeners
     this.messagingService?.abortService();
 
     const iframe = document.createElement("iframe") as HTMLIFrameElement;
     const url = new URL(
-      `${import.meta.env.VITE_IFRAME_URL}/embed/${type}/${intentId}?`,
+      `${import.meta.env.VITE_IFRAME_URL}/embed/${
+        this.options.type
+      }/${intentId}?`,
     );
 
     const lang = this.options.locale?.split("-")[0];
@@ -61,14 +57,14 @@ export default class MoneyHash {
     this.messagingService.onReceive(event => {
       if (event.data.type === "onSuccess") {
         this.options.onSuccess?.({
-          type,
+          type: this.options.type,
           ...event.data.data,
-        } as unknown as OnSuccessEventOptions);
+        } as unknown as OnSuccessEventOptions<TType>);
       } else if (event.data.type === "onFailure") {
         this.options.onFailure?.({
-          type,
+          type: this.options.type,
           ...event.data.data,
-        } as unknown as OnSuccessEventOptions);
+        } as unknown as OnSuccessEventOptions<TType>);
       }
     });
 

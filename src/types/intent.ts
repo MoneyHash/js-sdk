@@ -1,3 +1,5 @@
+export type IntentType = "payment" | "payout";
+
 export type IntentStatus =
   | "PROCESSED"
   | "UNPROCESSED"

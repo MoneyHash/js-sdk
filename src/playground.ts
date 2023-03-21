@@ -1,20 +1,21 @@
 import MoneyHash from ".";
 
-const paymentIntentId = "L227ppL";
-const payoutIntentId = "ZGAK2eL";
+const paymentIntentId = "Z0v7xoL";
+// const payoutIntentId = "ZGAK2eL";
 
-let moneyHash: MoneyHash;
+let moneyHash: MoneyHash<"payment">;
 
 document.getElementById("start")?.addEventListener("click", () => {
   moneyHash?.removeEventListeners();
   moneyHash = new MoneyHash({
-    onSuccess: ({ type, intent, transaction }) => {
+    type: "payment",
+    onSuccess: ({ intent, transaction }) => {
       // eslint-disable-next-line no-console
-      console.log("onSuccess", { type, intent, transaction });
+      console.log("onSuccess", { intent, transaction });
     },
-    onFailure: ({ type, intent, transaction }) => {
+    onFailure: ({ intent, transaction }) => {
       // eslint-disable-next-line no-console
-      console.log("onFailure", { type, intent, transaction });
+      console.log("onFailure", { intent, transaction });
     },
     styles: {
       submitButton: {
@@ -52,19 +53,17 @@ document.getElementById("start")?.addEventListener("click", () => {
   moneyHash.start({
     selector: "#app",
     intentId: paymentIntentId,
-    type: "payment",
   });
 });
 
-document.getElementById("start-payout")?.addEventListener("click", () => {
-  moneyHash?.removeEventListeners();
-  moneyHash = new MoneyHash({ locale: "ar" });
-  moneyHash.start({
-    selector: "#app",
-    intentId: payoutIntentId,
-    type: "payout",
-  });
-});
+// document.getElementById("start-payout")?.addEventListener("click", () => {
+//   moneyHash?.removeEventListeners();
+//   moneyHash = new MoneyHash({ type: "payout", locale: "ar" });
+//   moneyHash.start({
+//     selector: "#app",
+//     intentId: payoutIntentId,
+//   });
+// });
 
 document.getElementById("en")?.addEventListener("click", () => {
   moneyHash?.setLocale("en");
