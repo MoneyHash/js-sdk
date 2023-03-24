@@ -2,20 +2,15 @@ import type {
   IntentType,
   PaymentIntent,
   PayoutIntent,
-  TransactionStatus,
+  Transaction,
 } from "./intent";
 
-type Transaction = {
-  id: string | null;
-  status: TransactionStatus | null;
-};
-
-type PaymentIntentEventOptions = {
+export type PaymentIntentEventOptions = {
   intent: PaymentIntent;
   transaction: Transaction;
 };
 
-type PayoutIntentEventOptions = {
+export type PayoutIntentEventOptions = {
   intent: PayoutIntent;
   transaction: Transaction;
 };

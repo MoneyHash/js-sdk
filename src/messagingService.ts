@@ -35,6 +35,10 @@ export default class MessagingService<T extends Array<MessagePayload>> {
     this.listeners.push(callbackFn);
   }
 
+  removeListener(callbackFn: typeof this.listeners[number]) {
+    this.listeners = this.listeners.filter(cb => cb !== callbackFn);
+  }
+
   onIncomingMessage(event: MessageEvent) {
     // Don't receive messages from unknown origins
     if (event.origin !== this.targetOrigin) {

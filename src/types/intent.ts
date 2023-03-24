@@ -24,17 +24,14 @@ export type TransactionStatus =
   | "BOUNCED"
   | "NOT_DELIVERED";
 
-export interface AbstractPaymentMethod {
-  checkout_icons?: string[];
-  confirmation_required: boolean;
-}
-
-export interface PaymentMethod extends AbstractPaymentMethod {
-  payment_method_name: string;
-  payment_method: string;
-  use_for_express_checkout: boolean;
-  has_customized_label: boolean;
-}
+export type PaymentMethodSlugs =
+  | "custom-form"
+  | "update-method"
+  | "CASH_OUTLET"
+  | "CARD"
+  | "card_token"
+  | "MOBILE_WALLET"
+  | "SelfServe - Wallet";
 
 export interface AbstractIntent {
   id: string;
@@ -44,15 +41,6 @@ export interface AbstractIntent {
     currency: string;
   };
   method: PaymentMethodSlugs;
-}
-
-export interface PaymentIntent extends AbstractIntent {
-  expirationDate: string | null;
-  totals: {
-    subTotal: number;
-    donation?: Record<string, number>;
-    tipping?: Record<string, number>;
-  };
 }
 
 export interface IntentTemplate {
@@ -66,19 +54,19 @@ export interface IntentTemplate {
   }>;
 }
 
-export type PaymentMethodSlugs =
-  | "custom-form"
-  | "update-method"
-  | "CASH_OUTLET"
-  | "CARD"
-  | "card_token"
-  | "MOBILE_WALLET"
-  | "SelfServe - Wallet"
-  | ""; // TODO: @types-fixes this should be removed
-
-export interface PayoutMethod extends AbstractPaymentMethod {
-  payout_method_name: string;
-  payout_method: PaymentMethodSlugs;
+export interface PaymentIntent extends AbstractIntent {
+  expirationDate: string | null;
+  totals: {
+    subTotal: number;
+    donation?: Record<string, number>;
+    tipping?: Record<string, number>;
+  };
+  template: IntentTemplate | null;
 }
 
 export interface PayoutIntent extends AbstractIntent {}
+
+export type Transaction = {
+  id: string | null;
+  status: TransactionStatus | null;
+};
