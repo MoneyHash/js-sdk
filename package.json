@@ -6,13 +6,19 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/index.umd.js",
+  "main": "./dist/index.cjs.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.js"
+      "require": "./dist/index.cjs.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./headless": {
+      "import": "./dist/headless.es.js",
+      "require": "./dist/headless.cjs.js",
+      "types": "./dist/headless.d.ts"
     }
   },
   "publishConfig": {
