@@ -21,6 +21,16 @@
       "types": "./dist/headless.d.ts"
     }
   },
+  "typesVersions": {
+    "*": {
+      "index": [
+        "dist/index.d.ts"
+      ],
+      "headless": [
+        "dist/headless.d.ts"
+      ]
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
