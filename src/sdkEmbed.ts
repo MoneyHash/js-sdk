@@ -48,7 +48,6 @@ export default class SDKEmbed<TType extends IntentType> {
     if (lang) url.searchParams.set("lang", lang);
 
     this.iframe.src = url.toString();
-    this.iframe.id = "moneyhash-checkout";
     this.iframe.style.height = "100%";
     this.iframe.style.width = "100%";
     this.iframe.style.border = "0";
@@ -99,7 +98,7 @@ export default class SDKEmbed<TType extends IntentType> {
       }
 
       // send customized styles at initial load
-      if (!this.options.styles) {
+      if (this.options.styles) {
         this.messagingService?.send({
           type: "styles",
           data: { styles: this.options.styles },
