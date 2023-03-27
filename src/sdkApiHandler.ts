@@ -1,4 +1,5 @@
 import MessagingService, { MessagePayload } from "./messagingService";
+import isBrowser from "./utils/isBrowser";
 
 export default class SDKApiHandler {
   private static messagingService: MessagingService<MessagePayload[]> | null =
@@ -7,7 +8,9 @@ export default class SDKApiHandler {
   private static isCommunicationReady: Promise<void>;
 
   constructor() {
-    this.initSDKCommunicationIframe();
+    if (isBrowser()) {
+      this.initSDKCommunicationIframe();
+    }
   }
 
   private initSDKCommunicationIframe() {

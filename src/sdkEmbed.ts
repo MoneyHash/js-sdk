@@ -67,6 +67,10 @@ export default class SDKEmbed<TType extends IntentType> {
             type: this.options.type,
             ...data,
           } as unknown as OnCompleteEventOptions<TType>);
+
+          if (this.options.headless && this.iframe) {
+            this.iframe.hidden = true;
+          }
           break;
         }
 
@@ -75,6 +79,10 @@ export default class SDKEmbed<TType extends IntentType> {
             type: this.options.type,
             ...data,
           } as unknown as OnFailEventOptions<TType>);
+
+          if (this.options.headless && this.iframe) {
+            this.iframe.hidden = true;
+          }
           break;
         }
 

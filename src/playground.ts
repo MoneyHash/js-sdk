@@ -58,24 +58,24 @@ document.getElementById("start")?.addEventListener("click", async () => {
   //   note: "nice!",
   // });
 
-  // try {
-  //   const paymentSessionInfo = await moneyHash.getSessionDetails({
-  //     intentId: paymentIntentId,
-  //   });
-  //   console.log("after successful getSessionDetails", paymentSessionInfo);
+  try {
+    const paymentSessionInfo = await moneyHash.getSessionDetails({
+      intentId: paymentIntentId,
+    });
+    console.log("after successful getSessionDetails", paymentSessionInfo);
 
-  //   if (
-  //     paymentSessionInfo.intent.method &&
-  //     !paymentSessionInfo.transaction.status
-  //   ) {
-  //     moneyHash.renderForm({
-  //       selector: "#app",
-  //       intentId: paymentIntentId,
-  //     });
-  //   }
-  // } catch (error) {
-  //   console.log("after error getSessionDetails", error);
-  // }
+    if (
+      paymentSessionInfo.intent.method &&
+      !paymentSessionInfo.transaction.status
+    ) {
+      moneyHash.renderForm({
+        selector: "#app",
+        intentId: paymentIntentId,
+      });
+    }
+  } catch (error) {
+    console.log("after error getSessionDetails", error);
+  }
 
   moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
 });

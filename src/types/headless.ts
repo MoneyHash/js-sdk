@@ -1,4 +1,10 @@
-import { IntentType, PaymentIntent, PayoutIntent, Transaction } from "./intent";
+import {
+  IntentType,
+  PaymentIntent,
+  PaymentMethodSlugs,
+  PayoutIntent,
+  Transaction,
+} from "./intent";
 
 export interface Card {
   id: string;
@@ -11,12 +17,12 @@ export interface Card {
 }
 
 export interface Method {
-  method: string;
+  method: PaymentMethodSlugs;
   name: string;
   icons: string[];
 }
 
-type PaymentApiSuccessResponse = {
+export type PaymentApiSuccessResponse = {
   intent: PaymentIntent;
   transaction: Transaction;
   savedCards?: Card[];
@@ -24,7 +30,7 @@ type PaymentApiSuccessResponse = {
   wallet: number;
 };
 
-type PayoutApiSuccessResponse = {
+export type PayoutApiSuccessResponse = {
   intent: PayoutIntent;
   transaction: Transaction;
   payoutMethods: Method[];

@@ -1,7 +1,10 @@
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
 import type { IntentType, PaymentMethodSlugs } from "./types";
-import { SuccessResponse } from "./types/headless";
+import type { SuccessResponse } from "./types/headless";
+
+export * from "./types";
+export * from "./types/headless";
 
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {}
