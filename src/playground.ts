@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import MoneyHash from "./headlessMoneyHash";
 
-const paymentIntentId = "ZAR0yA9";
+// const paymentIntentId = "ZdY7Ky9";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -48,11 +48,19 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
-  console.log(intentDetails);
+  // const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  // console.log(intentDetails);
 
   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
   // console.log(intentMethods);
+
+  // const response = await moneyHash.proceedWith({
+  //   intentId: paymentIntentId,
+  //   type: "method", // method | savedCard | customerBalance
+  //   id: "MOBILE_WALLET",
+  // });
+
+  // console.log(response);
 });
 
 document.getElementById("en")?.addEventListener("click", () => {

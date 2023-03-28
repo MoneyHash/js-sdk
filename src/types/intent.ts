@@ -43,25 +43,8 @@ export interface AbstractIntent {
   method: PaymentMethodSlugs;
 }
 
-export interface IntentTemplate {
-  template_id: "adjustable_custom_amounts";
-  template_data: Array<{
-    id: string;
-    title: { en: string; ar?: string; fr?: string };
-    type: "donation" | "tipping";
-    values: string[];
-    selected_value: string | null;
-  }>;
-}
-
 export interface PaymentIntent extends AbstractIntent {
   expirationDate: string | null;
-  totals: {
-    subTotal: number;
-    donation?: Record<string, number>;
-    tipping?: Record<string, number>;
-  };
-  template: IntentTemplate | null;
 }
 
 export interface PayoutIntent extends AbstractIntent {
@@ -69,6 +52,7 @@ export interface PayoutIntent extends AbstractIntent {
 }
 
 export type Transaction = {
-  id: string | null;
-  status: TransactionStatus | null;
+  id: string;
+  status: TransactionStatus;
+  created: string;
 };

@@ -1,4 +1,6 @@
 import MessagingService, { MessagePayload } from "./messagingService";
+import throwIf from "./utils/throwIf";
+import warnIf from "./utils/warnIf";
 import {
   ButtonStyle,
   InputStyle,
@@ -7,6 +9,8 @@ import {
   OnFailEventOptions,
 } from "./types";
 
+const supportedTypes = new Set<IntentType>(["payment", "payout"]);
+const supportedLanguages = new Set(["en", "fr", "ar"]);
 export interface SDKEmbedOptions<TType extends IntentType> {
   type: TType;
   locale?: string;
@@ -26,11 +30,22 @@ export default class SDKEmbed<TType extends IntentType> {
   iframe: HTMLIFrameElement | null = null;
 
   constructor(options: SDKEmbedOptions<TType> & { headless?: boolean }) {
+    throwIf(
+      !supportedTypes.has(options.type),
+      "MoneyHash constructor must be called with valid type (payment | payout)!",
+    );
+
     this.options = options;
   }
 
   get lang() {
-    return this.options.locale?.split("-")[0] || "en";
+    const language = this.options.locale?.split("-")[0];
+    warnIf(
+      !!language && !supportedLanguages.has(language),
+      "Supported languages (en | fr | ar)",
+    );
+
+    return language || "en";
   }
 
   render({ selector, intentId }: { selector: string; intentId: string }) {
@@ -51,7 +66,11 @@ export default class SDKEmbed<TType extends IntentType> {
     this.iframe.style.height = "100%";
     this.iframe.style.width = "100%";
     this.iframe.style.border = "0";
-    document.querySelector(selector)?.replaceChildren(this.iframe);
+
+    const container = document.querySelector(selector);
+    throwIf(!container, `Couldn't find an element with selector ${selector}!`);
+
+    container!.replaceChildren(this.iframe);
 
     this.messagingService = new MessagingService({
       target: this.iframe.contentWindow as Window,

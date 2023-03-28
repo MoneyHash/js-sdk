@@ -1,11 +1,17 @@
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
-import type { IntentType, PaymentMethodSlugs } from "./types";
+import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
+import throwIf from "./utils/throwIf";
 
 export * from "./types";
 export * from "./types/headless";
 
+const supportedProceedWithTypes = new Set([
+  "method",
+  "customerBalance",
+  "savedCard",
+]);
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {}
 
@@ -50,8 +56,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }: {
     type: "method" | "customerBalance" | "savedCard";
     intentId: string;
-    id: PaymentMethodSlugs | (string & {});
+    id: string;
   }) {
+    throwIf(
+      !supportedProceedWithTypes.has(type),
+      "type must be a valid one (method | customerBalance | savedCard)",
+    );
+
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:proceedWith",
       payload: {
@@ -64,7 +75,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
-  deselectMethod({ intentId }: { intentId: string }) {
+  deselectMethod(intentId: string) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:deselectMethod",
       payload: {
@@ -75,34 +86,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
-  toggleTemplateAmount({
-    intentId,
-    templateId,
-    amount,
-    note,
-  }: {
-    intentId: string;
-    templateId: string;
-    amount: string;
-    note: string;
-  }) {
-    if (this.options.type === "payout") {
-      throw new Error(`Templates are not supported for payout`);
-    }
-
-    return this.sdkApiHandler.request<IntentDetails<TType>>({
-      api: "sdk:toggleTemplateAmount",
-      payload: {
-        intentId,
-        templateId,
-        amount,
-        note,
-        lang: this.sdkEmbed.lang,
-      },
-    });
-  }
-
   renderForm({ selector, intentId }: { selector: string; intentId: string }) {
+    throwIf(!selector, "selector is required for renderForm");
+    throwIf(!intentId, "intentId is required for renderForm");
+
     this.sdkEmbed.render({ selector, intentId });
   }
 

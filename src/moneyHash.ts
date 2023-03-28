@@ -1,5 +1,5 @@
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
-
+import throwIf from "./utils/throwIf";
 import type { IntentType } from "./types";
 
 export interface MoneyHashOptions<TType extends IntentType>
@@ -16,6 +16,9 @@ export default class MoneyHash<TType extends IntentType> {
   }
 
   start({ selector, intentId }: { selector: string; intentId: string }) {
+    throwIf(!selector, "selector is required for start");
+    throwIf(!intentId, "intentId is required for start");
+
     this.sdkEmbed.render({ selector, intentId });
   }
 
