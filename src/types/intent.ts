@@ -41,6 +41,7 @@ export interface AbstractIntent {
     currency: string;
   };
   method: PaymentMethodSlugs;
+  secret: string;
 }
 
 export interface PaymentIntent extends AbstractIntent {

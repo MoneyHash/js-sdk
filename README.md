@@ -12,56 +12,123 @@ $ yarn add @moneyhash/js-sdk
 
 ## How to use?
 
+### Embed Experience
+
 1. Create moneyHash instance using `MoneyHash` constructor
 
 ```js
 import MoneyHash from "@moneyhash/js-sdk";
 
-const moneyHash = new MoneyHash();
+const moneyHash = new MoneyHash({ type: "payment" | "payout" });
 ```
 
-2. Start your payment / payout to render in Iframe
-
-`payment`
+2. Render the iframe
 
 ```js
 moneyHash.start({
   selector: "<container_css_selector>",
   intentId: "<intent_id>",
-  type: "payment",
 });
 ```
 
-`payout`
+### Headless Experience
+
+- Create moneyHash instance using `MoneyHash` constructor
 
 ```js
-moneyHash.start({
-  selector: "<container_css_selector>",
-  intentId: "<intent_id>",
-  type: "payout",
+import MoneyHash from "@moneyhash/js-sdk/headless";
+
+const moneyHash = new MoneyHash({ type: "payment" | "payout" });
+```
+
+- Get intent details
+
+```js
+moneyHash.getIntentDetails("<intent_id>").then(({ intent, transaction }) => {
+  console.log({ intent, transaction });
 });
 ```
 
-That's it
+- Get intent methods
+
+```js
+moneyHash
+  .getIntentMethods("<intent_id>")
+  .then(({ paymentMethods, expressMethods, savedCards, customerBalances }) => {
+    console.log({
+      paymentMethods,
+      expressMethods,
+      savedCards,
+      customerBalances,
+    });
+  });
+```
+
+- Proceed with a Method, Card or Wallet
+
+```js
+moneyHash
+  .proceedWith({
+    intentId: "<intent_id>",
+    type: "method" | "savedCard" | "customerBalance",
+    id: "<method_id>" | "<card_id>" | "<customer_balance_id>",
+  })
+  .then(({ intent, transaction }) => {
+    console.log({ intent, transaction });
+  });
+```
+
+- Deselect intent method
+
+```js
+moneyHash.deselectMethod("<intent_id>").then(({ intent, transaction }) => {
+  console.log({
+    intent,
+    transaction,
+  });
+});
+```
+
+- Delete card
+
+```js
+moneyHash
+  .deleteCard({
+    cardId: "<card_id>",
+    intentSecret: "<intent_secret>",
+  })
+  .then(({ message }) => {
+    console.log({ message });
+  });
+```
+
+- Render SDK embed forms and payment integrations
+
+```js
+moneyHash.renderForm({
+  selector: "<container_css_selector>",
+  intentId: "<intent_id>",
+});
+```
 
 ## Event listeners
 
-### Success
+### Complete
 
 ```js
 const moneyHash = new MoneyHash({
-  onSuccess: ({ type, intent, transaction }) => {
-    console.log("onSuccess", { type, intent, transaction });
+  onComplete: ({ intent, transaction }) => {
+    console.log("onComplete", { intent, transaction });
   },
 });
 ```
 
-### Failure
+### Fail
 
 ```js
 const moneyHash = new MoneyHash({
-  onFailure: ({ type, intent, transaction }) => {
-    console.log("onFailure", { type, intent, transaction });
+  onFail: ({ intent, transaction }) => {
+    console.log("onFail", { intent, transaction });
   },
 });
 ```
@@ -70,13 +137,14 @@ const moneyHash = new MoneyHash({
 
 ```js
 const moneyHash = new MoneyHash({
+  type: "payment" | "payout",
   locale: "ar-EG",
 });
 ```
 
 ## Change intent language programmatically
 
-`we currently support 3 languages ['English', 'French', 'Arabic']`
+`we currently support 3 languages ['English', 'Arabic', 'Français']`
 
 ```js
 moneyHash.setLocale("<locale_code>");
@@ -101,26 +169,11 @@ const moneyHash = new MoneyHash({
 });
 ```
 
-> Check Style API for allowed values
+> Check Style Types for allowed values
 
-## API
+## Types
 
-### MoneyHash Options
-
-| Required | Prop      | Type                                               | Description                                     |
-| -------- | --------- | -------------------------------------------------- | ----------------------------------------------- |
-|          | locale    | string                                             | Start the intent Iframe with predefined locale  |
-|          | onSuccess | (event: OnSuccessEventOptions) => void             | Callback fires after successfull payment/payout |
-|          | onFailure | (event: OnFailureEventOptions) => void             | Callback fires after failure payment/payout     |
-|          | styles    | { submitButton?: ButtonStyle; input?: InputStyle } | Customize input & submit button styles          |
-
-### MoneyHash instance
-
-| Method               | Type                                                                          | Description                              |
-| -------------------- | ----------------------------------------------------------------------------- | ---------------------------------------- |
-| start                | ({ selector: string; intentId: string; type: "payment" \| "payout";}) => void | Start the payment/payout intent Iframe   |
-| setLocale            | (locale: string) => void                                                      | Change intent locale programmatically    |
-| removeEventListeners | ( ) => void                                                                   | Abort intent event listeners for cleanup |
+###
 
 ### Styles
 
@@ -176,4 +229,115 @@ export interface ButtonStyle {
   hover?: TextStyle & BlockStyle;
   focus?: TextStyle & BlockStyle;
 }
+```
+
+### Methods Error Response
+
+```ts
+export type ErrorResponse = {
+  code: number;
+  message: string;
+};
+```
+
+```ts
+export type IntentType = "payment" | "payout";
+
+export type IntentStatus =
+  | "PROCESSED"
+  | "UNPROCESSED"
+  | "CLOSED"
+  | "TIME_EXPIRED"
+  | "PENDING"
+  | "EXPIRED";
+
+export type TransactionStatus =
+  | "PENDING"
+  | "PENDING_APPROVAL"
+  | "SUCCESSFUL"
+  | "FAILED"
+  | "FULLY_REFUNDED"
+  | "PARTIALLY_REFUNDED"
+  | "VOIDED"
+  | "PENDING_AUTHENTICATION"
+  | "PENDING_EXTERNAL_ACTION"
+  | "PENDING_ONLINE_EXTERNAL_ACTION"
+  | "SENDING"
+  | "SENT"
+  | "BOUNCED"
+  | "NOT_DELIVERED";
+
+TODO: Ask backend for valid values 😪
+export type PaymentMethodSlugs =
+  | "custom-form"
+  | "update-method"
+  | "CASH_OUTLET"
+  | "CARD"
+  | "card_token"
+  | "MOBILE_WALLET"
+  | "SELFSERVE_WALLET";
+
+export interface AbstractIntent {
+  id: string;
+  status: IntentStatus;
+  amount: {
+    value: number;
+    currency: string;
+  };
+  method: PaymentMethodSlugs;
+  secret: string;
+}
+
+export interface PaymentIntent extends AbstractIntent {
+  expirationDate: string | null;
+}
+
+export interface PayoutIntent extends AbstractIntent {
+  max_payout_amount: number | null;
+}
+
+export type Transaction = {
+  id: string;
+  status: TransactionStatus;
+  created: string;
+};
+
+
+export interface Method {
+  id: PaymentMethodSlugs;
+  title: string;
+  icons: string[];
+  isSelected: boolean;
+  confirmationRequired: boolean;
+}
+export interface Card {
+  id: string;
+  brand: string;
+  logo: string;
+  last4: string;
+  expiryMonth: string;
+  expiryYear: string;
+  country: string | null;
+}
+
+export type CustomerBalances = [
+  {
+    id: "SELFSERVE_WALLET";
+    balance: number;
+    icon: string;
+    isSelected: boolean;
+  },
+];
+
+export type IntentMethods<TType extends IntentType> = TType extends "payment"
+  ? {
+      paymentMethods: Method[];
+      expressMethods: Method[];
+      savedCards: Card[];
+      customerBalances: CustomerBalances;
+    }
+  : {
+      payoutMethods: Method[];
+    };
+
 ```
