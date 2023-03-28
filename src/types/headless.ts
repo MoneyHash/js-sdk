@@ -23,6 +23,7 @@ export interface Method {
   title: string;
   icons: string[];
   isSelected: boolean;
+  confirmationRequired: boolean;
 }
 export interface Card {
   id: string;
