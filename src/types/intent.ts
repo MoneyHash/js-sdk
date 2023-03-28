@@ -31,7 +31,7 @@ export type PaymentMethodSlugs =
   | "CARD"
   | "card_token"
   | "MOBILE_WALLET"
-  | "SelfServe - Wallet";
+  | "SELFSERVE_WALLET";
 
 export interface AbstractIntent {
   id: string;
@@ -64,7 +64,9 @@ export interface PaymentIntent extends AbstractIntent {
   template: IntentTemplate | null;
 }
 
-export interface PayoutIntent extends AbstractIntent {}
+export interface PayoutIntent extends AbstractIntent {
+  max_payout_amount: number | null;
+}
 
 export type Transaction = {
   id: string | null;

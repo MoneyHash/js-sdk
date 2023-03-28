@@ -1,7 +1,7 @@
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
 import type { IntentType, PaymentMethodSlugs } from "./types";
-import type { SuccessResponse } from "./types/headless";
+import type { IntentDetails, IntentMethods } from "./types/headless";
 
 export * from "./types";
 export * from "./types/headless";
@@ -21,11 +21,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
   }
 
-  getSessionDetails({ intentId }: { intentId: string }) {
-    return this.sdkApiHandler.request<SuccessResponse<TType>>({
-      api: "sdk:getSessionDetails",
+  getIntentDetails(intentId: string) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:getIntentDetails",
       payload: {
-        type: this.options.type,
+        intentType: this.options.type,
+        intentId,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  getIntentMethods(intentId: string) {
+    return this.sdkApiHandler.request<IntentMethods<TType>>({
+      api: "sdk:getIntentMethods",
+      payload: {
+        intentType: this.options.type,
         intentId,
         lang: this.sdkEmbed.lang,
       },
@@ -34,27 +45,30 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   proceedWith({
     intentId,
-    method,
+    type,
+    id,
   }: {
+    type: "method" | "customerBalance" | "savedCard";
     intentId: string;
-    method: PaymentMethodSlugs;
+    id: PaymentMethodSlugs | (string & {});
   }) {
-    return this.sdkApiHandler.request<SuccessResponse<TType>>({
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:proceedWith",
       payload: {
-        type: this.options.type,
+        proceedWith: type,
+        intentType: this.options.type,
         intentId,
-        method,
+        id,
         lang: this.sdkEmbed.lang,
       },
     });
   }
 
   deselectMethod({ intentId }: { intentId: string }) {
-    return this.sdkApiHandler.request<SuccessResponse<TType>>({
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:deselectMethod",
       payload: {
-        type: this.options.type,
+        intentType: this.options.type,
         intentId,
         lang: this.sdkEmbed.lang,
       },
@@ -76,10 +90,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       throw new Error(`Templates are not supported for payout`);
     }
 
-    return this.sdkApiHandler.request<SuccessResponse<TType>>({
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:toggleTemplateAmount",
       payload: {
-        type: this.options.type,
         intentId,
         templateId,
         amount,

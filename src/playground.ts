@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import MoneyHash from "./headlessMoneyHash";
 
-const paymentIntentId = "gEQ35vg";
+const paymentIntentId = "ZAR0yA9";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -48,36 +48,11 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  // await moneyHash.proceedWith({ intentId: paymentIntentId, method: "CARD" });
-  // await moneyHash.deselectMethod({ intentId: paymentIntentId });
+  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  console.log(intentDetails);
 
-  // await moneyHash.toggleTemplateAmount({
-  //   intentId: paymentIntentId,
-  //   templateId: "91b601e8-160a-4e78-9679-8d042f88a158",
-  //   amount: "100.00",
-  //   note: "nice!",
-  // });
-
-  try {
-    const paymentSessionInfo = await moneyHash.getSessionDetails({
-      intentId: paymentIntentId,
-    });
-    console.log("after successful getSessionDetails", paymentSessionInfo);
-
-    if (
-      paymentSessionInfo.intent.method &&
-      !paymentSessionInfo.transaction.status
-    ) {
-      moneyHash.renderForm({
-        selector: "#app",
-        intentId: paymentIntentId,
-      });
-    }
-  } catch (error) {
-    console.log("after error getSessionDetails", error);
-  }
-
-  moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+  // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
+  // console.log(intentMethods);
 });
 
 document.getElementById("en")?.addEventListener("click", () => {
