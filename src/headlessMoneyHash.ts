@@ -86,6 +86,28 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  deleteCard({
+    cardId,
+    intentSecret,
+  }: {
+    cardId: string;
+    intentSecret: string;
+  }) {
+    throwIf(
+      this.options.type === "payout",
+      "deleteCard is allowed only for payment intent!",
+    );
+
+    return this.sdkApiHandler.request<{ message: "success" }>({
+      api: "sdk:deleteCard",
+      payload: {
+        cardId,
+        intentSecret,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
   renderForm({ selector, intentId }: { selector: string; intentId: string }) {
     throwIf(!selector, "selector is required for renderForm");
     throwIf(!intentId, "intentId is required for renderForm");
