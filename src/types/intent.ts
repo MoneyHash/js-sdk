@@ -36,11 +36,11 @@ export type PaymentMethodSlugs =
   | "PAY_AT_FAWRY"
   | "VALU"
   | "SHAHRY"
-  | "CashOnDelivery"
-  | "BANKINSTALLMENTS"
-  | "BANKTRANSFERS"
+  | "CASH_ON_DELIVERY"
+  | "BANK_INSTALLMENTS"
+  | "BANK_TRANSFERS"
   | "REFERENCE_NUMBER"
-  | "WALLET"
+  | "SELFSERVE_WALLET"
   | "APPLE_PAY"
   | "GOOGLE_PAY"
   | "M_PESA"
@@ -53,11 +53,12 @@ export type PaymentMethodSlugs =
   | "SOUHOOLA"
   | "GETGO"
   | "SAMSUNG_PAY"
-  | "QPay"
+  | "QPAY"
   | "TAMARA"
   | "BENEFIT"
   | "STC"
-  | "SELFSERVE_WALLET";
+  | "BANK_ACCOUNT"
+  | "CASH";
 
 export interface AbstractIntent {
   id: string;
@@ -75,7 +76,7 @@ export interface PaymentIntent extends AbstractIntent {
 }
 
 export interface PayoutIntent extends AbstractIntent {
-  max_payout_amount: number | null;
+  maxPayoutAmount: number | null;
 }
 
 export type Transaction = {
