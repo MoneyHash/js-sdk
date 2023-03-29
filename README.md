@@ -209,15 +209,39 @@ export type TransactionStatus =
   | "BOUNCED"
   | "NOT_DELIVERED";
 
-TODO: Ask backend for valid values 😪
 export type PaymentMethodSlugs =
-  | "custom-form"
-  | "update-method"
   | "CASH_OUTLET"
-  | "CARD"
-  | "card_token"
   | "MOBILE_WALLET"
-  | "SELFSERVE_WALLET";
+  | "CARD"
+  | "USSD"
+  | "KNET"
+  | "CASH_COLLECTION"
+  | "AMAN_MASARY"
+  | "PAYPAL"
+  | "PAY_AT_FAWRY"
+  | "VALU"
+  | "SHAHRY"
+  | "CashOnDelivery"
+  | "BANKINSTALLMENTS"
+  | "BANKTRANSFERS"
+  | "REFERENCE_NUMBER"
+  | "WALLET"
+  | "APPLE_PAY"
+  | "GOOGLE_PAY"
+  | "M_PESA"
+  | "MOBILE_MONEY"
+  | "CRYPTO_WALLET"
+  | "NAPS"
+  | "FORSA"
+  | "SYMPL"
+  | "TABBY"
+  | "SOUHOOLA"
+  | "GETGO"
+  | "SAMSUNG_PAY"
+  | "QPay"
+  | "TAMARA"
+  | "BENEFIT"
+  | "STC";
 
 export interface AbstractIntent {
   id: string;
@@ -243,7 +267,6 @@ export type Transaction = {
   status: TransactionStatus;
   created: string;
 };
-
 
 export interface Method {
   id: PaymentMethodSlugs;
@@ -281,7 +304,6 @@ export type IntentMethods<TType extends IntentType> = TType extends "payment"
   : {
       payoutMethods: Method[];
     };
-
 ```
 
 ### Styles
