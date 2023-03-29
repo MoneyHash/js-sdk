@@ -22,7 +22,7 @@
     "import/no-extraneous-dependencies": [
       "error",
       {
-        "devDependencies": ["vite.config.ts", "scripts/build.ts"]
+        "devDependencies": ["vite.config.umd.ts", "vite.config.ts"]
       }
     ]
   }

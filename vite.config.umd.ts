@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 
 export default defineConfig({
   server: {
@@ -7,16 +6,16 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: {
-        index: "./src/index.ts",
-        headless: "./src/headlessMoneyHash.ts",
-      },
+      entry:
+        process.env.UMD === "HEADLESS"
+          ? "./src/headlessMoneyHash.ts"
+          : "./src/index.ts",
       name: "MoneyHash",
       fileName: (ext, entry) => `${entry}.${ext}.js`,
-      formats: ["es", "cjs"],
+      formats: ["umd"],
     },
+    emptyOutDir: false,
     rollupOptions: {},
     target: "es2015",
   },
-  plugins: [dts({ insertTypesEntry: true, rollupTypes: true })],
 });

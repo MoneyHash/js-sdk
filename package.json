@@ -41,13 +41,18 @@
     "build": "tsc && vite build --mode development",
     "build:staging": "tsc && vite build --mode staging",
     "build:production": "tsc && vite build --mode production",
+    "build:umd": "yarn build:index:umd && yarn build:headless:umd",
+    "build:index:umd": "vite build --mode production --config vite.config.umd.ts",
+    "build:headless:umd": "UMD=HEADLESS vite build --mode production --config vite.config.umd.ts",
     "preview": "vite preview",
     "eslint:check": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore --report-unused-disable-directives --max-warnings 0",
     "eslint:fix": "eslint . --fix --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore --report-unused-disable-directives --max-warnings 0",
     "prettier:check": "prettier . --check --ignore-unknown --ignore-path .gitignore",
     "prettier:fix": "prettier . --write --ignore-unknown --ignore-path .gitignore",
     "commit": "cz",
-    "prepare": "is-ci || husky install"
+    "prepare": "is-ci || husky install",
+    "prerelease": "yarn build:production && yarn build:umd",
+    "release": "np"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.1.0",
