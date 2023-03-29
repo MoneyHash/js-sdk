@@ -60,7 +60,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }) {
     throwIf(
       !supportedProceedWithTypes.has(type),
-      "type must be a valid one (method | customerBalance | savedCard)",
+      `type must be a valid one (${[...supportedProceedWithTypes].join(
+        " | ",
+      )})`,
     );
 
     return this.sdkApiHandler.request<IntentDetails<TType>>({

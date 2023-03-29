@@ -32,7 +32,9 @@ export default class SDKEmbed<TType extends IntentType> {
   constructor(options: SDKEmbedOptions<TType> & { headless?: boolean }) {
     throwIf(
       !supportedTypes.has(options.type),
-      "MoneyHash constructor must be called with valid type (payment | payout)!",
+      `MoneyHash constructor must be called with valid type (${[
+        ...supportedTypes,
+      ].join(" | ")})!`,
     );
 
     this.options = options;
@@ -42,7 +44,7 @@ export default class SDKEmbed<TType extends IntentType> {
     const language = this.options.locale?.split("-")[0];
     warnIf(
       !!language && !supportedLanguages.has(language),
-      "Supported languages (en | fr | ar)",
+      `Supported languages (${[...supportedLanguages].join(" | ")})`,
     );
 
     return language || "en";

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import MoneyHash from "./headlessMoneyHash";
 
-// const paymentIntentId = "ZdY7Ky9";
+const paymentIntentId = "ZdY7Ky9";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -48,8 +48,8 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  // const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
-  // console.log(intentDetails);
+  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  console.log(intentDetails);
 
   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
   // console.log(intentMethods);

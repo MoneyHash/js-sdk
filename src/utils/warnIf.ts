@@ -1,5 +1,5 @@
-export default function warnIf(shouldThrow: boolean, message: string): void {
-  if (shouldThrow) {
+export default function warnIf(shouldWarn: boolean, message: string): void {
+  if (shouldWarn) {
     // eslint-disable-next-line no-console
     console.warn(message);
   }
