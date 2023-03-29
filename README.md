@@ -241,7 +241,8 @@ export type PaymentMethodSlugs =
   | "QPay"
   | "TAMARA"
   | "BENEFIT"
-  | "STC";
+  | "STC"
+  | "SELFSERVE_WALLET";
 
 export interface AbstractIntent {
   id: string;

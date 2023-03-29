@@ -77,9 +77,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
-  deselectMethod(intentId: string) {
+  resetSelectedMethod(intentId: string) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
-      api: "sdk:deselectMethod",
+      api: "sdk:resetSelectedMethod",
       payload: {
         intentType: this.options.type,
         intentId,

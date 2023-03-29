@@ -58,7 +58,7 @@ export default class SDKEmbed<TType extends IntentType> {
     const url = new URL(
       `${import.meta.env.VITE_IFRAME_URL}/embed/${
         this.options.type
-      }/${intentId}?`,
+      }/${intentId}?sdk=true`,
     );
 
     const lang = this.options.locale?.split("-")[0];
