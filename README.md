@@ -78,10 +78,10 @@ moneyHash
   });
 ```
 
-- Deselect intent method
+- Reset intent selected method
 
 ```js
-moneyHash.deselectMethod("<intent_id>").then(({ intent, transaction }) => {
+moneyHash.resetSelectedMethod("<intent_id>").then(({ intent, transaction }) => {
   console.log({
     intent,
     transaction,
