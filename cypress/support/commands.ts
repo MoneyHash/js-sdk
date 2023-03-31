@@ -53,13 +53,14 @@ declare global {
       getMoneyHashInstance<TType extends IntentType>(options: {
         type: TType;
       }): Chainable<MoneyHash<TType>>;
+      addAmountWallet(amount: number): Chainable<void>;
     }
   }
 }
 
 Cypress.Commands.add("createIntent", (intentType, overRidePayload) => {
   cy.fixture(intentType === "payment" ? "paymentPayload" : "payout").then(
-    paymentPayload => {
+    payload => {
       cy.request({
         method: "POST",
         url: `${Cypress.env("BACKEND_URL")}/${
@@ -68,7 +69,7 @@ Cypress.Commands.add("createIntent", (intentType, overRidePayload) => {
         headers: {
           "x-api-key": Cypress.env("SANDBOX_API_KEY"),
         },
-        body: { ...paymentPayload, ...overRidePayload },
+        body: { ...payload, ...overRidePayload },
       }).then(resp => resp.body.data.id);
     },
   );
@@ -78,5 +79,20 @@ Cypress.Commands.add("getMoneyHashInstance", ({ type }) => {
   cy.window().then(window => {
     const moneyHash = new window.MoneyHash({ type });
     return moneyHash;
+  });
+});
+
+Cypress.Commands.add("addAmountWallet", amount => {
+  cy.fixture("paymentPayload").then(paymentPayload => {
+    cy.request({
+      method: "POST",
+      url: `${Cypress.env("BACKEND_URL")}/customers/${
+        paymentPayload.customer
+      }/wallets/top-up/`,
+      headers: {
+        "x-api-key": Cypress.env("SANDBOX_API_KEY"),
+      },
+      body: { currency: paymentPayload.amount_currency, amount },
+    }).then(resp => resp.body.data.id);
   });
 });

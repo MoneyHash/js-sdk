@@ -113,7 +113,9 @@ describe("headlessMoneyHash", () => {
     });
 
     it("Self serve wallet", () => {
-      cy.reload();
+      // Add amount to wallet to before paying with
+      cy.addAmountWallet(50);
+
       cy.createIntent("payment").then(intentId => {
         cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
           const { customerBalances } = await moneyHash.getIntentMethods(
@@ -121,18 +123,12 @@ describe("headlessMoneyHash", () => {
           );
           const selfServeWallet = customerBalances[0];
 
-          try {
-            const response = await moneyHash.proceedWith({
-              intentId,
-              type: "customerBalance",
-              id: selfServeWallet.id,
-            });
-
-            expect(response.intent.method).eq(selfServeWallet.id);
-          } catch (error) {
-            expect(error.code).eq(400);
-            expect(error.message).eq("not enough wallet balance");
-          }
+          const response = await moneyHash.proceedWith({
+            intentId,
+            type: "customerBalance",
+            id: selfServeWallet.id,
+          });
+          expect(response.intent.method).eq(selfServeWallet.id);
         });
       });
     });
