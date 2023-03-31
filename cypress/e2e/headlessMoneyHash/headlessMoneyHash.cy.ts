@@ -34,7 +34,7 @@ describe("headlessMoneyHash", () => {
     });
   });
 
-  it.only("moneyHash.getIntentMethods should response with appropriate methods, saved cards and wallet details", () => {
+  it("moneyHash.getIntentMethods should response with appropriate methods, saved cards and wallet details", () => {
     cy.createIntent("payment").then(intentId => {
       cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
         const { paymentMethods, expressMethods, savedCards, customerBalances } =
@@ -71,6 +71,68 @@ describe("headlessMoneyHash", () => {
           expect(balance.icon).to.be.a("string");
           expect(balance.balance).to.be.a("number");
           expect(balance.isSelected).to.be.a("boolean");
+        });
+      });
+    });
+  });
+
+  context("moneyHash.proceedWith should update intent selected method", () => {
+    it("Payment method", () => {
+      cy.createIntent("payment").then(intentId => {
+        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+          const { paymentMethods } = await moneyHash.getIntentMethods(intentId);
+          const randomMethod =
+            paymentMethods[Cypress._.random(0, paymentMethods.length)];
+
+          const response = await moneyHash.proceedWith({
+            intentId,
+            type: "method",
+            id: randomMethod.id,
+          });
+
+          expect(response.intent.method).eq(randomMethod.id);
+        });
+      });
+    });
+
+    it("Saved cards", () => {
+      cy.createIntent("payment").then(intentId => {
+        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+          const { savedCards } = await moneyHash.getIntentMethods(intentId);
+          const randomCard = savedCards[Cypress._.random(0, savedCards.length)];
+
+          const response = await moneyHash.proceedWith({
+            intentId,
+            type: "savedCard",
+            id: randomCard.id,
+          });
+
+          expect(response.intent.method).eq("CARD");
+        });
+      });
+    });
+
+    it("Self serve wallet", () => {
+      cy.reload();
+      cy.createIntent("payment").then(intentId => {
+        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+          const { customerBalances } = await moneyHash.getIntentMethods(
+            intentId,
+          );
+          const selfServeWallet = customerBalances[0];
+
+          try {
+            const response = await moneyHash.proceedWith({
+              intentId,
+              type: "customerBalance",
+              id: selfServeWallet.id,
+            });
+
+            expect(response.intent.method).eq(selfServeWallet.id);
+          } catch (error) {
+            expect(error.code).eq(400);
+            expect(error.message).eq("not enough wallet balance");
+          }
         });
       });
     });
