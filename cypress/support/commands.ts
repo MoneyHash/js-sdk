@@ -1,43 +1,7 @@
 /// <reference types="cypress" />
+
 import type { IntentType } from "../../src/types";
 import MoneyHash from "../../src/headlessMoneyHash";
-
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
 
 declare global {
   namespace Cypress {
@@ -54,7 +18,11 @@ declare global {
         type: TType;
       }): Chainable<MoneyHash<TType>>;
       addAmountWallet(amount: number): Chainable<void>;
+      createCardToken(): Chainable<void>;
     }
+  }
+  interface Window {
+    MoneyHash: typeof MoneyHash;
   }
 }
 
@@ -94,5 +62,34 @@ Cypress.Commands.add("addAmountWallet", amount => {
       },
       body: { currency: paymentPayload.amount_currency, amount },
     }).then(resp => resp.body.data.id);
+  });
+});
+
+Cypress.Commands.add("createCardToken", () => {
+  cy.origin(Cypress.env("EMBED_URL"), () => {
+    cy.fixture("paymentPayload").then(paymentPayload => {
+      cy.request({
+        method: "POST",
+        url: `${Cypress.env("BACKEND_URL")}/tokens/cards/`,
+        headers: {
+          "x-api-key": Cypress.env("SANDBOX_API_KEY"),
+        },
+        body: {
+          webhook_url: paymentPayload.webhook_url,
+          customer: paymentPayload.customer,
+        },
+      }).then(res => {
+        cy.visit(res.body.data.embed_url);
+
+        // wait for embed vault to load
+        // eslint-disable-next-line cypress/no-unnecessary-waiting
+        cy.wait(3000);
+        cy.get("button")
+          .contains(/add card/i)
+          .click();
+
+        cy.get("h3").contains(/Your card was added successfully./i);
+      });
+    });
   });
 });

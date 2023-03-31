@@ -13,10 +13,3 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 import "./commands";
-import MoneyHash from "../../src/headlessMoneyHash";
-
-declare global {
-  interface Window {
-    MoneyHash: typeof MoneyHash;
-  }
-}

@@ -95,7 +95,11 @@ describe("headlessMoneyHash", () => {
       });
     });
 
-    it("Saved cards", () => {
+    it.only("Saved cards", () => {
+      // tokenize card before paying with
+      cy.createCardToken();
+
+      cy.visit("/");
       cy.createIntent("payment").then(intentId => {
         cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
           const { savedCards } = await moneyHash.getIntentMethods(intentId);
