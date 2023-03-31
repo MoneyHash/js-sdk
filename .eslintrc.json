@@ -28,6 +28,7 @@
         "devDependencies": [
           "vite.config.umd.ts",
           "vite.config.ts",
+          "cypress/**/*.ts",
           "cypress.config.ts"
         ]
       }
