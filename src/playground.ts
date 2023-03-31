@@ -1,6 +1,14 @@
 /* eslint-disable no-console */
 import MoneyHash from "./headlessMoneyHash";
 
+declare global {
+  interface Window {
+    MoneyHash: typeof MoneyHash;
+  }
+}
+
+window.MoneyHash = window.MoneyHash || MoneyHash;
+
 const paymentIntentId = "ZdY7Ky9";
 
 let moneyHash: MoneyHash<"payment">;
@@ -48,8 +56,9 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
-  console.log(intentDetails);
+  // const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  // console.log(intentDetails);
+  moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
 
   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
   // console.log(intentMethods);
@@ -59,16 +68,4 @@ document.getElementById("start")?.addEventListener("click", async () => {
   //   type: "method", // method | savedCard | customerBalance
   //   id: "MOBILE_WALLET",
   // });
-
-  // console.log(response);
-});
-
-document.getElementById("en")?.addEventListener("click", () => {
-  moneyHash?.setLocale("en");
-});
-document.getElementById("fr")?.addEventListener("click", () => {
-  moneyHash?.setLocale("fr");
-});
-document.getElementById("ar")?.addEventListener("click", () => {
-  moneyHash?.setLocale("ar");
 });

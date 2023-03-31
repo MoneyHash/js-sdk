@@ -1,4 +1,7 @@
 /// <reference types="cypress" />
+import type { IntentType } from "../../src/types";
+import MoneyHash from "../../src/headlessMoneyHash";
+
 // ***********************************************
 // This example commands.ts shows you how to
 // create various custom commands and overwrite
@@ -35,3 +38,45 @@
 //     }
 //   }
 // }
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      /**
+       * Custom command to create payment intent via API and yield intent id.
+       * @example cy.createIntent('payment')
+       */
+      createIntent(
+        intentType: IntentType,
+        overRidePayload?: Record<string, unknown>,
+      ): Chainable<string>;
+      getMoneyHashInstance<TType extends IntentType>(options: {
+        type: TType;
+      }): Chainable<MoneyHash<TType>>;
+    }
+  }
+}
+
+Cypress.Commands.add("createIntent", (intentType, overRidePayload) => {
+  cy.fixture(intentType === "payment" ? "paymentPayload" : "payout").then(
+    paymentPayload => {
+      cy.request({
+        method: "POST",
+        url: `${Cypress.env("BACKEND_URL")}/${
+          intentType === "payment" ? "payments" : "payout"
+        }/intent/`,
+        headers: {
+          "x-api-key": Cypress.env("SANDBOX_API_KEY"),
+        },
+        body: { ...paymentPayload, ...overRidePayload },
+      }).then(resp => resp.body.data.id);
+    },
+  );
+});
+
+Cypress.Commands.add("getMoneyHashInstance", ({ type }) => {
+  cy.window().then(window => {
+    const moneyHash = new window.MoneyHash({ type });
+    return moneyHash;
+  });
+});
