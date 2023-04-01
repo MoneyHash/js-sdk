@@ -1,20 +1,20 @@
 /// <reference types="cypress" />
 
 Cypress.Commands.add("createIntent", (intentType, overRidePayload) => {
-  cy.fixture(intentType === "payment" ? "paymentPayload" : "payout").then(
-    payload => {
-      cy.request({
-        method: "POST",
-        url: `${Cypress.env("BACKEND_URL")}/${
-          intentType === "payment" ? "payments" : "payout"
-        }/intent/`,
-        headers: {
-          "x-api-key": Cypress.env("SANDBOX_API_KEY"),
-        },
-        body: { ...payload, ...overRidePayload },
-      }).then(resp => resp.body.data.id);
-    },
-  );
+  cy.fixture(
+    intentType === "payment" ? "paymentPayload" : "payoutPayload",
+  ).then(payload => {
+    cy.request({
+      method: "POST",
+      url: `${Cypress.env("BACKEND_URL")}/${
+        intentType === "payment" ? "payments" : "payout"
+      }/intent/`,
+      headers: {
+        "x-api-key": Cypress.env("SANDBOX_API_KEY"),
+      },
+      body: { ...payload, ...overRidePayload },
+    }).then(resp => resp.body.data.id);
+  });
 });
 
 Cypress.Commands.add("getMoneyHashInstance", ({ type }) => {
