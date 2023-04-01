@@ -82,7 +82,7 @@ describe("headlessMoneyHash", () => {
         cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
           const { paymentMethods } = await moneyHash.getIntentMethods(intentId);
           const randomMethod =
-            paymentMethods[Cypress._.random(0, paymentMethods.length)];
+            paymentMethods[Cypress._.random(0, paymentMethods.length - 1)];
 
           const response = await moneyHash.proceedWith({
             intentId,
@@ -95,15 +95,17 @@ describe("headlessMoneyHash", () => {
       });
     });
 
-    it.only("Saved cards", () => {
+    it("Saved cards", () => {
       // tokenize card before paying with
       cy.createCardToken();
 
       cy.visit("/");
+
       cy.createIntent("payment").then(intentId => {
         cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
           const { savedCards } = await moneyHash.getIntentMethods(intentId);
-          const randomCard = savedCards[Cypress._.random(0, savedCards.length)];
+          const randomCard =
+            savedCards[Cypress._.random(0, savedCards.length - 1)];
 
           const response = await moneyHash.proceedWith({
             intentId,
@@ -137,4 +139,78 @@ describe("headlessMoneyHash", () => {
       });
     });
   });
+
+  it("moneyHash.resetSelectedMethod should reset the pre selected method", () => {
+    cy.createIntent("payment").then(intentId => {
+      cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+        const { intent } = await moneyHash.getIntentDetails(intentId);
+        expect(intent.method).to.eq(null);
+
+        const method = "MOBILE_WALLET";
+        const proceedWithResponse = await moneyHash.proceedWith({
+          intentId,
+          type: "method",
+          id: method,
+        });
+
+        expect(proceedWithResponse.intent.method).to.eq(method);
+
+        const response = await moneyHash.resetSelectedMethod(intentId);
+
+        expect(response.intent.method).to.eq(null);
+      });
+    });
+  });
+
+  it("moneyHash.deleteCard should delete user tokenized card", () => {
+    cy.createCardToken();
+
+    cy.visit("/");
+
+    cy.createIntent("payment").then(intentId => {
+      cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+        const [{ intent }, { savedCards }] = await Promise.all([
+          moneyHash.getIntentDetails(intentId),
+          moneyHash.getIntentMethods(intentId),
+        ]);
+
+        const cardToDelete = savedCards[0];
+
+        const response = await moneyHash.deleteCard({
+          cardId: cardToDelete.id,
+          intentSecret: intent.secret,
+        });
+
+        // console.log({ response });
+        expect(response.message).to.eq("success");
+      });
+    });
+  });
+
+  context(
+    "moneyHash.renderForm should render the embed experience inside a container",
+    () => {
+      it("renders correctly if container element found", () => {
+        cy.createIntent("payment").then(intentId => {
+          cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+            moneyHash.renderForm({ selector: "#app", intentId });
+          });
+
+          cy.get("#app > iframe").should("be.visible");
+        });
+      });
+
+      it("not found container should throw an error", () => {
+        cy.createIntent("payment").then(intentId => {
+          cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+            expect(() =>
+              moneyHash.renderForm({ selector: "#not-a-container", intentId }),
+            ).to.throw(
+              "Couldn't find an element with selector #not-a-container!",
+            );
+          });
+        });
+      });
+    },
+  );
 });
