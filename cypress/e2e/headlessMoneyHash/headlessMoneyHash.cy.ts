@@ -40,7 +40,7 @@ describe("headlessMoneyHash", () => {
 
     it("moneyHash.getIntentMethods should response with appropriate methods, saved cards and wallet details", () => {
       cy.createIntent("payment").then(intentId => {
-        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
+        cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
           cy.wrap(moneyHash.getIntentMethods(intentId)).as("getIntentMethods");
 
           cy.get("@getIntentMethods").then(response => {
@@ -190,22 +190,32 @@ describe("headlessMoneyHash", () => {
 
     it("moneyHash.resetSelectedMethod should reset the pre selected method", () => {
       cy.createIntent("payment").then(intentId => {
-        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
-          const { intent } = await moneyHash.getIntentDetails(intentId);
-          expect(intent.method).to.eq(null);
+        cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+          cy.wrap(moneyHash.getIntentDetails(intentId)).as("getIntentDetails");
 
-          const method = "MOBILE_WALLET";
-          const proceedWithResponse = await moneyHash.proceedWith({
-            intentId,
-            type: "method",
-            id: method,
-          });
+          cy.get("@getIntentDetails")
+            .its("intent.method")
+            .should("eq", null)
+            .then(() => {
+              const method = "MOBILE_WALLET";
 
-          expect(proceedWithResponse.intent.method).to.eq(method);
+              cy.wrap(
+                moneyHash.proceedWith({
+                  intentId,
+                  type: "method",
+                  id: method,
+                }),
+              )
+                .its("intent.method")
+                .should("eq", method)
+                .as("proceedWith");
 
-          const response = await moneyHash.resetSelectedMethod(intentId);
-
-          expect(response.intent.method).to.eq(null);
+              cy.get("@proceedWith").then(() => {
+                cy.wrap(moneyHash.resetSelectedMethod(intentId))
+                  .its("intent.method")
+                  .should("eq", null);
+              });
+            });
         });
       });
     });
@@ -216,21 +226,30 @@ describe("headlessMoneyHash", () => {
       cy.visit("/");
 
       cy.createIntent("payment").then(intentId => {
-        cy.getMoneyHashInstance({ type: "payment" }).then(async moneyHash => {
-          const [{ intent }, { savedCards }] = await Promise.all([
-            moneyHash.getIntentDetails(intentId),
-            moneyHash.getIntentMethods(intentId),
-          ]);
+        cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+          cy.wrap(
+            Promise.all([
+              moneyHash.getIntentDetails(intentId),
+              moneyHash.getIntentMethods(intentId),
+            ]),
+          ).as("intent&methodsDetails");
 
-          const cardToDelete = savedCards[0];
+          cy.get("@intent&methodsDetails").then(response => {
+            const [{ intent }, { savedCards }] = response as unknown as [
+              Awaited<ReturnType<typeof moneyHash.getIntentDetails>>,
+              Awaited<ReturnType<typeof moneyHash.getIntentMethods>>,
+            ];
+            const cardToDelete = savedCards[0];
 
-          const response = await moneyHash.deleteCard({
-            cardId: cardToDelete.id,
-            intentSecret: intent.secret,
+            cy.wrap(
+              moneyHash.deleteCard({
+                cardId: cardToDelete.id,
+                intentSecret: intent.secret,
+              }),
+            )
+              .its("message")
+              .should("eq", "success");
           });
-
-          // console.log({ response });
-          expect(response.message).to.eq("success");
         });
       });
     });
@@ -240,11 +259,9 @@ describe("headlessMoneyHash", () => {
       () => {
         it("renders correctly if container element found", () => {
           cy.createIntent("payment").then(intentId => {
-            cy.getMoneyHashInstance({ type: "payment" }).then(
-              async moneyHash => {
-                moneyHash.renderForm({ selector: "#app", intentId });
-              },
-            );
+            cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+              moneyHash.renderForm({ selector: "#app", intentId });
+            });
 
             cy.get("#app > iframe").should("be.visible");
           });
@@ -252,18 +269,16 @@ describe("headlessMoneyHash", () => {
 
         it("not found container should throw an error", () => {
           cy.createIntent("payment").then(intentId => {
-            cy.getMoneyHashInstance({ type: "payment" }).then(
-              async moneyHash => {
-                expect(() =>
-                  moneyHash.renderForm({
-                    selector: "#not-a-container",
-                    intentId,
-                  }),
-                ).to.throw(
-                  "Couldn't find an element with selector #not-a-container!",
-                );
-              },
-            );
+            cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+              expect(() =>
+                moneyHash.renderForm({
+                  selector: "#not-a-container",
+                  intentId,
+                }),
+              ).to.throw(
+                "Couldn't find an element with selector #not-a-container!",
+              );
+            });
           });
         });
       },
@@ -273,53 +288,62 @@ describe("headlessMoneyHash", () => {
   context("Payout Intent", () => {
     it("moneyHash.getIntentDetails should response with appropriate intent & transaction details", () => {
       cy.createIntent("payout").then(intentId => {
-        cy.getMoneyHashInstance({ type: "payout" }).then(async moneyHash => {
-          const { intent, transaction } = await moneyHash.getIntentDetails(
-            intentId,
-          );
+        cy.getMoneyHashInstance({ type: "payout" }).then(moneyHash => {
+          cy.wrap(moneyHash.getIntentDetails(intentId)).as("getIntentDetails");
+          cy.get("@getIntentDetails").then(response => {
+            const { intent, transaction } = response as unknown as Awaited<
+              ReturnType<typeof moneyHash.getIntentDetails>
+            >;
 
-          expect(transaction).eq(null, "transaction");
-          expect(intent)
-            .to.be.an("object")
-            .to.have.all.keys(
-              "id",
-              "status",
-              "amount",
-              "method",
-              "expirationDate",
-              "secret",
-              "maxPayoutAmount",
-            );
-          expect(intent)
-            .to.have.nested.property("amount.value")
-            .to.be.a("number");
-          expect(intent)
-            .to.have.nested.property("amount.currency")
-            .to.be.a("string");
+            expect(transaction).eq(null, "transaction");
+            expect(intent)
+              .to.be.an("object")
+              .to.have.all.keys(
+                "id",
+                "status",
+                "amount",
+                "method",
+                "expirationDate",
+                "secret",
+                "maxPayoutAmount",
+              );
+            expect(intent)
+              .to.have.nested.property("amount.value")
+              .to.be.a("number");
+            expect(intent)
+              .to.have.nested.property("amount.currency")
+              .to.be.a("string");
+          });
         });
       });
     });
 
     it("moneyHash.getIntentMethods should response with appropriate payout methods", () => {
       cy.createIntent("payout").then(intentId => {
-        cy.getMoneyHashInstance({ type: "payout" }).then(async moneyHash => {
-          const { payoutMethods } = await moneyHash.getIntentMethods(intentId);
+        cy.getMoneyHashInstance({ type: "payout" }).then(moneyHash => {
+          cy.wrap(moneyHash.getIntentMethods(intentId)).as("getIntentMethods");
 
-          expect(payoutMethods).to.be.an("array");
+          cy.get("@getIntentMethods").then(response => {
+            const { payoutMethods } = response as unknown as Awaited<
+              ReturnType<typeof moneyHash.getIntentMethods>
+            >;
 
-          payoutMethods.forEach(method => {
-            expect(method.id).to.be.a("string");
-            expect(method.title).to.be.a("string");
-            expect(method.confirmationRequired).to.be.a("boolean");
-            expect(method.isSelected).to.be.a("boolean");
-            expect(method.icons).to.be.an("array");
+            expect(payoutMethods).to.be.an("array");
+
+            payoutMethods.forEach(method => {
+              expect(method.id).to.be.a("string");
+              expect(method.title).to.be.a("string");
+              expect(method.confirmationRequired).to.be.a("boolean");
+              expect(method.isSelected).to.be.a("boolean");
+              expect(method.icons).to.be.an("array");
+            });
           });
         });
       });
     });
 
     it("moneyHash.deleteCard should throw an error", () => {
-      cy.getMoneyHashInstance({ type: "payout" }).then(async moneyHash => {
+      cy.getMoneyHashInstance({ type: "payout" }).then(moneyHash => {
         expect(() =>
           moneyHash.deleteCard({ cardId: "blabla", intentSecret: "blabla" }),
         ).to.throw("deleteCard is allowed only for payment intent!");
@@ -327,7 +351,7 @@ describe("headlessMoneyHash", () => {
     });
 
     it("moneyHash.deleteCard should throw an error", () => {
-      cy.getMoneyHashInstance({ type: "payout" }).then(async moneyHash => {
+      cy.getMoneyHashInstance({ type: "payout" }).then(moneyHash => {
         expect(() =>
           moneyHash.deleteCard({ cardId: "blabla", intentSecret: "blabla" }),
         ).to.throw("deleteCard is allowed only for payment intent!");
