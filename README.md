@@ -44,9 +44,11 @@ const moneyHash = new MoneyHash({ type: "payment" | "payout" });
 - Get intent details
 
 ```js
-moneyHash.getIntentDetails("<intent_id>").then(({ intent, transaction }) => {
-  console.log({ intent, transaction });
-});
+moneyHash
+  .getIntentDetails("<intent_id>")
+  .then(({ intent, transaction, selectedMethod, redirect }) => {
+    console.log({ intent, transaction, selectedMethod, redirect });
+  });
 ```
 
 - Get intent methods
@@ -73,20 +75,24 @@ moneyHash
     type: "method" | "savedCard" | "customerBalance",
     id: "<method_id>" | "<card_id>" | "<customer_balance_id>",
   })
-  .then(({ intent, transaction }) => {
-    console.log({ intent, transaction });
+  .then(({ intent, transaction, selectedMethod, redirect, methods }) => {
+    console.log({ intent, transaction, selectedMethod, redirect, methods });
   });
 ```
 
 - Reset intent selected method
 
 ```js
-moneyHash.resetSelectedMethod("<intent_id>").then(({ intent, transaction }) => {
-  console.log({
-    intent,
-    transaction,
+moneyHash
+  .resetSelectedMethod("<intent_id>")
+  .then(({ intent, transaction, selectedMethod, methods }) => {
+    console.log({
+      intent,
+      transaction,
+      selectedMethod,
+      methods,
+    });
   });
-});
 ```
 
 - Delete card
@@ -117,8 +123,13 @@ moneyHash.renderForm({
 
 ```js
 const moneyHash = new MoneyHash({
-  onComplete: ({ intent, transaction }) => {
-    console.log("onComplete", { intent, transaction });
+  onComplete: ({ intent, transaction, selectedMethod, redirect }) => {
+    console.log("onComplete", {
+      intent,
+      transaction,
+      selectedMethod,
+      redirect,
+    });
   },
 });
 ```
@@ -127,8 +138,8 @@ const moneyHash = new MoneyHash({
 
 ```js
 const moneyHash = new MoneyHash({
-  onFail: ({ intent, transaction }) => {
-    console.log("onFail", { intent, transaction });
+  onFail: ({ intent, transaction, selectedMethod, redirect }) => {
+    console.log("onFail", { intent, transaction, selectedMethod, redirect });
   },
 });
 ```
@@ -254,6 +265,7 @@ export interface AbstractIntent {
   };
   method: PaymentMethodSlugs;
   secret: string;
+  isLive: boolean;
 }
 
 export interface PaymentIntent extends AbstractIntent {
@@ -264,11 +276,54 @@ export interface PayoutIntent extends AbstractIntent {
   maxPayoutAmount: number | null;
 }
 
-export type Transaction = {
+export interface Transaction {
   id: string;
   status: TransactionStatus;
   created: string;
-};
+  customFields: Record<string, string | number | boolean> | null;
+  providerTransactionFields: Record<string, unknown>;
+  externalActionMessage: string[];
+}
+
+export interface PaymentTransaction extends Transaction {
+  amount: {
+    value: number;
+    currency: string;
+  };
+  billing_data: {
+    apartment: string | null;
+    building: string | null;
+    city: string | null;
+    country: string | null;
+    email: string | null;
+    first_name: string | null;
+    floor: string | null;
+    last_name: string | null;
+    name: string | null;
+    phone_number: string | null;
+    postal_code: string | null;
+    state: string | null;
+    street: string | null;
+  };
+  paymentMethodName: string;
+  paymentMethod: PaymentMethodSlugs;
+  customFormAnswers: {
+    formFields: Record<string, string | number | boolean>;
+  } | null;
+}
+
+export interface PayoutTransaction extends Transaction {
+  amount: {
+    value: string;
+    currency: string;
+  };
+  payoutMethodName: string;
+  payoutMethod: PaymentMethodSlugs;
+}
+
+export interface Redirect {
+  redirectUrl: string;
+}
 
 export interface Method {
   id: PaymentMethodSlugs;

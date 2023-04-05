@@ -2,17 +2,23 @@ import type {
   IntentType,
   PaymentIntent,
   PayoutIntent,
-  Transaction,
+  PaymentTransaction,
+  PayoutTransaction,
+  Redirect,
+  PaymentMethodSlugs,
 } from "./intent";
 
 export type PaymentIntentEventOptions = {
   intent: PaymentIntent;
-  transaction: Transaction;
+  transaction: PaymentTransaction;
+  redirect: Redirect | null;
+  selectedMethod: PaymentMethodSlugs | null;
 };
 
 export type PayoutIntentEventOptions = {
   intent: PayoutIntent;
-  transaction: Transaction;
+  transaction: PayoutTransaction;
+  selectedMethod: PaymentMethodSlugs | null;
 };
 
 export type OnCompleteEventOptions<TType extends IntentType> =

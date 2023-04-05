@@ -69,6 +69,7 @@ export interface AbstractIntent {
   };
   method: PaymentMethodSlugs;
   secret: string;
+  isLive: boolean;
 }
 
 export interface PaymentIntent extends AbstractIntent {
@@ -79,8 +80,51 @@ export interface PayoutIntent extends AbstractIntent {
   maxPayoutAmount: number | null;
 }
 
-export type Transaction = {
+export interface Transaction {
   id: string;
   status: TransactionStatus;
   created: string;
-};
+  customFields: Record<string, string | number | boolean> | null;
+  providerTransactionFields: Record<string, unknown>;
+  externalActionMessage: string[];
+}
+
+export interface PaymentTransaction extends Transaction {
+  amount: {
+    value: number;
+    currency: string;
+  };
+  billing_data: {
+    apartment: string | null;
+    building: string | null;
+    city: string | null;
+    country: string | null;
+    email: string | null;
+    first_name: string | null;
+    floor: string | null;
+    last_name: string | null;
+    name: string | null;
+    phone_number: string | null;
+    postal_code: string | null;
+    state: string | null;
+    street: string | null;
+  };
+  paymentMethodName: string;
+  paymentMethod: PaymentMethodSlugs;
+  customFormAnswers: {
+    formFields: Record<string, string | number | boolean>;
+  } | null;
+}
+
+export interface PayoutTransaction extends Transaction {
+  amount: {
+    value: string;
+    currency: string;
+  };
+  payoutMethodName: string;
+  payoutMethod: PaymentMethodSlugs;
+}
+
+export interface Redirect {
+  redirectUrl: string;
+}
