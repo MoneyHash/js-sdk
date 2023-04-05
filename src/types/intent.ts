@@ -64,8 +64,9 @@ export interface AbstractIntent {
   id: string;
   status: IntentStatus;
   amount: {
-    value: number;
+    value: string;
     currency: string;
+    formatted: number;
   };
   secret: string;
   isLive: boolean;
@@ -82,7 +83,7 @@ export interface PayoutIntent extends AbstractIntent {
 export interface Transaction {
   id: string;
   status: TransactionStatus;
-  created: string;
+  createdDate: string;
   billingData: {
     apartment: string | null;
     building: string | null;
@@ -98,7 +99,7 @@ export interface Transaction {
     state: string | null;
     street: string | null;
   };
-  customFields: Record<string, string | number | boolean> | null;
+  customFields: Record<string, unknown> | null;
   providerTransactionFields: Record<string, unknown>;
   externalActionMessage: string[];
 }
