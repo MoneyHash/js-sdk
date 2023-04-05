@@ -279,17 +279,7 @@ export interface Transaction {
   id: string;
   status: TransactionStatus;
   created: string;
-  customFields: Record<string, string | number | boolean> | null;
-  providerTransactionFields: Record<string, unknown>;
-  externalActionMessage: string[];
-}
-
-export interface PaymentTransaction extends Transaction {
-  amount: {
-    value: number;
-    currency: string;
-  };
-  billing_data: {
+  billingData: {
     apartment: string | null;
     building: string | null;
     city: string | null;
@@ -303,6 +293,16 @@ export interface PaymentTransaction extends Transaction {
     postal_code: string | null;
     state: string | null;
     street: string | null;
+  };
+  customFields: Record<string, string | number | boolean> | null;
+  providerTransactionFields: Record<string, unknown>;
+  externalActionMessage: string[];
+}
+
+export interface PaymentTransaction extends Transaction {
+  amount: {
+    value: number;
+    currency: string;
   };
   paymentMethodName: string;
   paymentMethod: PaymentMethodSlugs;
