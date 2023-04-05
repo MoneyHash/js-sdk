@@ -263,7 +263,6 @@ export interface AbstractIntent {
     value: number;
     currency: string;
   };
-  method: PaymentMethodSlugs;
   secret: string;
   isLive: boolean;
 }
