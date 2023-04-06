@@ -2,8 +2,10 @@ import {
   IntentType,
   PaymentIntent,
   PaymentMethodSlugs,
+  PaymentTransaction,
   PayoutIntent,
-  Transaction,
+  PayoutTransaction,
+  Redirect,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -14,9 +16,15 @@ export type ErrorResponse = {
 export type IntentDetails<TType extends IntentType> = TType extends "payment"
   ? {
       intent: PaymentIntent;
-      transaction: Transaction;
+      transaction: PaymentTransaction;
+      redirect: Redirect | null;
+      selectedMethod: PaymentMethodSlugs | null;
     }
-  : { intent: PayoutIntent; transaction: Transaction };
+  : {
+      intent: PayoutIntent;
+      transaction: PayoutTransaction;
+      selectedMethod: PaymentMethodSlugs | null;
+    };
 
 export interface Method {
   id: PaymentMethodSlugs;
