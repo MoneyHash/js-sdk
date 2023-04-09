@@ -19,14 +19,14 @@ export default class MoneyHash<TType extends IntentType> {
     throwIf(!selector, "selector is required for start");
     throwIf(!intentId, "intentId is required for start");
 
-    this.sdkEmbed.render({ selector, intentId });
+    return this.sdkEmbed.render({ selector, intentId });
   }
 
   setLocale(locale: string) {
-    this.sdkEmbed.setLocale(locale);
+    return this.sdkEmbed.setLocale(locale);
   }
 
   removeEventListeners() {
-    this.sdkEmbed.abortService();
+    return this.sdkEmbed.abortService();
   }
 }

@@ -28,7 +28,13 @@ export default class SDKApiHandler {
     });
 
     SDKApiHandler.isCommunicationReady = new Promise(res => {
-      iframe.onload = () => res();
+      const handleReceive = (event: MessageEvent<MessagePayload>) => {
+        if (event.data.type !== "headlessSDK:init") return;
+        res();
+        SDKApiHandler.messagingService?.removeListener(handleReceive);
+      };
+
+      SDKApiHandler.messagingService?.onReceive(handleReceive);
     });
   }
 

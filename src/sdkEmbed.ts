@@ -29,6 +29,8 @@ export default class SDKEmbed<TType extends IntentType> {
 
   iframe: HTMLIFrameElement | null = null;
 
+  isCommunicationReady: Promise<void> | null = null;
+
   constructor(options: SDKEmbedOptions<TType> & { headless?: boolean }) {
     throwIf(
       !supportedTypes.has(options.type),
@@ -79,9 +81,30 @@ export default class SDKEmbed<TType extends IntentType> {
       targetOrigin: import.meta.env.VITE_IFRAME_URL,
     });
 
-    this.messagingService.onReceive(event => {
+    this.isCommunicationReady = new Promise(res => {
+      const handleReceive = (event: MessageEvent<MessagePayload>) => {
+        if (event.data.type !== "sdk:init") return;
+        res();
+        this.messagingService?.removeListener(handleReceive);
+      };
+
+      this.messagingService?.onReceive(handleReceive);
+    });
+
+    this.messagingService.onReceive((event, reply) => {
       const { type, data } = event.data;
       switch (type) {
+        case "sdk:init": {
+          reply({
+            type: "sdk:init",
+            data: {
+              headless: Boolean(this.options.headless),
+              styles: this.options.styles,
+            },
+          });
+          break;
+        }
+
         case "onComplete": {
           this.options.onComplete?.({
             type: this.options.type,
@@ -111,24 +134,11 @@ export default class SDKEmbed<TType extends IntentType> {
       }
     });
 
-    this.iframe.onload = () => {
-      if (this.options.headless) {
-        this.messagingService?.send({
-          type: "headlessMode",
-        });
-      }
-
-      // send customized styles at initial load
-      if (this.options.styles) {
-        this.messagingService?.send({
-          type: "styles",
-          data: { styles: this.options.styles },
-        });
-      }
-    };
+    return this.isCommunicationReady;
   }
 
-  setLocale(locale: string) {
+  async setLocale(locale: string) {
+    await this?.isCommunicationReady;
     this.options.locale = locale;
     this.messagingService?.send({
       type: "changeLanguage",
@@ -136,7 +146,8 @@ export default class SDKEmbed<TType extends IntentType> {
     });
   }
 
-  abortService() {
+  async abortService() {
+    await this?.isCommunicationReady;
     this.messagingService?.abortService();
   }
 }

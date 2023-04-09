@@ -114,14 +114,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     throwIf(!selector, "selector is required for renderForm");
     throwIf(!intentId, "intentId is required for renderForm");
 
-    this.sdkEmbed.render({ selector, intentId });
+    return this.sdkEmbed.render({ selector, intentId });
   }
 
   setLocale(locale: string) {
-    this.sdkEmbed.setLocale(locale);
+    return this.sdkEmbed.setLocale(locale);
   }
 
   removeEventListeners() {
-    this.sdkEmbed.abortService();
+    return this.sdkEmbed.abortService();
   }
 }
