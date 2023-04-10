@@ -3,5 +3,8 @@
   "amount_currency": "USD",
   "customer": "a0084255-9320-4df5-989b-a9d7015635cf",
   "operation": "purchase",
+  "successful_redirect_url": "https://stg-dashboard.moneyhash.io/sandbox/sandbox_redirect_page_example/",
+  "failed_redirect_url": "https://stg-dashboard.moneyhash.io/sandbox/sandbox_redirect_page_example/",
+  "pending_external_action_redirect_url": "https://stg-dashboard.moneyhash.io/sandbox/sandbox_redirect_page_example/",
   "webhook_url": "https://webhook.site/b8954509-f628-4805-a4b4-58a0fb2be958"
 }

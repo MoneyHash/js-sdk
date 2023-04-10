@@ -57,7 +57,7 @@ Cypress.Commands.add("createCardToken", () => {
 
         // wait for embed vault to load
         // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(3000);
+        cy.wait(4000);
         cy.get("button")
           .contains(/add card/i)
           .click();
