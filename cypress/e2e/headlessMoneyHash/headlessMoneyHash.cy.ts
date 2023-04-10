@@ -47,7 +47,7 @@ describe("headlessMoneyHash", () => {
       });
 
       describe("with intent that has completed", () => {
-        it.only("response with transaction and redirect as expected", () => {
+        it("response with transaction and redirect as expected", () => {
           // Add amount to wallet to before paying with
           cy.addAmountWallet(50);
 
