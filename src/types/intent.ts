@@ -8,22 +8,6 @@ export type IntentStatus =
   | "PENDING"
   | "EXPIRED";
 
-export type TransactionStatus =
-  | "PENDING"
-  | "PENDING_APPROVAL"
-  | "SUCCESSFUL"
-  | "FAILED"
-  | "FULLY_REFUNDED"
-  | "PARTIALLY_REFUNDED"
-  | "VOIDED"
-  | "PENDING_AUTHENTICATION"
-  | "PENDING_EXTERNAL_ACTION"
-  | "PENDING_ONLINE_EXTERNAL_ACTION"
-  | "SENDING"
-  | "SENT"
-  | "BOUNCED"
-  | "NOT_DELIVERED";
-
 export type PaymentMethodSlugs =
   | "CASH_OUTLET"
   | "MOBILE_WALLET"
@@ -60,6 +44,72 @@ export type PaymentMethodSlugs =
   | "BANK_ACCOUNT"
   | "CASH";
 
+export type IntentState =
+  | "METHOD_SELECTION"
+  | "INTENT_FORM"
+  | "INTENT_PROCESSED"
+  | "TRANSACTION_WAITING_USER_ACTION"
+  | "TRANSACTION_FAILED"
+  | "EXPIRED"
+  | "CLOSED";
+
+export type PurchaseOperationStatus =
+  | "pending"
+  | "pending_authentication"
+  | "pending_external_action"
+  | "pending_online_external_action"
+  | "pending_authorization"
+  | "failed"
+  | "successful";
+
+export type AuthorizeOperationStatus =
+  | "pending"
+  | "pending_authentication"
+  | "failed"
+  | "successful";
+
+export type CaptureOperationStatus =
+  | "pending"
+  | "pending_authentication"
+  | "failed"
+  | "successful";
+
+export type VoidOperationStatus = "pending" | "failed" | "successful";
+export type RefundOperationStatus = "pending" | "failed" | "successful";
+
+type TransactionOperationStatusMap = {
+  purchase: PurchaseOperationStatus;
+  authorize: AuthorizeOperationStatus;
+  capture: CaptureOperationStatus;
+  refund: RefundOperationStatus;
+  void: VoidOperationStatus;
+  increase_authorization: AuthorizeOperationStatus;
+};
+
+type TransactionStatus = {
+  [k in keyof TransactionOperationStatusMap]: `${k}.${TransactionOperationStatusMap[k]}`;
+}[keyof TransactionOperationStatusMap];
+
+type TransactionOperation = {
+  [k in keyof TransactionOperationStatusMap]: {
+    id: string;
+    type: k;
+    status: `${TransactionOperationStatusMap[k]}`;
+    amount: {
+      value: number;
+      currency: string;
+    };
+    statuses: {
+      id: string;
+      value: `${TransactionOperationStatusMap[k]}`;
+      code: string;
+      message: string;
+      created: string;
+    }[];
+    refund_type?: "full" | "partial" | null;
+  };
+}[keyof TransactionOperationStatusMap];
+
 export interface AbstractIntent {
   id: string;
   status: IntentStatus;
@@ -67,6 +117,7 @@ export interface AbstractIntent {
     value: string;
     currency: string;
     formatted: number;
+    maxPayoutAmount?: number | null;
   };
   secret: string;
   isLive: boolean;
@@ -76,13 +127,12 @@ export interface PaymentIntent extends AbstractIntent {
   expirationDate: string | null;
 }
 
-export interface PayoutIntent extends AbstractIntent {
-  maxPayoutAmount: number | null;
-}
+export interface PayoutIntent extends AbstractIntent {}
 
 export interface Transaction {
   id: string;
   status: TransactionStatus;
+  operations: TransactionOperation[];
   createdDate: string;
   billingData: {
     apartment: string | null;

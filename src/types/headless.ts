@@ -6,6 +6,7 @@ import {
   PayoutIntent,
   PayoutTransaction,
   Redirect,
+  IntentState,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -19,11 +20,13 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       transaction: PaymentTransaction;
       redirect: Redirect | null;
       selectedMethod: PaymentMethodSlugs | null;
+      state: IntentState;
     }
   : {
       intent: PayoutIntent;
       transaction: PayoutTransaction;
       selectedMethod: PaymentMethodSlugs | null;
+      state: IntentState;
     };
 
 export interface Method {

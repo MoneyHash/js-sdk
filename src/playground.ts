@@ -9,7 +9,7 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "ZARw7w9";
+const paymentIntentId = "gax6WGL";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -73,4 +73,6 @@ document.getElementById("start")?.addEventListener("click", async () => {
   //   type: "method", // method | savedCard | customerBalance
   //   id: "MOBILE_WALLET",
   // });
+
+  // console.log(response);
 });
