@@ -14,7 +14,7 @@ describe("headlessMoneyHash", () => {
               "getIntentDetails",
             );
             cy.get("@getIntentDetails").then(response => {
-              const { intent, transaction, redirect, selectedMethod } =
+              const { intent, transaction, redirect, selectedMethod, state } =
                 response as unknown as Awaited<
                   ReturnType<typeof moneyHash.getIntentDetails>
                 >;
@@ -22,6 +22,7 @@ describe("headlessMoneyHash", () => {
               expect(transaction).eq(null, "transaction");
               expect(redirect).eq(null, "redirect");
               expect(selectedMethod).eq(null, "selectedMethod");
+              expect(state).to.be.a("string", "state");
               expect(intent)
                 .to.be.an("object")
                 .to.have.all.keys(
@@ -47,7 +48,7 @@ describe("headlessMoneyHash", () => {
       });
 
       describe("with intent that has completed", () => {
-        it("response with transaction and redirect as expected", () => {
+        it.only("response with transaction and redirect as expected", () => {
           // Add amount to wallet to before paying with
           cy.addAmountWallet(50);
 
@@ -74,6 +75,7 @@ describe("headlessMoneyHash", () => {
                   .to.have.all.keys(
                     "id",
                     "status",
+                    "operations",
                     "amount",
                     "billingData",
                     "createdDate",
@@ -84,9 +86,16 @@ describe("headlessMoneyHash", () => {
                     "paymentMethodName",
                     "providerTransactionFields",
                   );
-                // expect(intent)
-                //   .to.have.nested.property("amount.value")
-                //   .to.be.a("string");
+                expect(transaction)
+                  .to.have.nested.property("amount.value")
+                  .to.be.a("number");
+                expect(transaction)
+                  .to.have.nested.property("amount.currency")
+                  .to.be.a("string");
+
+                expect(transaction)
+                  .to.have.nested.property("operations")
+                  .to.be.a("array");
               });
             });
           });
@@ -187,6 +196,8 @@ describe("headlessMoneyHash", () => {
                     ...randomMethod,
                     isSelected: true,
                   });
+
+                cy.get("@proceedWith").its("state").should("eq", "INTENT_FORM");
               });
             });
           });
@@ -218,9 +229,15 @@ describe("headlessMoneyHash", () => {
                     type: "savedCard",
                     id: randomCard.id,
                   }),
-                )
+                ).as("proceedWith");
+
+                cy.get("@proceedWith")
                   .its("selectedMethod")
                   .should("eq", "CARD");
+
+                cy.get("@proceedWith")
+                  .its("state")
+                  .should("eq", "INTENT_PROCESSED");
               });
             });
           });
@@ -266,6 +283,10 @@ describe("headlessMoneyHash", () => {
                   )
                   .its("isSelected")
                   .should("eq", true);
+
+                cy.get("@proceedWith")
+                  .its("state")
+                  .should("eq", "INTENT_PROCESSED");
               });
             });
           });
@@ -299,9 +320,17 @@ describe("headlessMoneyHash", () => {
                   .as("proceedWith");
 
                 cy.get("@proceedWith").then(() => {
-                  cy.wrap(moneyHash.resetSelectedMethod(intentId))
+                  cy.wrap(moneyHash.resetSelectedMethod(intentId)).as(
+                    "resetSelectedMethod",
+                  );
+
+                  cy.get("@resetSelectedMethod")
                     .its("selectedMethod")
                     .should("eq", null);
+
+                  cy.get("@resetSelectedMethod")
+                    .its("state")
+                    .should("eq", "METHOD_SELECTION");
                 });
               });
           });
@@ -395,14 +424,7 @@ describe("headlessMoneyHash", () => {
               expect(selectedMethod).eq(null, "selectedMethod");
               expect(intent)
                 .to.be.an("object")
-                .to.have.all.keys(
-                  "id",
-                  "status",
-                  "amount",
-                  "maxPayoutAmount",
-                  "secret",
-                  "isLive",
-                );
+                .to.have.all.keys("id", "status", "amount", "secret", "isLive");
               expect(intent)
                 .to.have.nested.property("amount.value")
                 .to.be.a("string");
@@ -412,6 +434,12 @@ describe("headlessMoneyHash", () => {
               expect(intent)
                 .to.have.nested.property("amount.formatted")
                 .to.be.a("number");
+              expect(intent)
+                .to.have.nested.property("amount.maxPayoutAmount")
+                .to.satisfies(
+                  value => value === null || typeof value === "number",
+                  "expected amount.maxPayoutAmount to be number or null",
+                );
             });
           });
         });
