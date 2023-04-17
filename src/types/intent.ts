@@ -117,7 +117,7 @@ export interface AbstractIntent {
     value: string;
     currency: string;
     formatted: number;
-    maxPayoutAmount?: number | null;
+    maxPayout?: number | null;
   };
   secret: string;
   isLive: boolean;

@@ -48,7 +48,7 @@ describe("headlessMoneyHash", () => {
       });
 
       describe("with intent that has completed", () => {
-        it.only("response with transaction and redirect as expected", () => {
+        it("response with transaction and redirect as expected", () => {
           // Add amount to wallet to before paying with
           cy.addAmountWallet(50);
 
@@ -435,10 +435,10 @@ describe("headlessMoneyHash", () => {
                 .to.have.nested.property("amount.formatted")
                 .to.be.a("number");
               expect(intent)
-                .to.have.nested.property("amount.maxPayoutAmount")
+                .to.have.nested.property("amount.maxPayout")
                 .to.satisfies(
                   value => value === null || typeof value === "number",
-                  "expected amount.maxPayoutAmount to be number or null",
+                  "expected amount.maxPayout to be number or null",
                 );
             });
           });
