@@ -9,5 +9,8 @@ export default defineConfig({
       EMBED_URL: "https://stg-embed.moneyhash.io",
     },
     defaultCommandTimeout: 10000,
+    retries: {
+      runMode: 1,
+    },
   },
 });
