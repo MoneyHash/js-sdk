@@ -16,9 +16,15 @@ export default class SDKApiHandler {
   private initSDKCommunicationIframe() {
     if (document.getElementById("moneyhash-headless-sdk")) return;
 
+    const url = new URL(
+      `${import.meta.env.VITE_IFRAME_URL}/embed/headless-sdk`,
+    );
+    url.searchParams.set("sdk", "true");
+    url.searchParams.set("parent", window.location.origin);
+
     const iframe = document.createElement("iframe");
     iframe.id = "moneyhash-headless-sdk";
-    iframe.src = `${import.meta.env.VITE_IFRAME_URL}/embed/headless-sdk`;
+    iframe.src = url.toString();
     iframe.hidden = true;
     document.body.appendChild(iframe);
 
