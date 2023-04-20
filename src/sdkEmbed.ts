@@ -56,16 +56,18 @@ export default class SDKEmbed<TType extends IntentType> {
     // cleanup previous listeners
     this.messagingService?.abortService();
 
-    this.iframe = document.createElement("iframe");
     const url = new URL(
       `${import.meta.env.VITE_IFRAME_URL}/embed/${
         this.options.type
-      }/${intentId}?sdk=true`,
+      }/${intentId}`,
     );
+    url.searchParams.set("sdk", "true");
+    url.searchParams.set("parent", window.location.origin);
 
     const lang = this.options.locale?.split("-")[0];
     if (lang) url.searchParams.set("lang", lang);
 
+    this.iframe = document.createElement("iframe");
     this.iframe.src = url.toString();
     this.iframe.style.height = "100%";
     this.iframe.style.width = "100%";
