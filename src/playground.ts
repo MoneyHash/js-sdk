@@ -9,7 +9,7 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "gax6WGL";
+const paymentIntentId = "XZOylL8";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -61,9 +61,9 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
-  // const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
-  // console.log(intentDetails);
+  // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  console.log(intentDetails);
 
   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
   // console.log(intentMethods);

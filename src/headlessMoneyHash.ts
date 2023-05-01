@@ -53,10 +53,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId,
     type,
     id,
+    metaData,
   }: {
     type: "method" | "customerBalance" | "savedCard";
     intentId: string;
     id: string;
+    metaData?: {
+      cvv: string;
+    };
   }) {
     throwIf(
       !supportedProceedWithTypes.has(type),
@@ -73,6 +77,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentId,
         id,
         lang: this.sdkEmbed.lang,
+        metaData,
       },
     });
   }
