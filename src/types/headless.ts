@@ -44,6 +44,7 @@ export interface Card {
   expiryMonth: string;
   expiryYear: string;
   country: string | null;
+  requiresCvv: boolean;
 }
 
 export type CustomerBalances = [

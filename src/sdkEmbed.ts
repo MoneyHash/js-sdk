@@ -63,6 +63,7 @@ export default class SDKEmbed<TType extends IntentType> {
     );
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
+    url.searchParams.set("version", SDK_VERSION);
 
     const lang = this.options.locale?.split("-")[0];
     if (lang) url.searchParams.set("lang", lang);

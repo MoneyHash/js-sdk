@@ -21,6 +21,7 @@ export default class SDKApiHandler {
     );
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
+    url.searchParams.set("version", SDK_VERSION);
 
     const iframe = document.createElement("iframe");
     iframe.id = "moneyhash-headless-sdk";

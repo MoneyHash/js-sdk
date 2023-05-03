@@ -19,4 +19,7 @@ export default defineConfig({
     target: "es2015",
   },
   plugins: [dts({ insertTypesEntry: true, rollupTypes: true })],
+  define: {
+    SDK_VERSION: JSON.stringify(`js@${process.env.npm_package_version}`),
+  },
 });

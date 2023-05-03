@@ -15,4 +15,7 @@ export default defineConfig({
     rollupOptions: {},
     target: "es2015",
   },
+  define: {
+    SDK_VERSION: JSON.stringify(`js@${process.env.npm_package_version}`),
+  },
 });
