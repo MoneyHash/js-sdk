@@ -25,7 +25,7 @@ const moneyHash = new MoneyHash({ type: "payment" | "payout" });
 2. Render the iframe
 
 ```js
-moneyHash.start({
+await moneyHash.start({
   selector: "<container_css_selector>",
   intentId: "<intent_id>",
 });
@@ -41,6 +41,18 @@ import MoneyHash from "@moneyhash/js-sdk/headless";
 const moneyHash = new MoneyHash({ type: "payment" | "payout" });
 ```
 
+> MoneyHash headless SDK guides to for the actions required to be done, to have seamless integration through intent details `state`
+
+| state                             | Action                                                                                                                                                                                            |
+| :-------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `METHOD_SELECTION`                | Use `moneyHash.getIntentMethod` to get different intent methods and render them natively with your own styles & use `moneyHash.proceedWith` to proceed with one of them on user selection         |
+| `INTENT_FORM`                     | Use `moneyHash.renderForm` to render the SDK embed to let MoneyHash handle the payments for you & listen for completion for failure through `onComplete` `onFail` callbacks on MoneyHash instance |
+| `INTENT_PROCESSED`                | Render your successful confirmation UI with the intent details                                                                                                                                    |
+| `TRANSACTION_FAILED`              | Render your failure UI with the intent details                                                                                                                                                    |
+| `TRANSACTION_WAITING_USER_ACTION` | Render your pending actions confirmation UI with the intent details & `externalActionMessage` if exists on `Transaction`                                                                          |
+| `EXPIRED`                         | Render your intent expired UI                                                                                                                                                                     |
+| `CLOSED`                          | Render your intent closed UI                                                                                                                                                                      |
+
 - Get intent details
 
 ```js
@@ -51,7 +63,7 @@ moneyHash
   });
 ```
 
-- Get intent methods
+- Get intent available payment/payout methods, saved cards and customer balances
 
 ```js
 moneyHash
@@ -66,7 +78,7 @@ moneyHash
   });
 ```
 
-- Proceed with a Method, Card or Wallet
+- Proceed with a payment/payout method, card or wallet
 
 ```js
 moneyHash
@@ -74,6 +86,9 @@ moneyHash
     intentId: "<intent_id>",
     type: "method" | "savedCard" | "customerBalance",
     id: "<method_id>" | "<card_id>" | "<customer_balance_id>",
+    metaData: {
+      cvv: "<cvv>", // required for customer saved cards that requires cvv
+    },
   })
   .then(({ intent, transaction, selectedMethod, redirect, methods, state }) => {
     console.log({
@@ -87,7 +102,11 @@ moneyHash
   });
 ```
 
-- Reset intent selected method
+- Reset the selected method on and intent to null
+
+> Can be used for `back` button after method selection
+> or `retry` button on failed transaction UI to try a different
+> method by the user.
 
 ```js
 moneyHash
@@ -103,7 +122,7 @@ moneyHash
   });
 ```
 
-- Delete card
+- Delete a customer saved card
 
 ```js
 moneyHash
@@ -118,8 +137,10 @@ moneyHash
 
 - Render SDK embed forms and payment integrations
 
+> Must be called if `state` of an intent is `INTENT_FORM` to let MoneyHash handle the payment. you can listen for completion or failure of an intent by providing `onComplete` `onFail` callbacks on MoneyHash instance.
+
 ```js
-moneyHash.renderForm({
+await moneyHash.renderForm({
   selector: "<container_css_selector>",
   intentId: "<intent_id>",
 });
@@ -173,7 +194,7 @@ const moneyHash = new MoneyHash({
 `we currently support 3 languages ['English', 'Arabic', 'Français']`
 
 ```js
-moneyHash.setLocale("<locale_code>");
+await moneyHash.setLocale("<locale_code>");
 ```
 
 ## Customize Input & Submit button styles
