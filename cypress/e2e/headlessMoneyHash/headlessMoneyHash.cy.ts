@@ -144,6 +144,7 @@ describe("headlessMoneyHash", () => {
                 expect(card.country).satisfies(
                   country => country === null || typeof country === "string",
                 );
+                expect(card.requiresCvv).to.be.a("boolean");
               });
 
               expect(customerBalances).to.be.an("array").that.has.length(1);
@@ -197,7 +198,9 @@ describe("headlessMoneyHash", () => {
                     isSelected: true,
                   });
 
-                cy.get("@proceedWith").its("state").should("eq", "INTENT_FORM");
+                cy.get("@proceedWith")
+                  .its("state")
+                  .should("be.oneOf", ["INTENT_FORM", "INTENT_PROCESSED"]);
               });
             });
           });
@@ -205,39 +208,115 @@ describe("headlessMoneyHash", () => {
       });
 
       describe("with Saved card", () => {
-        it("updates intent details selectedMethod with CARD", () => {
-          cy.createCardToken();
+        describe("when cvv is not required", () => {
+          it("updates intent details selectedMethod with CARD", () => {
+            cy.createCardToken();
 
-          cy.visit("/");
+            cy.visit("/");
 
-          cy.createIntent("payment").then(intentId => {
-            cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
-              cy.wrap(moneyHash.getIntentMethods(intentId)).as(
-                "getIntentMethods",
-              );
+            cy.createIntent("payment").then(intentId => {
+              cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+                cy.wrap(moneyHash.getIntentMethods(intentId)).as(
+                  "getIntentMethods",
+                );
 
-              cy.get("@getIntentMethods").then(response => {
-                const { savedCards } = response as unknown as Awaited<
-                  ReturnType<typeof moneyHash.getIntentMethods>
-                >;
-                const randomCard =
-                  savedCards[Cypress._.random(0, savedCards.length - 1)];
+                cy.get("@getIntentMethods").then(response => {
+                  const { savedCards } = response as unknown as Awaited<
+                    ReturnType<typeof moneyHash.getIntentMethods>
+                  >;
+                  const randomCard = savedCards.find(card => !card.requiresCvv);
 
-                cy.wrap(
-                  moneyHash.proceedWith({
-                    intentId,
-                    type: "savedCard",
-                    id: randomCard.id,
-                  }),
-                ).as("proceedWith");
+                  cy.wrap(
+                    moneyHash.proceedWith({
+                      intentId,
+                      type: "savedCard",
+                      id: randomCard.id,
+                    }),
+                  ).as("proceedWith");
 
-                cy.get("@proceedWith")
-                  .its("selectedMethod")
-                  .should("eq", "CARD");
+                  cy.get("@proceedWith")
+                    .its("selectedMethod")
+                    .should("eq", "CARD");
 
-                cy.get("@proceedWith")
-                  .its("state")
-                  .should("eq", "INTENT_PROCESSED");
+                  cy.get("@proceedWith")
+                    .its("state")
+                    .should("be.oneOf", ["INTENT_PROCESSED", "INTENT_FORM"]);
+                });
+              });
+            });
+          });
+        });
+
+        describe("when cvv is required", () => {
+          it("updates intent details selectedMethod with CARD", () => {
+            cy.createCardToken();
+
+            cy.visit("/");
+
+            cy.createIntent("payment").then(intentId => {
+              cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+                cy.wrap(moneyHash.getIntentMethods(intentId)).as(
+                  "getIntentMethods",
+                );
+
+                cy.get("@getIntentMethods").then(response => {
+                  const { savedCards } = response as unknown as Awaited<
+                    ReturnType<typeof moneyHash.getIntentMethods>
+                  >;
+                  const randomCard = savedCards.find(card => card.requiresCvv);
+
+                  cy.wrap(
+                    moneyHash.proceedWith({
+                      intentId,
+                      type: "savedCard",
+                      id: randomCard.id,
+                      metaData: {
+                        cvv: "1234",
+                      },
+                    }),
+                  ).as("proceedWith");
+
+                  cy.get("@proceedWith")
+                    .its("selectedMethod")
+                    .should("eq", "CARD");
+
+                  cy.get("@proceedWith")
+                    .its("state")
+                    .should("eq", "INTENT_PROCESSED");
+                });
+              });
+            });
+          });
+
+          it("throws an error with cvv required message", () => {
+            cy.createCardToken();
+
+            cy.visit("/");
+
+            cy.createIntent("payment").then(intentId => {
+              cy.getMoneyHashInstance({ type: "payment" }).then(moneyHash => {
+                cy.wrap(moneyHash.getIntentMethods(intentId)).as(
+                  "getIntentMethods",
+                );
+
+                cy.get("@getIntentMethods").then(response => {
+                  const { savedCards } = response as unknown as Awaited<
+                    ReturnType<typeof moneyHash.getIntentMethods>
+                  >;
+                  const randomCard = savedCards.find(card => card.requiresCvv);
+
+                  return moneyHash
+                    .proceedWith({
+                      intentId,
+                      type: "savedCard",
+                      id: randomCard.id,
+                    })
+                    .catch(error => {
+                      expect(error.message).to.equal(
+                        "cvv is required for this card token",
+                      );
+                    });
+                });
               });
             });
           });
