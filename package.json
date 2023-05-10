@@ -1,7 +1,7 @@
 {
   "name": "@moneyhash/js-sdk",
-  "private": true,
   "version": "0.0.0-development",
+  "description": "MoneyHash JavaScript SDK",
   "type": "module",
   "files": [
     "dist"
@@ -54,6 +54,22 @@
     "prepare": "is-ci || husky install",
     "prerelease": "yarn build:production && yarn build:umd",
     "release": "np"
+  },
+  "keywords": [
+    "MoneyHash",
+    "MoneyHash JS",
+    "MoneyHash Headless SDK"
+  ],
+  "author": "MoneyHash (https://moneyhash.io)",
+  "license": "MIT",
+  "homepage": "https://github.com/MoneyHash/js-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MoneyHash/js-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/MoneyHash/js-sdk/issues",
+    "email": "a.aboubakr@moneyhash.io"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.1.0",
