@@ -12,10 +12,37 @@ import {
 const supportedTypes = new Set<IntentType>(["payment", "payout"]);
 const supportedLanguages = new Set(["en", "fr", "ar"]);
 export interface SDKEmbedOptions<TType extends IntentType> {
+  /**
+   * Intent type `payment`, `payout`
+   */
   type: TType;
+
+  /**
+   * Locale of rendered embed. Can be changed programmatically with `moneyHash.setLocale`
+   */
   locale?: string;
+
+  /**
+   * Listen for intent completion. e.g. successful transaction, intent closed, intent expired ...etc
+   * @param {OnCompleteEventOptions} event
+   *
+   * @see {@link PaymentIntentEventOptions} - Payment intent event
+   * @see {@link PayoutIntentEventOptions} - Payout intent event
+   */
   onComplete?(event: OnCompleteEventOptions<TType>): void;
+
+  /**
+   * Listen for intent transaction failure status
+   * @param {OnFailEventOptions} event
+   *
+   * @see {@link PaymentIntentEventOptions} - Payment intent event
+   * @see {@link PayoutIntentEventOptions} - Payout intent event
+   */
   onFail?(event: OnFailEventOptions<TType>): void;
+
+  /**
+   * Customize input styles and submit button of MoneyHash embed
+   */
   styles?: {
     submitButton?: ButtonStyle;
     input?: InputStyle;

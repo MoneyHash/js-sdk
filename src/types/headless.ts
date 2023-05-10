@@ -20,12 +20,18 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       transaction: PaymentTransaction;
       redirect: Redirect | null;
       selectedMethod: PaymentMethodSlugs | null;
+      /**
+       * Intent state to guide you through different actions required. check [README](https://github.com/MoneyHash/js-sdk)
+       */
       state: IntentState;
     }
   : {
       intent: PayoutIntent;
       transaction: PayoutTransaction;
       selectedMethod: PaymentMethodSlugs | null;
+      /**
+       * Intent state to guide you through different actions required. check [README](https://github.com/MoneyHash/js-sdk)
+       */
       state: IntentState;
     };
 
