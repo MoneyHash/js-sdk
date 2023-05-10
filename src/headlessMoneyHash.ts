@@ -27,6 +27,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
   }
 
+  /**
+   * Get intent details
+   * @example
+   * ```
+   * await moneyHash.getIntentDetails('<intent_id>');
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
   getIntentDetails(intentId: string) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:getIntentDetails",
@@ -38,6 +47,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Get intent available payment/payout methods, saved cards and customer balances
+   * @example
+   * ```
+   * await moneyHash.getIntentMethods('<intent_id>');
+   * ```
+   * @returns Promise<{@link IntentMethods}>
+   */
   getIntentMethods(intentId: string) {
     return this.sdkApiHandler.request<IntentMethods<TType>>({
       api: "sdk:getIntentMethods",
@@ -49,6 +66,55 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Proceed with a payment/payout method, card or wallet
+   *
+   * @example
+   * <caption>Proceed with a payment/payout method</caption>
+   * ```
+   * await moneyHash.proceedWith({
+   *   intentId: '<intent_id>',
+   *   type: 'method',
+   *   id: '<method_id>',
+   * })
+   * ```
+   * @see {@link Method} - for \<method_id>
+   *
+   * @example
+   * <caption>Proceed with a customer balance. e.g. wallet</caption>
+   * ```
+   * await moneyHash.proceedWith({
+   *   intentId: '<intent_id>',
+   *   type: 'customerBalance',
+   *   id: '<customer_balance_id>',
+   * })
+   * ```
+   * @see {@link CustomerBalances} - for \<customer_balance_id>
+   *
+   * @example
+   * <caption>Proceed with a customer saved card</caption>
+   * ```
+   * // Card doesn't require CVV
+   * await moneyHash.proceedWith({
+   *   intentId: '<intent_id>',
+   *   type: 'savedCard',
+   *   id: '<card_id>',
+   * })
+   *
+   * // Card requires CVV
+   * await moneyHash.proceedWith({
+   *   intentId: '<intent_id>',
+   *   type: 'savedCard',
+   *   id: '<card_id>',
+   *   metaData: {
+   *     cvv: '<cvv>',
+   *   }
+   * })
+   * ```
+   * @see {@link Card} - for \<card_id> & if card requires cvv or not
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
   proceedWith({
     intentId,
     type,
@@ -82,6 +148,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Reset the selected method on and intent to null
+   *
+   * @description Can be used for `back` button after method selection
+   * or `retry` button on failed transaction UI to try a different
+   * method by the user.
+   *
+   * @example
+   * ```
+   * await moneyHash.resetSelectedMethod('<intent_id>');
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
   resetSelectedMethod(intentId: string) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:resetSelectedMethod",
@@ -93,6 +173,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Delete a customer saved card
+   *
+   * @example
+   * ```
+   * await moneyHash.deleteCard({
+   *   cardId: '<card_id>',
+   *   intentSecret: '<intent_secret>',
+   * });
+   * ```
+   * @see {@link Card} - for \<card_id>
+   * @see {@link AbstractIntent} - for \<intent_secret>
+   * @returns Promise<{ message: 'success'} >
+   */
   deleteCard({
     cardId,
     intentSecret,
@@ -115,6 +209,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Render SDK embed forms and payment integrations
+   *
+   * @description must be called if `state` of an intent is `INTENT_FORM` to let MoneyHash handle the payment.
+   * you can listen for completion or failure of an intent by providing `onComplete` `onFail` callbacks on MoneyHash instance.
+   *
+   * @example
+   * ```
+   * await moneyHash.renderForm({
+   *   selector: '<container_css_selector>',
+   *   intentId: '<intentId>',
+   * });
+   * ```
+   * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
+   * @returns Promise<void>
+   */
   renderForm({ selector, intentId }: { selector: string; intentId: string }) {
     throwIf(!selector, "selector is required for renderForm");
     throwIf(!intentId, "intentId is required for renderForm");
@@ -122,10 +232,26 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return this.sdkEmbed.render({ selector, intentId });
   }
 
+  /**
+   * Change the embed localization
+   *
+   * @description we currently support 3 languages `English`, `Arabic`, `Français`.
+   *
+   * @example
+   * ```
+   * await moneyHash.setLocale("<locale_code>");
+   * ```
+   *
+   * @returns Promise<void>
+   */
   setLocale(locale: string) {
     return this.sdkEmbed.setLocale(locale);
   }
 
+  /**
+   * Cleanup all listeners set by the SDK
+   * @returns Promise<void>
+   */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
   }
