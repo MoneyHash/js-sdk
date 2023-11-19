@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import MoneyHash from "./headlessMoneyHash";
+import MoneyHash from "./moneyHash";
 
 declare global {
   interface Window {
@@ -9,7 +9,7 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "ZOoeWYZ";
+const paymentIntentId = "9zK7xDL";
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -61,12 +61,12 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
-  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
-  console.log(intentDetails);
+  await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
+  // const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  // console.log(intentDetails);
 
-  const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
-  console.log(intentMethods);
+  // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
+  // console.log(intentMethods);
 
   // const response = await moneyHash.proceedWith({
   //   intentId: paymentIntentId,

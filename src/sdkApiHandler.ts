@@ -1,4 +1,5 @@
 import MessagingService, { MessagePayload } from "./messagingService";
+import getIframeUrl from "./utils/getIframeUrl";
 import isBrowser from "./utils/isBrowser";
 
 export default class SDKApiHandler {
@@ -16,9 +17,8 @@ export default class SDKApiHandler {
   private initSDKCommunicationIframe() {
     if (document.getElementById("moneyhash-headless-sdk")) return;
 
-    const url = new URL(
-      `${import.meta.env.VITE_IFRAME_URL}/embed/headless-sdk`,
-    );
+    const IFRAME_URL = getIframeUrl();
+    const url = new URL(`${IFRAME_URL}/embed/headless-sdk`);
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
@@ -31,7 +31,7 @@ export default class SDKApiHandler {
 
     SDKApiHandler.messagingService = new MessagingService({
       target: iframe.contentWindow as Window,
-      targetOrigin: import.meta.env.VITE_IFRAME_URL,
+      targetOrigin: IFRAME_URL,
     });
 
     SDKApiHandler.isCommunicationReady = new Promise(res => {
