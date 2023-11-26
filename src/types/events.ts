@@ -7,6 +7,8 @@ import type {
   Redirect,
   PaymentMethodSlugs,
   IntentState,
+  Shipping,
+  ProductItem,
 } from "./intent";
 
 export type PaymentIntentEventOptions = {
@@ -15,6 +17,8 @@ export type PaymentIntentEventOptions = {
   redirect: Redirect | null;
   selectedMethod: PaymentMethodSlugs | null;
   state: IntentState;
+  shippingData: Shipping | null;
+  productItems: ProductItem[] | null;
 };
 
 export type PayoutIntentEventOptions = {

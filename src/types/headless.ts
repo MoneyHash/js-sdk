@@ -7,6 +7,8 @@ import {
   PayoutTransaction,
   Redirect,
   IntentState,
+  Shipping,
+  ProductItem,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -24,6 +26,8 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        * Intent state to guide you through different actions required. check [README](https://github.com/MoneyHash/js-sdk)
        */
       state: IntentState;
+      shippingData: Shipping | null;
+      productItems: ProductItem[] | null;
     }
   : {
       intent: PayoutIntent;
