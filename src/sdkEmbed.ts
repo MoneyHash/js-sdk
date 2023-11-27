@@ -5,6 +5,7 @@ import {
   ButtonStyle,
   InputStyle,
   IntentType,
+  LoaderStyle,
   OnCompleteEventOptions,
   OnFailEventOptions,
 } from "./types";
@@ -47,6 +48,7 @@ export interface SDKEmbedOptions<TType extends IntentType> {
   styles?: {
     submitButton?: ButtonStyle;
     input?: InputStyle;
+    loader?: LoaderStyle;
   };
 }
 
