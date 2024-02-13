@@ -9,6 +9,7 @@ import {
   IntentState,
   Shipping,
   ProductItem,
+  AppleNativePayData,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -23,18 +24,19 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       redirect: Redirect | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
-       * Intent state to guide you through different actions required. check [README](https://github.com/MoneyHash/js-sdk)
+       * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
+      nativePayData: AppleNativePayData | null;
     }
   : {
       intent: PayoutIntent;
       transaction: PayoutTransaction;
       selectedMethod: PaymentMethodSlugs | null;
       /**
-       * Intent state to guide you through different actions required. check [README](https://github.com/MoneyHash/js-sdk)
+       * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
     };

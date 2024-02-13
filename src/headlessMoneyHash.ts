@@ -2,6 +2,7 @@ import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
 import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
+import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 
 export * from "./types";
@@ -207,6 +208,94 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         lang: this.sdkEmbed.lang,
       },
     });
+  }
+
+  async payWithApplePay({
+    countryCode,
+    currencyCode,
+    supportedNetworks,
+    amount,
+    secret,
+    onCancel,
+    onError,
+    onComplete,
+  }: {
+    countryCode: string;
+    currencyCode: string;
+    supportedNetworks: string[];
+    amount: string;
+    secret: string;
+    onCancel: () => void;
+    onError: () => void;
+    onComplete: () => void;
+  }) {
+    await loadScript(
+      "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
+      "moneyHash-apple-pay-sdk",
+    );
+
+    if (!ApplePaySession) return;
+
+    const session = new ApplePaySession(3, {
+      countryCode,
+      currencyCode,
+      supportedNetworks,
+      merchantCapabilities: ["supports3DS"],
+      total: {
+        label: "Apple Pay",
+        type: "final",
+        amount,
+      },
+    });
+
+    session.onvalidatemerchant = e => {
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/session/`,
+        {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secret,
+            validation_url: e.validationURL,
+          }),
+        },
+      )
+        .then(response => response.json())
+        .then(merchantSession =>
+          session.completeMerchantValidation(merchantSession),
+        )
+        .catch(onError);
+    };
+
+    session.onpaymentauthorized = e => {
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/token/`,
+        {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token_data: e.payment.token,
+            secret,
+          }),
+        },
+      )
+        .then(response => response.json())
+        .then(() => {
+          session.completePayment(ApplePaySession.STATUS_SUCCESS);
+          onComplete();
+        })
+        .catch(() => {
+          session.completePayment(ApplePaySession.STATUS_FAILURE);
+          onError();
+        });
+    };
+
+    session.oncancel = onCancel;
+    session.begin();
   }
 
   /**

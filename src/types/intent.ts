@@ -51,7 +51,8 @@ export type IntentState =
   | "TRANSACTION_WAITING_USER_ACTION"
   | "TRANSACTION_FAILED"
   | "EXPIRED"
-  | "CLOSED";
+  | "CLOSED"
+  | "NATIVE_PAY";
 
 export type PurchaseOperationStatus =
   | "pending"
@@ -208,4 +209,13 @@ export interface Shipping {
   apartment: string | null;
   description: string | null;
   shipping_method: string | null;
+}
+
+export interface AppleNativePayData {
+  method: "APPLE_PAY";
+  merchantId: string;
+  countryCode: string;
+  currencyCode: string;
+  amount: string;
+  supportedNetworks: string[];
 }

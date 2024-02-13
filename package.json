@@ -74,9 +74,11 @@
   "devDependencies": {
     "@commitlint/cli": "^16.1.0",
     "@commitlint/config-conventional": "^16.0.0",
+    "@types/applepayjs": "^14.0.4",
     "@types/node": "^18.15.2",
     "@typescript-eslint/eslint-plugin": "^5.10.0",
     "@typescript-eslint/parser": "^5.10.0",
+    "@vitejs/plugin-basic-ssl": "^1.1.0",
     "commitizen": "^4.2.4",
     "cross-env": "^7.0.3",
     "cypress": "^12.9.0",
