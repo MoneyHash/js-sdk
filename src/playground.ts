@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import MoneyHash from "./headlessMoneyHash";
+import MoneyHash, { IntentDetails } from "./headlessMoneyHash";
 
 declare global {
   interface Window {
@@ -9,7 +9,9 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "jgxYqZr";
+const paymentIntentId = "9KbKzOZ";
+
+let intentDetails: IntentDetails<"payment"> | null = null;
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -17,14 +19,9 @@ document.getElementById("start")?.addEventListener("click", async () => {
   moneyHash?.removeEventListeners();
   moneyHash = new MoneyHash({
     type: "payment",
-    onComplete: ({ intent, transaction, selectedMethod, redirect, state }) => {
-      console.log("onComplete", {
-        state,
-        intent,
-        transaction,
-        selectedMethod,
-        redirect,
-      });
+    onComplete: data => {
+      // open modal confirmation for apple pay
+      console.log("onComplete", data);
     },
     onFail: ({ intent, transaction }) => {
       console.log("onFail", { intent, transaction });
@@ -63,42 +60,13 @@ document.getElementById("start")?.addEventListener("click", async () => {
   });
 
   // await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
-  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+
   console.log(intentDetails);
+
   // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
 
-  if (!intentDetails.nativePayData) {
-    console.log("no native pay");
-    return;
-  }
-  const { amount, countryCode, currencyCode, supportedNetworks } =
-    intentDetails.nativePayData;
-
-  // const countryCode = "AE";
-  // const currencyCode = "SAR";
-  // const amount = "50";
-  // const secret =
-  //   "Z0FBQUFBQmx5TnhGamF5WjFMdVBzUFB6SXNzSnItWVp3bko4VkRSVWRDQldfNnFHVThXcXdpNDBzVU1yM09IWDZpMF95UHo2dW9JOGxGOVdUM0pzV2JZelJTUVpkaG9XYjY5RzlQdEU0eXJINmtKN3Y0WVdadTJ0a1I4Sm1XV3JMa2htR3drZUp6ZXJOcGpXbUFBQjFvUkhJUEZ6MnJXQ1lBPT0=";
-  // const supportedNetworks = ["visa", "masterCard", "amex", "discover", "mada"];
-
-  moneyHash.payWithApplePay({
-    countryCode,
-    amount,
-    supportedNetworks,
-    currencyCode,
-    secret: intentDetails.intent.secret,
-    onCancel: () => console.log("CANCEL"),
-    onComplete: async () => {
-      console.log("COMPLETE");
-      console.log(await moneyHash.getIntentDetails(paymentIntentId));
-    },
-    onError: async () => {
-      console.log("ERROR");
-    },
-  });
-
   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
-  // console.log(intentMethods);
 
   // const response = await moneyHash.proceedWith({
   //   intentId: paymentIntentId,
@@ -107,4 +75,42 @@ document.getElementById("start")?.addEventListener("click", async () => {
   // });
 
   // console.log(response);
+});
+
+document.getElementById("apple-btn")?.addEventListener("click", () => {
+  if (!intentDetails) return;
+
+  moneyHash
+    .payWithApplePay({
+      intentId: paymentIntentId,
+      countryCode: "AE",
+      amount: intentDetails.intent.amount.formatted,
+      currency: intentDetails.intent.amount.currency,
+      billingData: {
+        email: "test@test.com",
+      },
+      onCancel: () => console.log("CANCEL"),
+      onComplete: async () => {
+        // Will fire after a successful payment
+        console.log("COMPLETE");
+      },
+      onError: async () => {
+        // Will fire after a failure payment
+        console.log("ERROR");
+      },
+    })
+    .catch(error => {
+      console.log(error);
+      /**
+       *
+       * error.message
+          - Must create a new ApplePaySession from a user gesture handler. // Native apple pay button need to be triggered from click event directly
+          - Billing data is missing while calling payWithApplePay // intent requires billing data to proceed with the native integration
+       */
+
+      /**
+       * error
+       *  { email: "Enter a valid email address." }
+       */
+    });
 });

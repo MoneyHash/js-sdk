@@ -1,9 +1,11 @@
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+// import basicSsl from "@vitejs/plugin-basic-ssl";
 
 export default defineConfig({
   server: {
-    port: 3010,
+    port: 3000,
+    // https: true,
   },
   build: {
     lib: {
@@ -18,7 +20,10 @@ export default defineConfig({
     rollupOptions: {},
     target: "es2015",
   },
-  plugins: [dts({ insertTypesEntry: true, rollupTypes: true })],
+  plugins: [
+    dts({ insertTypesEntry: true, rollupTypes: true }),
+    // basicSsl()
+  ],
   define: {
     SDK_VERSION: JSON.stringify(`js@${process.env.npm_package_version}`),
   },

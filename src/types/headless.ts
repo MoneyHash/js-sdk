@@ -30,6 +30,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
       nativePayData: AppleNativePayData | null;
+      __providerId__: string | null;
     }
   : {
       intent: PayoutIntent;
@@ -39,6 +40,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
+      __providerId__: never;
     };
 
 export interface Method {

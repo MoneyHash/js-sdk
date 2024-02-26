@@ -9,6 +9,7 @@ import type {
   IntentState,
   Shipping,
   ProductItem,
+  AppleNativePayData,
 } from "./intent";
 
 export type PaymentIntentEventOptions = {
@@ -19,6 +20,7 @@ export type PaymentIntentEventOptions = {
   state: IntentState;
   shippingData: Shipping | null;
   productItems: ProductItem[] | null;
+  nativePayData: AppleNativePayData | null;
 };
 
 export type PayoutIntentEventOptions = {
