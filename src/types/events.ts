@@ -7,6 +7,9 @@ import type {
   Redirect,
   PaymentMethodSlugs,
   IntentState,
+  Shipping,
+  ProductItem,
+  AppleNativePayData,
 } from "./intent";
 
 export type PaymentIntentEventOptions = {
@@ -15,6 +18,9 @@ export type PaymentIntentEventOptions = {
   redirect: Redirect | null;
   selectedMethod: PaymentMethodSlugs | null;
   state: IntentState;
+  shippingData: Shipping | null;
+  productItems: ProductItem[] | null;
+  nativePayData: AppleNativePayData | null;
 };
 
 export type PayoutIntentEventOptions = {

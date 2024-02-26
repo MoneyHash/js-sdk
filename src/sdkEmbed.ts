@@ -5,9 +5,11 @@ import {
   ButtonStyle,
   InputStyle,
   IntentType,
+  LoaderStyle,
   OnCompleteEventOptions,
   OnFailEventOptions,
 } from "./types";
+import getIframeUrl from "./utils/getIframeUrl";
 
 const supportedTypes = new Set<IntentType>(["payment", "payout"]);
 const supportedLanguages = new Set(["en", "fr", "ar"]);
@@ -46,6 +48,7 @@ export interface SDKEmbedOptions<TType extends IntentType> {
   styles?: {
     submitButton?: ButtonStyle;
     input?: InputStyle;
+    loader?: LoaderStyle;
   };
 }
 
@@ -83,11 +86,9 @@ export default class SDKEmbed<TType extends IntentType> {
     // cleanup previous listeners
     this.messagingService?.abortService();
 
-    const url = new URL(
-      `${import.meta.env.VITE_IFRAME_URL}/embed/${
-        this.options.type
-      }/${intentId}`,
-    );
+    const IFRAME_URL = getIframeUrl();
+
+    const url = new URL(`${IFRAME_URL}/embed/${this.options.type}/${intentId}`);
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
@@ -108,7 +109,7 @@ export default class SDKEmbed<TType extends IntentType> {
 
     this.messagingService = new MessagingService({
       target: this.iframe.contentWindow as Window,
-      targetOrigin: import.meta.env.VITE_IFRAME_URL,
+      targetOrigin: IFRAME_URL,
     });
 
     this.isCommunicationReady = new Promise(res => {

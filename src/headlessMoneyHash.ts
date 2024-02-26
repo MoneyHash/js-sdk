@@ -2,6 +2,8 @@ import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
 import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
+import isEmpty from "./utils/isEmpty";
+import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 
 export * from "./types";
@@ -207,6 +209,166 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         lang: this.sdkEmbed.lang,
       },
     });
+  }
+
+  /**
+   * Pay with native apple pay
+   *
+   * @example
+   * ```
+   * moneyHash
+   * .payWithApplePay({
+   *   intentId: paymentIntentId,
+   *   countryCode: "AE",
+   *   amount: intentDetails.intent.amount.formatted,
+   *   currency: intentDetails.intent.amount.currency,
+   *   billingData: {
+   *     email: "test@test.com",
+   *   },
+   *   onCancel: () => console.log("CANCEL"),
+   *   onComplete: async () => {
+   *     // Will fire after a successful payment
+   *     console.log("COMPLETE");
+   *   },
+   *   onError: async () => {
+   *     // Will fire after a failure payment
+   *     console.log("ERROR");
+   *   },
+   * })
+   * .catch(error => {
+   *   console.log(error);
+   *   error.message | string
+   *       // Native apple pay button need to be triggered from click event directly
+          - Must create a new ApplePaySession from a user gesture handler.
+
+           // intent requires billing data to proceed with the native integration
+          - Billing data is missing while calling payWithApplePay
+
+       error | Record<string, string>
+          {email: "Enter a valid email address."}
+   * });
+   * ```
+   */
+  async payWithApplePay({
+    intentId,
+    currency,
+    amount,
+    countryCode,
+    onCancel,
+    onError,
+    onComplete,
+    billingData = {},
+  }: {
+    intentId: string;
+    countryCode: string;
+    currency: string;
+    amount: number;
+    onCancel: () => void;
+    onError: () => void;
+    onComplete: () => void;
+    billingData?: Record<string, unknown>;
+  }) {
+    await loadScript(
+      "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
+      "moneyHash-apple-pay-sdk",
+    );
+
+    if (!ApplePaySession) return;
+
+    const session = new ApplePaySession(3, {
+      countryCode,
+      currencyCode: currency,
+      supportedNetworks: ["visa", "masterCard", "amex", "discover", "mada"],
+      merchantCapabilities: ["supports3DS"],
+      total: {
+        label: "Apple Pay",
+        type: "final",
+        amount: `${amount}`,
+      },
+    });
+
+    const {
+      __providerId__: providerId,
+      state,
+      intent,
+    } = await this.proceedWith({
+      intentId,
+      type: "method",
+      id: "APPLE_PAY",
+    });
+
+    try {
+      if (state === "INTENT_FORM") {
+        if (isEmpty(billingData)) {
+          throw new Error(
+            "Billing data is missing while calling payWithApplePay",
+          );
+        }
+
+        await this.sdkApiHandler.request<IntentDetails<TType>>({
+          api: "sdk:submitNativeForm",
+          payload: {
+            intentId,
+            paymentMethod: "APPLE_PAY",
+            providerId,
+            lang: this.sdkEmbed.lang,
+            billingData,
+          },
+        });
+      }
+    } catch (error) {
+      await this.resetSelectedMethod(intentId);
+      throw error;
+    }
+
+    session.onvalidatemerchant = e => {
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/session/`,
+        {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secret: intent.secret,
+            validation_url: e.validationURL,
+          }),
+        },
+      )
+        .then(response => response.json())
+        .then(merchantSession =>
+          session.completeMerchantValidation(merchantSession),
+        )
+        .catch(onError);
+    };
+
+    session.onpaymentauthorized = e => {
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/token/`,
+        {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token_data: e.payment.token,
+            secret: intent.secret,
+          }),
+        },
+      )
+        .then(response => response.json())
+        .then(() => {
+          session.completePayment(ApplePaySession.STATUS_SUCCESS);
+          onComplete();
+        })
+        .catch(() => {
+          session.completePayment(ApplePaySession.STATUS_FAILURE);
+          onError();
+        });
+    };
+
+    session.oncancel = onCancel;
+    session.begin();
   }
 
   /**

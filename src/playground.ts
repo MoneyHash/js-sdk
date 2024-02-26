@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import MoneyHash from "./headlessMoneyHash";
+import MoneyHash, { IntentDetails } from "./headlessMoneyHash";
 
 declare global {
   interface Window {
@@ -9,7 +9,9 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "ZOoeWYZ";
+const paymentIntentId = "9KbKzOZ";
+
+let intentDetails: IntentDetails<"payment"> | null = null;
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -17,13 +19,9 @@ document.getElementById("start")?.addEventListener("click", async () => {
   moneyHash?.removeEventListeners();
   moneyHash = new MoneyHash({
     type: "payment",
-    onComplete: ({ intent, transaction, selectedMethod, redirect }) => {
-      console.log("onComplete", {
-        intent,
-        transaction,
-        selectedMethod,
-        redirect,
-      });
+    onComplete: data => {
+      // open modal confirmation for apple pay
+      console.log("onComplete", data);
     },
     onFail: ({ intent, transaction }) => {
       console.log("onFail", { intent, transaction });
@@ -61,12 +59,14 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
-  const intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  // await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
+  intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+
   console.log(intentDetails);
 
-  const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
-  console.log(intentMethods);
+  // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+
+  // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
 
   // const response = await moneyHash.proceedWith({
   //   intentId: paymentIntentId,
@@ -75,4 +75,42 @@ document.getElementById("start")?.addEventListener("click", async () => {
   // });
 
   // console.log(response);
+});
+
+document.getElementById("apple-btn")?.addEventListener("click", () => {
+  if (!intentDetails) return;
+
+  moneyHash
+    .payWithApplePay({
+      intentId: paymentIntentId,
+      countryCode: "AE",
+      amount: intentDetails.intent.amount.formatted,
+      currency: intentDetails.intent.amount.currency,
+      billingData: {
+        email: "test@test.com",
+      },
+      onCancel: () => console.log("CANCEL"),
+      onComplete: async () => {
+        // Will fire after a successful payment
+        console.log("COMPLETE");
+      },
+      onError: async () => {
+        // Will fire after a failure payment
+        console.log("ERROR");
+      },
+    })
+    .catch(error => {
+      console.log(error);
+      /**
+       *
+       * error.message
+          - Must create a new ApplePaySession from a user gesture handler. // Native apple pay button need to be triggered from click event directly
+          - Billing data is missing while calling payWithApplePay // intent requires billing data to proceed with the native integration
+       */
+
+      /**
+       * error
+       *  { email: "Enter a valid email address." }
+       */
+    });
 });

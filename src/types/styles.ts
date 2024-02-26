@@ -50,3 +50,8 @@ export interface InputStyle {
   focus?: InputAllowedStyle;
   error?: InputAllowedStyle;
 }
+
+export interface LoaderStyle {
+  backgroundColor: string;
+  color: string;
+}

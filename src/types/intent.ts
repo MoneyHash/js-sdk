@@ -51,7 +51,8 @@ export type IntentState =
   | "TRANSACTION_WAITING_USER_ACTION"
   | "TRANSACTION_FAILED"
   | "EXPIRED"
-  | "CLOSED";
+  | "CLOSED"
+  | "NATIVE_PAY";
 
 export type PurchaseOperationStatus =
   | "pending"
@@ -177,4 +178,44 @@ export interface PayoutTransaction extends Transaction {
 
 export interface Redirect {
   redirectUrl: string;
+}
+
+export interface ProductItem {
+  name: string;
+  type: string;
+  amount: string;
+  category: string;
+  quantity: number;
+  description: string;
+  subcategory: string;
+  reference_id: string;
+}
+
+export interface Shipping {
+  phone_number: string | null;
+  created: string | null;
+  modified: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  address: string | null;
+  country: string | null;
+  city: string | null;
+  street: string | null;
+  floor: string | null;
+  building: string | null;
+  state: string | null;
+  postal_code: string | null;
+  apartment: string | null;
+  description: string | null;
+  shipping_method: string | null;
+}
+
+export interface AppleNativePayData {
+  method: "APPLE_PAY";
+  merchantId: string;
+  countryCode: string;
+  currencyCode: string;
+  amount: string;
+  supportedNetworks: string[];
 }
