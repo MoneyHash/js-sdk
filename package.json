@@ -1,6 +1,6 @@
 {
   "name": "@moneyhash/js-sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MoneyHash JavaScript SDK",
   "type": "module",
   "files": [
