@@ -332,9 +332,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           secret: intent.secret,
           validation_url: e.validationURL,
         }),
-        mode: "no-cors",
       })
-        .then(response => response.json())
+        .then(response => (response.ok ? response.json() : Promise.reject()))
         .then(merchantSession =>
           session.completeMerchantValidation(merchantSession),
         )
@@ -352,7 +351,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           secret: intent.secret,
         }),
       })
-        .then(response => response.json())
+        .then(response => (response.ok ? response.json() : Promise.reject()))
         .then(() => {
           session.completePayment(ApplePaySession.STATUS_SUCCESS);
           onComplete();
