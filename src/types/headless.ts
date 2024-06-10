@@ -23,6 +23,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       transaction: PaymentTransaction;
       redirect: Redirect | null;
       selectedMethod: PaymentMethodSlugs | null;
+      accessToken: string | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
@@ -36,6 +37,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       intent: PayoutIntent;
       transaction: PayoutTransaction;
       selectedMethod: PaymentMethodSlugs | null;
+      accessToken: string | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
