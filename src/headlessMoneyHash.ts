@@ -435,7 +435,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const inputListeners: any[] = [];
     this.#setupInputListeners(inputListeners);
 
-    let submitListener: any;
+    const submitListener: any[] = [];
     this.#setupSubmitListener(submitListener);
 
     return {
@@ -508,7 +508,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         const defPromise = new DeferredPromise();
 
-        submitListener = (event: MessageEvent) => {
+        submitListener[0] = (event: MessageEvent) => {
           const { type, data } = event.data;
 
           if (type === "vaultSubmit:success") {
@@ -537,8 +537,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   #setupSubmitListener(submitListener: any) {
     const onReceiveSubmitMessage = (event: MessageEvent) => {
-      if (submitListener) {
-        submitListener(event);
+      if (submitListener.length) {
+        submitListener[0]?.(event);
       }
     };
     window.addEventListener("message", onReceiveSubmitMessage);
