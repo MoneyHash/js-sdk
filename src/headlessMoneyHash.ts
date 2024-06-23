@@ -440,7 +440,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     return {
       create: (
-        selector: string,
         elementType:
           | "cardHolderName"
           | "cardNumber"
@@ -448,6 +447,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           | "cardExpiryMonth"
           | "cardExpiryYear",
         elementOptions: {
+          selector: string;
           height?: string;
           placeholder?: string;
           styles?: {
@@ -457,10 +457,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           };
         },
       ) => {
-        const container = document.querySelector(selector) as HTMLDivElement;
+        const container = document.querySelector(
+          elementOptions.selector,
+        ) as HTMLDivElement;
         throwIf(
           !container,
-          `Couldn't find an element with selector ${selector}!`,
+          `Couldn't find an element with selector ${elementOptions.selector}!`,
         );
         container.classList.add("moneyhash-element");
 
@@ -495,9 +497,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           },
         };
       },
-      submit: async () => {
-        const accessToken = await this.#getAccessToken(intentId);
-
+      submit: async ({
+        accessToken,
+        providerId,
+        billingData,
+        shippingData,
+      }: {
+        accessToken: string | null;
+        providerId: string | null;
+        billingData: Record<string, unknown>;
+        shippingData: Record<string, unknown>;
+      }) => {
         throwIf(!accessToken, "accessToken is required for submitting form");
 
         const submitIframe = document.getElementById("moneyhash-submit-iframe");
@@ -521,7 +531,29 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         this.#renderSubmitIframe(accessToken!);
 
-        return defPromise.promise;
+        const newDefPromise = new DeferredPromise();
+
+        defPromise.promise
+          .then(async cardEmbedData => {
+            this.sdkApiHandler
+              .request<IntentDetails<TType>>({
+                api: "sdk:submitNativeForm",
+                payload: {
+                  intentId,
+                  paymentMethod: "CARD",
+                  providerId,
+                  lang: this.sdkEmbed.lang,
+                  billingData,
+                  shippingData,
+                  cardEmbed: cardEmbedData,
+                },
+              })
+              .then(res => newDefPromise.resolve(res))
+              .catch(err => newDefPromise.reject(err));
+          })
+          .catch(err => newDefPromise.reject(err));
+
+        return newDefPromise.promise;
       },
     };
   }
@@ -542,18 +574,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       }
     };
     window.addEventListener("message", onReceiveSubmitMessage);
-  }
-
-  async #getAccessToken(intentId: string) {
-    await this.proceedWith({
-      intentId,
-      type: "method",
-      id: "CARD",
-    });
-
-    const { accessToken } = await this.getIntentDetails(intentId);
-
-    return accessToken;
   }
 
   #renderInputFieldIframe({
