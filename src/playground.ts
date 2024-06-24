@@ -9,58 +9,59 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "LnqENn9";
+const paymentIntentId = "Z1AqzYZ";
 
 const intentDetails: IntentDetails<"payment"> | null = null;
 
-let moneyHash: MoneyHash<"payment">;
+const moneyHash: MoneyHash<"payment"> = new MoneyHash({
+  type: "payment",
+  onComplete: data => {
+    // open modal confirmation for apple pay
+    console.log("onComplete", data);
+  },
+  onFail: ({ intent, transaction }) => {
+    console.log("onFail", { intent, transaction });
+  },
+  styles: {
+    submitButton: {
+      base: {
+        background: "#09c",
+        color: "white",
+        borderRadius: "999px",
+      },
+      hover: {
+        background: "green",
+        color: "black",
+      },
+      focus: {
+        background: "yellow",
+        color: "black",
+      },
+    },
+    input: {
+      base: {
+        borderRadius: "0px",
+        borderColor: "#09c",
+      },
+      focus: {
+        boxShadow: "none",
+      },
+      error: {
+        borderColor: "red",
+        borderWidth: 1,
+        boxShadow: "none",
+      },
+    },
+  },
+});
 
 document.getElementById("start")?.addEventListener("click", async () => {
   moneyHash?.removeEventListeners();
-  moneyHash = new MoneyHash({
-    type: "payment",
-    onComplete: data => {
-      // open modal confirmation for apple pay
-      console.log("onComplete", data);
-    },
-    onFail: ({ intent, transaction }) => {
-      console.log("onFail", { intent, transaction });
-    },
-    styles: {
-      submitButton: {
-        base: {
-          background: "#09c",
-          color: "white",
-          borderRadius: "999px",
-        },
-        hover: {
-          background: "green",
-          color: "black",
-        },
-        focus: {
-          background: "yellow",
-          color: "black",
-        },
-      },
-      input: {
-        base: {
-          borderRadius: "0px",
-          borderColor: "#09c",
-        },
-        focus: {
-          boxShadow: "none",
-        },
-        error: {
-          borderColor: "red",
-          borderWidth: 1,
-          boxShadow: "none",
-        },
-      },
-    },
-  });
+
+  const x = await moneyHash.getIntentDetails(paymentIntentId);
+  console.log(x);
 
   const elements = await moneyHash.elements({
-    intentId: paymentIntentId,
     styles: {
       color: "white", // color of the text
       backgroundColor: "grey", // background color of the input
@@ -140,7 +141,8 @@ document.getElementById("start")?.addEventListener("click", async () => {
 
       const shippingData = {};
 
-      const res = await elements.submit({
+      const res = await moneyHash.submitForm({
+        intentId: paymentIntentId,
         accessToken,
         providerId,
         billingData,
@@ -194,6 +196,7 @@ document.getElementById("start")?.addEventListener("click", async () => {
   // console.log(response);
 });
 
+document.getElementById("start")?.click();
 document.getElementById("apple-btn")?.addEventListener("click", () => {
   if (!intentDetails) return;
 
