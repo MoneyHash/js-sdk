@@ -9,9 +9,9 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "9KbKzOZ";
+const paymentIntentId = "LnqENn9";
 
-let intentDetails: IntentDetails<"payment"> | null = null;
+const intentDetails: IntentDetails<"payment"> | null = null;
 
 let moneyHash: MoneyHash<"payment">;
 
@@ -59,10 +59,127 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  // await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
-  intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  const elements = await moneyHash.elements({
+    intentId: paymentIntentId,
+    styles: {
+      color: "white", // color of the text
+      backgroundColor: "grey", // background color of the input
+      placeholderColor: "#ccc", // placeholder color
+    },
+  });
 
-  console.log(intentDetails);
+  const cardHolderName = elements.create("cardHolderName", {
+    selector: "#card-holder-name",
+    // height: "80px",
+    placeholder: "Card Holder Name",
+    styles: {
+      // color: "red",
+      // backgroundColor: "black", // background color of the input
+      // placeholderColor: "#ccc", // placeholder color
+    },
+  });
+
+  const cardNumber = elements.create("cardNumber", {
+    selector: "#card-number",
+    styles: {
+      // color: "red",
+    },
+  });
+
+  const cardCvv = elements.create("cardCvv", {
+    selector: "#card-cvv",
+    styles: {
+      // color: "blue",
+    },
+  });
+
+  const cardExpiryMonth = elements.create("cardExpiryMonth", {
+    selector: "#card-expiry-month",
+    styles: {
+      // color: "green",
+    },
+  });
+
+  const cardExpiryYear = elements.create("cardExpiryYear", {
+    selector: "#card-expiry-year",
+    styles: {},
+  });
+
+  cardHolderName.on("focus", () => {
+    console.log("focus card holder");
+  });
+
+  cardHolderName.mount();
+  cardNumber.mount();
+  cardCvv.mount();
+  cardExpiryMonth.mount();
+  cardExpiryYear.mount();
+
+  const message = document.querySelector("#message")!;
+  const submit = document.createElement("button");
+  submit.innerText = "Submit";
+
+  submit.addEventListener("click", async () => {
+    message.innerHTML = "";
+    try {
+      submit.innerText = "Submitting...";
+      await moneyHash.proceedWith({
+        intentId: paymentIntentId,
+        type: "method",
+        id: "CARD",
+      });
+
+      const { accessToken, __providerId__: providerId } =
+        await moneyHash.getIntentDetails(paymentIntentId);
+      const billingData = {
+        first_name: "Alaa",
+        last_name: "Othman",
+        email: "a.a@a.com",
+        phone_number: "+201001234567",
+      };
+
+      const shippingData = {};
+
+      const res = await elements.submit({
+        accessToken,
+        providerId,
+        billingData,
+        shippingData,
+      });
+      console.log("Success! Intent Processed", { res });
+      submit.innerText = "Submit";
+      message.innerHTML = "Success! Intent Processed";
+      message.setAttribute("style", "color: green");
+    } catch (error) {
+      console.log("playground", error);
+      submit.innerText = "Submit";
+      message.innerHTML = `${error}`;
+      message.setAttribute("style", "color: red");
+    }
+  });
+
+  const container = document.querySelector(".container");
+  container!.appendChild(submit);
+
+  // cardName.on("ready", event => {
+  //   // Handle ready event
+  //   cardName.focus();
+  // });
+
+  // cardName.on("focus", () => {
+  //   // Handle focus event
+  // });
+
+  // cardName.on("blur", () => {
+  //   // Handle blur event
+  // });
+
+  // moneyHash.renderField({ selector: "#app", inputType: "text", options: {} });
+
+  // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+  // intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+
+  // console.log(intentDetails);
 
   // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
 
