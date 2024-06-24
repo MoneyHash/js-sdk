@@ -52,6 +52,7 @@ export interface Method {
   icons: string[];
   isSelected: boolean;
   confirmationRequired: boolean;
+  requiredBillingFields: FormField[] | null;
 }
 export interface Card {
   id: string;
@@ -83,3 +84,30 @@ export type IntentMethods<TType extends IntentType> = TType extends "payment"
   : {
       payoutMethods: Method[];
     };
+
+export type FormField = {
+  choices?: Record<string, string> | null;
+  error_messages: {
+    blank: string;
+    null?: string;
+    required: string;
+    invalid: string;
+    min_length: string;
+    max_length: string;
+  };
+  field_name: string;
+  help_text?: string | null;
+  label?: string;
+  max_length?: number | null;
+  min_length?: number | null;
+  read_only: boolean;
+  required: boolean;
+  type:
+    | "PhoneNumberField"
+    | "ChoiceField"
+    | "CharField"
+    | "IntegerField"
+    | "EmailField"
+    | "DateField";
+  value: string;
+};
