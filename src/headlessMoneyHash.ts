@@ -5,6 +5,7 @@ import type { IntentDetails, IntentMethods } from "./types/headless";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
+import getApiUrl from "./utils/getApiUrl";
 
 export * from "./types";
 export * from "./types/headless";
@@ -254,7 +255,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     currency,
     amount,
     countryCode,
-    onCancel,
+    onCancel = () => {},
     onError,
     onComplete,
     billingData = {},
@@ -263,7 +264,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     countryCode: string;
     currency: string;
     amount: number;
-    onCancel: () => void;
+    onCancel?: () => void;
     onError: () => void;
     onComplete: () => void;
     billingData?: Record<string, unknown>;
@@ -322,20 +323,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     }
 
     session.onvalidatemerchant = e => {
-      fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/session/`,
-        {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            secret: intent.secret,
-            validation_url: e.validationURL,
-          }),
+      fetch(`${getApiUrl()}/api/v1/providers/applepay/session/`, {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
         },
-      )
-        .then(response => response.json())
+        body: JSON.stringify({
+          secret: intent.secret,
+          validation_url: e.validationURL,
+        }),
+      })
+        .then(response => (response.ok ? response.json() : Promise.reject()))
         .then(merchantSession =>
           session.completeMerchantValidation(merchantSession),
         )
@@ -343,20 +341,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
 
     session.onpaymentauthorized = e => {
-      fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/providers/applepay/token/`,
-        {
-          method: "post",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token_data: e.payment.token,
-            secret: intent.secret,
-          }),
+      fetch(`${getApiUrl()}/api/v1/providers/applepay/token/`, {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
         },
-      )
-        .then(response => response.json())
+        body: JSON.stringify({
+          token_data: e.payment.token,
+          secret: intent.secret,
+        }),
+      })
+        .then(response => (response.ok ? response.json() : Promise.reject()))
         .then(() => {
           session.completePayment(ApplePaySession.STATUS_SUCCESS);
           onComplete();
