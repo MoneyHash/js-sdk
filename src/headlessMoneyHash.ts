@@ -5,6 +5,13 @@ import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
+import {
+  ElementEvents,
+  ElementProps,
+  ElementsProps,
+  ElementStyles,
+  ElementType,
+} from "./types/standaloneFields";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
@@ -27,15 +34,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   private sdkEmbed: SDKEmbed<TType>;
 
-  private submitListener: { current: ((event: MessageEvent) => void) | null } =
-    {
-      current: null,
-    };
+  private vaultSubmitListener: {
+    current: ((event: MessageEvent) => void) | null;
+  } = {
+    current: null,
+  };
 
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
-    this.#setupSubmitListener(this.submitListener);
+    this.#setupVaultSubmitListener(this.vaultSubmitListener);
   }
 
   /**
@@ -427,48 +435,26 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return this.sdkEmbed.abortService();
   }
 
-  async elements({
-    styles,
-  }: {
-    styles?: {
-      color?: string;
-      backgroundColor?: string;
-      placeholderColor?: string;
-    };
-  }) {
-    const inputListeners: any[] = [];
-    this.#setupInputListeners(inputListeners);
+  async elements({ styles }: ElementsProps) {
+    const fieldsListeners: Array<(event: MessageEvent) => void> = [];
+    this.#setupVaultFieldsListeners(fieldsListeners);
 
     return {
-      create: (
-        elementType:
-          | "cardHolderName"
-          | "cardNumber"
-          | "cardCvv"
-          | "cardExpiryMonth"
-          | "cardExpiryYear",
-        elementOptions: {
-          selector: string;
-          height?: string;
-          placeholder?: string;
-          styles?: {
-            color?: string;
-            backgroundColor?: string;
-            placeholderColor?: string;
-          };
-        },
-      ) => {
+      create: ({ elementType, elementOptions }: ElementProps) => {
+        const eventCallbacks = new Map<string, () => void>();
+
         const container = document.querySelector(
           elementOptions.selector,
         ) as HTMLDivElement;
+
         throwIf(
           !container,
           `Couldn't find an element with selector ${elementOptions.selector}!`,
         );
+
         container.classList.add("moneyhash-element");
 
-        const eventCallbacks = new Map<string, () => void>();
-        inputListeners.push((event: MessageEvent) => {
+        fieldsListeners.push((event: MessageEvent) => {
           const { type } = event.data;
 
           // if (type === `${elementType}:init`) {
@@ -487,14 +473,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         return {
           mount: () =>
-            this.#renderInputFieldIframe({
+            this.#renderFieldIframe({
               container,
               elementType,
-              styles: { ...styles, ...elementOptions.styles },
               elementOptions,
+              styles: { ...styles, ...elementOptions.styles },
             }),
-          on: (event: "focus" | "blur", callback: () => void) => {
-            eventCallbacks.set(`${elementType}@${event}`, callback);
+          on: (eventName: ElementEvents, callback: () => void) => {
+            eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
         };
       },
@@ -514,24 +500,25 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
   }) {
-    const inputFieldsDefPromise = new DeferredPromise();
+    const vaultFieldsDefPromise = new DeferredPromise();
 
     let cardEmbedData: any;
     let submitIframe: HTMLIFrameElement | undefined;
 
     if (accessToken) {
-      this.submitListener.current = (event: MessageEvent) => {
+      this.vaultSubmitListener.current = (event: MessageEvent) => {
         const { type, data } = event.data;
 
         if (type === "vaultSubmit:success") {
-          inputFieldsDefPromise.resolve(data);
+          vaultFieldsDefPromise.resolve(data);
         }
         if (type === "vaultSubmit:error") {
-          inputFieldsDefPromise.reject(data);
+          vaultFieldsDefPromise.reject(data);
         }
       };
-      submitIframe = this.#renderSubmitIframe(accessToken!);
-      cardEmbedData = await inputFieldsDefPromise.promise;
+
+      submitIframe = this.#renderVaultSubmitIframe(accessToken);
+      cardEmbedData = await vaultFieldsDefPromise.promise;
     }
 
     await this.sdkApiHandler.request<IntentDetails<TType>>({
@@ -550,16 +537,18 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     if (submitIframe) submitIframe.remove();
   }
 
-  #setupInputListeners(inputListeners: any[]) {
+  #setupVaultFieldsListeners(
+    fieldsListeners: Array<(event: MessageEvent) => void>,
+  ) {
     const onReceiveInputMessage = (event: MessageEvent) => {
-      inputListeners.forEach(listener => {
+      fieldsListeners.forEach(listener => {
         listener(event);
       });
     };
     window.addEventListener("message", onReceiveInputMessage);
   }
 
-  #setupSubmitListener(submitListener: { current: any }) {
+  #setupVaultSubmitListener(submitListener: { current: any }) {
     const onReceiveSubmitMessage = (event: MessageEvent) => {
       if (submitListener.current) {
         submitListener.current(event);
@@ -568,24 +557,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     window.addEventListener("message", onReceiveSubmitMessage);
   }
 
-  #renderInputFieldIframe({
+  #renderFieldIframe({
     container,
     elementType,
     elementOptions,
     styles,
   }: {
     container: HTMLDivElement;
-    elementType:
-      | "cardNumber"
-      | "cardCvv"
-      | "cardExpiryMonth"
-      | "cardExpiryYear"
-      | "cardHolderName";
-    styles?: {
-      color?: string;
-      backgroundColor?: string;
-      placeholderColor?: string;
-    };
+    elementType: ElementType;
+    styles?: ElementStyles;
     elementOptions: {
       height?: string;
       placeholder?: string;
@@ -626,7 +606,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     container.replaceChildren(fieldIframe);
   }
 
-  #renderSubmitIframe(accessToken: string) {
+  #renderVaultSubmitIframe(accessToken: string) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 

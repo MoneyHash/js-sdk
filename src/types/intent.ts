@@ -219,3 +219,35 @@ export interface AppleNativePayData {
   amount: string;
   supportedNetworks: string[];
 }
+
+// formFields received in intentDetails
+export type FieldType =
+  | "text"
+  | "number"
+  | "email"
+  | "date"
+  | "phoneNumber"
+  | "select";
+
+export type Field<TType extends FieldType = FieldType> = {
+  type: FieldType;
+  name: string;
+  label: string;
+  hint: string;
+  value: string;
+  readOnly: boolean;
+  validation: {
+    required: boolean;
+    minLength: number | null;
+    maxLength: number | null;
+  };
+  options: TType extends "select" ? { label: string; value: string }[] : never;
+};
+
+export type FormFields = {
+  billing: Array<Field> | null;
+  shipping: Array<Field> | null;
+  card: {
+    accessToken: string;
+  } | null;
+};
