@@ -227,7 +227,8 @@ export type FieldType =
   | "email"
   | "date"
   | "phoneNumber"
-  | "select";
+  | "select"
+  | "depSelect";
 
 export type Field<TType extends FieldType = FieldType> = {
   type: FieldType;
@@ -242,6 +243,7 @@ export type Field<TType extends FieldType = FieldType> = {
     maxLength: number | null;
   };
   options: TType extends "select" ? { label: string; value: string }[] : never;
+  dependsOn?: string;
 };
 
 export type FormFields = {
