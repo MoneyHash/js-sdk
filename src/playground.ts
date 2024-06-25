@@ -9,7 +9,7 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "Z1AqzYZ";
+const paymentIntentId = "LnEDaJ9";
 
 const intentDetails: IntentDetails<"payment"> | null = null;
 
@@ -69,41 +69,56 @@ document.getElementById("start")?.addEventListener("click", async () => {
     },
   });
 
-  const cardHolderName = elements.create("cardHolderName", {
-    selector: "#card-holder-name",
-    // height: "80px",
-    placeholder: "Card Holder Name",
-    styles: {
-      // color: "red",
-      // backgroundColor: "black", // background color of the input
-      // placeholderColor: "#ccc", // placeholder color
+  const cardHolderName = elements.create({
+    elementType: "cardHolderName",
+    elementOptions: {
+      selector: "#card-holder-name",
+      // height: "80px",
+      placeholder: "Card Holder Name",
+      styles: {
+        // color: "red",
+        // backgroundColor: "black", // background color of the input
+        // placeholderColor: "#ccc", // placeholder color
+      },
     },
   });
 
-  const cardNumber = elements.create("cardNumber", {
-    selector: "#card-number",
-    styles: {
-      // color: "red",
+  const cardNumber = elements.create({
+    elementType: "cardNumber",
+    elementOptions: {
+      selector: "#card-number",
+      styles: {
+        // color: "red",
+      },
     },
   });
 
-  const cardCvv = elements.create("cardCvv", {
-    selector: "#card-cvv",
-    styles: {
-      // color: "blue",
+  const cardCvv = elements.create({
+    elementType: "cardCvv",
+    elementOptions: {
+      selector: "#card-cvv",
+      styles: {
+        // color: "blue",
+      },
     },
   });
 
-  const cardExpiryMonth = elements.create("cardExpiryMonth", {
-    selector: "#card-expiry-month",
-    styles: {
-      // color: "green",
+  const cardExpiryMonth = elements.create({
+    elementType: "cardExpiryMonth",
+    elementOptions: {
+      selector: "#card-expiry-month",
+      styles: {
+        // color: "green",
+      },
     },
   });
 
-  const cardExpiryYear = elements.create("cardExpiryYear", {
-    selector: "#card-expiry-year",
-    styles: {},
+  const cardExpiryYear = elements.create({
+    elementType: "cardExpiryYear",
+    elementOptions: {
+      selector: "#card-expiry-year",
+      styles: {},
+    },
   });
 
   cardHolderName.on("focus", () => {
@@ -124,14 +139,13 @@ document.getElementById("start")?.addEventListener("click", async () => {
     message.innerHTML = "";
     try {
       submit.innerText = "Submitting...";
-      await moneyHash.proceedWith({
-        intentId: paymentIntentId,
-        type: "method",
-        id: "CARD",
-      });
+      const { formFields, __providerId__: providerId } =
+        await moneyHash.proceedWith({
+          intentId: paymentIntentId,
+          type: "method",
+          id: "CARD",
+        });
 
-      const { accessToken, __providerId__: providerId } =
-        await moneyHash.getIntentDetails(paymentIntentId);
       const billingData = {
         first_name: "Alaa",
         last_name: "Othman",
@@ -143,7 +157,7 @@ document.getElementById("start")?.addEventListener("click", async () => {
 
       const res = await moneyHash.submitForm({
         intentId: paymentIntentId,
-        accessToken,
+        accessToken: formFields?.card?.accessToken,
         providerId,
         billingData,
         shippingData,
