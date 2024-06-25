@@ -9,60 +9,193 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "9KbKzOZ";
+const paymentIntentId = "LnEDaJ9";
 
-let intentDetails: IntentDetails<"payment"> | null = null;
+const intentDetails: IntentDetails<"payment"> | null = null;
 
-let moneyHash: MoneyHash<"payment">;
+const moneyHash: MoneyHash<"payment"> = new MoneyHash({
+  type: "payment",
+  onComplete: data => {
+    // open modal confirmation for apple pay
+    console.log("onComplete", data);
+  },
+  onFail: ({ intent, transaction }) => {
+    console.log("onFail", { intent, transaction });
+  },
+  styles: {
+    submitButton: {
+      base: {
+        background: "#09c",
+        color: "white",
+        borderRadius: "999px",
+      },
+      hover: {
+        background: "green",
+        color: "black",
+      },
+      focus: {
+        background: "yellow",
+        color: "black",
+      },
+    },
+    input: {
+      base: {
+        borderRadius: "0px",
+        borderColor: "#09c",
+      },
+      focus: {
+        boxShadow: "none",
+      },
+      error: {
+        borderColor: "red",
+        borderWidth: 1,
+        boxShadow: "none",
+      },
+    },
+  },
+});
 
 document.getElementById("start")?.addEventListener("click", async () => {
   moneyHash?.removeEventListeners();
-  moneyHash = new MoneyHash({
-    type: "payment",
-    onComplete: data => {
-      // open modal confirmation for apple pay
-      console.log("onComplete", data);
-    },
-    onFail: ({ intent, transaction }) => {
-      console.log("onFail", { intent, transaction });
-    },
+
+  const x = await moneyHash.getIntentDetails(paymentIntentId);
+  console.log(x);
+
+  const elements = await moneyHash.elements({
     styles: {
-      submitButton: {
-        base: {
-          background: "#09c",
-          color: "white",
-          borderRadius: "999px",
-        },
-        hover: {
-          background: "green",
-          color: "black",
-        },
-        focus: {
-          background: "yellow",
-          color: "black",
-        },
-      },
-      input: {
-        base: {
-          borderRadius: "0px",
-          borderColor: "#09c",
-        },
-        focus: {
-          boxShadow: "none",
-        },
-        error: {
-          borderColor: "red",
-          borderWidth: 1,
-          boxShadow: "none",
-        },
+      color: "white", // color of the text
+      backgroundColor: "grey", // background color of the input
+      placeholderColor: "#ccc", // placeholder color
+    },
+  });
+
+  const cardHolderName = elements.create({
+    elementType: "cardHolderName",
+    elementOptions: {
+      selector: "#card-holder-name",
+      // height: "80px",
+      placeholder: "Card Holder Name",
+      styles: {
+        // color: "red",
+        // backgroundColor: "black", // background color of the input
+        // placeholderColor: "#ccc", // placeholder color
       },
     },
   });
 
-  // await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
-  intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+  const cardNumber = elements.create({
+    elementType: "cardNumber",
+    elementOptions: {
+      selector: "#card-number",
+      styles: {
+        // color: "red",
+      },
+    },
+  });
 
-  console.log(intentDetails);
+  const cardCvv = elements.create({
+    elementType: "cardCvv",
+    elementOptions: {
+      selector: "#card-cvv",
+      styles: {
+        // color: "blue",
+      },
+    },
+  });
+
+  const cardExpiryMonth = elements.create({
+    elementType: "cardExpiryMonth",
+    elementOptions: {
+      selector: "#card-expiry-month",
+      styles: {
+        // color: "green",
+      },
+    },
+  });
+
+  const cardExpiryYear = elements.create({
+    elementType: "cardExpiryYear",
+    elementOptions: {
+      selector: "#card-expiry-year",
+      styles: {},
+    },
+  });
+
+  cardHolderName.on("focus", () => {
+    console.log("focus card holder");
+  });
+
+  cardHolderName.mount();
+  cardNumber.mount();
+  cardCvv.mount();
+  cardExpiryMonth.mount();
+  cardExpiryYear.mount();
+
+  const message = document.querySelector("#message")!;
+  const submit = document.createElement("button");
+  submit.innerText = "Submit";
+
+  submit.addEventListener("click", async () => {
+    message.innerHTML = "";
+    try {
+      submit.innerText = "Submitting...";
+      const { formFields, __providerId__: providerId } =
+        await moneyHash.proceedWith({
+          intentId: paymentIntentId,
+          type: "method",
+          id: "CARD",
+        });
+
+      const billingData = {
+        first_name: "Alaa",
+        last_name: "Othman",
+        email: "a.a@a.com",
+        phone_number: "+201001234567",
+      };
+
+      const shippingData = {};
+
+      const res = await moneyHash.submitForm({
+        intentId: paymentIntentId,
+        accessToken: formFields?.card?.accessToken,
+        providerId,
+        billingData,
+        shippingData,
+      });
+      console.log("Success! Intent Processed", { res });
+      submit.innerText = "Submit";
+      message.innerHTML = "Success! Intent Processed";
+      message.setAttribute("style", "color: green");
+    } catch (error) {
+      console.log("playground", error);
+      submit.innerText = "Submit";
+      message.innerHTML = `${error}`;
+      message.setAttribute("style", "color: red");
+    }
+  });
+
+  const container = document.querySelector(".container");
+  container!.appendChild(submit);
+
+  // cardName.on("ready", event => {
+  //   // Handle ready event
+  //   cardName.focus();
+  // });
+
+  // cardName.on("focus", () => {
+  //   // Handle focus event
+  // });
+
+  // cardName.on("blur", () => {
+  //   // Handle blur event
+  // });
+
+  // moneyHash.renderField({ selector: "#app", inputType: "text", options: {} });
+
+  // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+  // intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+
+  // console.log(intentDetails);
 
   // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
 
@@ -77,6 +210,7 @@ document.getElementById("start")?.addEventListener("click", async () => {
   // console.log(response);
 });
 
+document.getElementById("start")?.click();
 document.getElementById("apple-btn")?.addEventListener("click", () => {
   if (!intentDetails) return;
 

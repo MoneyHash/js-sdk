@@ -1,7 +1,17 @@
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
+import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
+import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
+import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
+import {
+  ElementEvents,
+  ElementProps,
+  ElementsProps,
+  ElementStyles,
+  ElementType,
+} from "./types/standaloneFields";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
@@ -25,9 +35,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   private sdkEmbed: SDKEmbed<TType>;
 
+  private vaultSubmitListener: {
+    current: ((event: MessageEvent) => void) | null;
+  } = {
+    current: null,
+  };
+
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
+    this.#setupVaultSubmitListener(this.vaultSubmitListener);
   }
 
   /**
@@ -411,5 +428,199 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
+  }
+
+  async elements({ styles }: ElementsProps) {
+    const fieldsListeners: Array<(event: MessageEvent) => void> = [];
+    this.#setupVaultFieldsListeners(fieldsListeners);
+
+    return {
+      create: ({ elementType, elementOptions }: ElementProps) => {
+        const eventCallbacks = new Map<string, () => void>();
+
+        const container = document.querySelector(
+          elementOptions.selector,
+        ) as HTMLDivElement;
+
+        throwIf(
+          !container,
+          `Couldn't find an element with selector ${elementOptions.selector}!`,
+        );
+
+        container.classList.add("moneyhash-element");
+
+        fieldsListeners.push((event: MessageEvent) => {
+          const { type } = event.data;
+
+          // if (type === `${elementType}:init`) {
+          //   //console.log(elementType, "init");
+
+          // }
+          if (type === `${elementType}@focus`) {
+            container.classList.add("moneyhash-focus");
+            eventCallbacks.get(`${elementType}@focus`)?.();
+          }
+          if (type === `${elementType}@blur`) {
+            container.classList.remove("moneyhash-focus");
+            eventCallbacks.get(`${elementType}@blur`)?.();
+          }
+        });
+
+        return {
+          mount: () =>
+            this.#renderFieldIframe({
+              container,
+              elementType,
+              elementOptions,
+              styles: { ...styles, ...elementOptions.styles },
+            }),
+          on: (eventName: ElementEvents, callback: () => void) => {
+            eventCallbacks.set(`${elementType}@${eventName}`, callback);
+          },
+        };
+      },
+    };
+  }
+
+  async submitForm({
+    intentId,
+    accessToken,
+    providerId,
+    billingData,
+    shippingData,
+  }: {
+    intentId: string;
+    accessToken?: string | null;
+    providerId: string | null;
+    billingData?: Record<string, unknown>;
+    shippingData?: Record<string, unknown>;
+  }) {
+    const vaultFieldsDefPromise = new DeferredPromise();
+
+    let cardEmbedData: any;
+    let submitIframe: HTMLIFrameElement | undefined;
+
+    if (accessToken) {
+      this.vaultSubmitListener.current = (event: MessageEvent) => {
+        const { type, data } = event.data;
+
+        if (type === "vaultSubmit:success") {
+          vaultFieldsDefPromise.resolve(data);
+        }
+        if (type === "vaultSubmit:error") {
+          vaultFieldsDefPromise.reject(data);
+        }
+      };
+
+      submitIframe = this.#renderVaultSubmitIframe(accessToken);
+      cardEmbedData = await vaultFieldsDefPromise.promise;
+    }
+
+    await this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:submitNativeForm",
+      payload: {
+        intentId,
+        paymentMethod: "CARD",
+        providerId,
+        lang: this.sdkEmbed.lang,
+        billingData,
+        shippingData,
+        cardEmbed: cardEmbedData,
+      },
+    });
+
+    if (submitIframe) submitIframe.remove();
+  }
+
+  #setupVaultFieldsListeners(
+    fieldsListeners: Array<(event: MessageEvent) => void>,
+  ) {
+    const onReceiveInputMessage = (event: MessageEvent) => {
+      fieldsListeners.forEach(listener => {
+        listener(event);
+      });
+    };
+    window.addEventListener("message", onReceiveInputMessage);
+  }
+
+  #setupVaultSubmitListener(submitListener: { current: any }) {
+    const onReceiveSubmitMessage = (event: MessageEvent) => {
+      if (submitListener.current) {
+        submitListener.current(event);
+      }
+    };
+    window.addEventListener("message", onReceiveSubmitMessage);
+  }
+
+  #renderFieldIframe({
+    container,
+    elementType,
+    elementOptions,
+    styles,
+  }: {
+    container: HTMLDivElement;
+    elementType: ElementType;
+    styles?: ElementStyles;
+    elementOptions: {
+      height?: string;
+      placeholder?: string;
+    };
+  }) {
+    const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
+
+    const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
+
+    url.searchParams.set("parent", window.location.origin); // the application that is using the SDK
+    url.searchParams.set("type", elementType);
+    url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
+
+    url.searchParams.set("color", styles?.color || "#000");
+    url.searchParams.set(
+      "placeholderColor",
+      styles?.placeholderColor || "#ccc",
+    );
+    url.searchParams.set(
+      "backgroundColor",
+      styles?.backgroundColor || "transparent",
+    );
+
+    const fieldIframe = document.createElement("iframe");
+
+    fieldIframe.src = url.toString();
+    fieldIframe.style.height = elementOptions.height ?? "40px";
+    fieldIframe.style.setProperty("overflow", "hidden", "important");
+    fieldIframe.style.setProperty("display", "block", "important");
+    fieldIframe.style.setProperty("width", "100%", "important");
+    fieldIframe.style.setProperty("maxWidth", "100%", "important");
+    fieldIframe.style.setProperty("border", "0", "important");
+    fieldIframe.style.setProperty("margin", "0", "important");
+    fieldIframe.style.setProperty("padding", "0", "important");
+    fieldIframe.style.setProperty("userSelect", "none", "important");
+    fieldIframe.style.setProperty("colorScheme", "light only", "important");
+
+    container.replaceChildren(fieldIframe);
+  }
+
+  #renderVaultSubmitIframe(accessToken: string) {
+    const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
+    const VAULT_API_URL = getVaultApiUrl();
+
+    const url = new URL(
+      `${VAULT_INPUT_IFRAME_URL}/vaultSubmit/vaultSubmit.html`,
+    );
+
+    url.searchParams.set("parent", window.location.origin); // the application that is using the SDK
+    url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
+    url.searchParams.set("access_token", accessToken);
+
+    const submitIframe = document.createElement("iframe");
+
+    submitIframe.id = "moneyhash-submit-iframe";
+    submitIframe.src = url.toString();
+    submitIframe.hidden = true;
+
+    document.body.appendChild(submitIframe);
+
+    return submitIframe;
   }
 }
