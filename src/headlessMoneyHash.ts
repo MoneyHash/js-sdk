@@ -288,11 +288,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       },
     });
 
-    const {
-      __providerId__: providerId,
-      state,
-      intent,
-    } = await this.proceedWith({
+    const { state, intent } = await this.proceedWith({
       intentId,
       type: "method",
       id: "APPLE_PAY",
@@ -311,7 +307,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           payload: {
             intentId,
             paymentMethod: "APPLE_PAY",
-            providerId,
             lang: this.sdkEmbed.lang,
             billingData,
           },
