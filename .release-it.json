@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/release-it/schema/release-it.json",
   "git": {
     "requireCommits": true,
-    "commitMessage": ":rocket: release v${version} [skip ci]",
+    "commitMessage": "chore: release v${version} [skip ci]",
     "tagAnnotation": "v${version}"
   },
   "github": {
