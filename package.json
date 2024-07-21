@@ -52,8 +52,7 @@
     "commit": "cz",
     "cypress:open": "cypress open",
     "prepare": "is-ci || husky install",
-    "prerelease": "yarn build:production && yarn build:umd",
-    "release": "np"
+    "release": "release-it"
   },
   "keywords": [
     "MoneyHash",
