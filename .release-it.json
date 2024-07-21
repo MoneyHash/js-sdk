@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+  "git": {
+    "requireCommits": true,
+    "commitMessage": ":rocket: release v${version} [skip ci]",
+    "tagAnnotation": "v${version}"
+  },
+  "github": {
+    "release": true,
+    "releaseName": "🚀 release v${version}"
+  },
+  "hooks": {
+    "before:init": ["npx tsc", "yarn eslint:check"],
+    "after:bump": "yarn build:production && yarn build:umd"
+  },
+  "plugins": {}
+}
