@@ -5,6 +5,7 @@
     "vite.config.umd.ts",
     "vite.config.ts",
     "cypress",
-    "cypress.config.ts"
+    "cypress.config.ts",
+    "release.config.mjs"
   ]
 }
