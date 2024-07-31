@@ -457,11 +457,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
           // }
           if (type === `${elementType}@focus`) {
-            container.classList.add("moneyhash-focus");
+            container.classList.add("moneyhash-element_focus");
             eventCallbacks.get(`${elementType}@focus`)?.();
           }
           if (type === `${elementType}@blur`) {
-            container.classList.remove("moneyhash-focus");
+            container.classList.remove("moneyhash-element_focus");
             eventCallbacks.get(`${elementType}@blur`)?.();
           }
         });
