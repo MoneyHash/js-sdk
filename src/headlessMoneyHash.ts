@@ -539,7 +539,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe(url);
       case "REDIRECT":
-        return null;
+        return this.#renderUrlInRedirect(url);
       default:
         return null;
     }
@@ -561,6 +561,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   #renderUrlInPopUpIframe(url: string) {
     return window.open(`${url}`, "", "width=600,height=400,left=200,top=200");
+  }
+
+  #renderUrlInRedirect(url: string) {
+    return window.open(url, "_blank");
   }
 
   #setupVaultFieldsListeners(
