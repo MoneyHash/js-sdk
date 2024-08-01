@@ -529,6 +529,36 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     if (submitIframe) submitIframe.remove();
   }
 
+  renderUrl(
+    url: string,
+    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
+  ) {
+    switch (renderStrategy) {
+      case "IFRAME":
+        return this.#renderUrlInIframe(url);
+      case "POPUP_IFRAME":
+        return null;
+      case "REDIRECT":
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  #renderUrlInIframe(url: string) {
+    const container = document.querySelector("#rendered-url-iframe-container");
+
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.style.setProperty("border", "0", "important");
+    iframe.style.setProperty("width", "100vw", "important");
+    iframe.style.setProperty("height", "100vh", "important");
+
+    container?.replaceChildren(iframe);
+
+    return iframe;
+  }
+
   #setupVaultFieldsListeners(
     fieldsListeners: Array<(event: MessageEvent) => void>,
   ) {
