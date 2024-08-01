@@ -430,7 +430,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return this.sdkEmbed.abortService();
   }
 
-  async elements({ styles }: ElementsProps) {
+  elements({ styles }: ElementsProps) {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     this.#setupVaultFieldsListeners(fieldsListeners);
 
@@ -485,13 +485,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async submitForm({
     intentId,
     accessToken,
-    providerId,
     billingData,
     shippingData,
   }: {
     intentId: string;
     accessToken?: string | null;
-    providerId: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
   }) {
@@ -521,7 +519,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       payload: {
         intentId,
         paymentMethod: "CARD",
-        providerId,
         lang: this.sdkEmbed.lang,
         billingData,
         shippingData,
