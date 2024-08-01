@@ -31,6 +31,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       productItems: ProductItem[] | null;
       nativePayData: AppleNativePayData | null;
       __providerId__: string | null;
+      recommendedMethods: Method[] | null;
     }
   : {
       intent: PayoutIntent;
