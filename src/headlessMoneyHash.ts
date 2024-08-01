@@ -529,6 +529,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     if (submitIframe) submitIframe.remove();
   }
 
+  async submitCvv({ intentId, cvv }: { intentId: string; cvv: string }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:submitCardCvv",
+      payload: {
+        intentId,
+        cvv,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
   renderUrl(
     url: string,
     renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
