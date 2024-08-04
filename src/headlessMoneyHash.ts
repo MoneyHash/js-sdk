@@ -447,7 +447,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           `Couldn't find an element with selector ${elementOptions.selector}!`,
         );
 
-        container.classList.add("moneyhash-element");
+        container.classList.add("MoneyHashElement");
 
         fieldsListeners.push((event: MessageEvent) => {
           const { type } = event.data;
@@ -457,11 +457,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
           // }
           if (type === `${elementType}@focus`) {
-            container.classList.add("moneyhash-element_focus");
+            container.classList.add("MoneyHashElement--focus");
             eventCallbacks.get(`${elementType}@focus`)?.();
           }
           if (type === `${elementType}@blur`) {
-            container.classList.remove("moneyhash-element_focus");
+            container.classList.remove("MoneyHashElement--focus");
             eventCallbacks.get(`${elementType}@blur`)?.();
           }
         });
