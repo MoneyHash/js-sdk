@@ -514,7 +514,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       cardEmbedData = await vaultFieldsDefPromise.promise;
     }
 
-    await this.sdkApiHandler.request<IntentDetails<TType>>({
+    const submissionResult = await this.sdkApiHandler.request<
+      IntentDetails<TType>
+    >({
       api: "sdk:submitNativeForm",
       payload: {
         intentId,
@@ -527,6 +529,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
 
     if (submitIframe) submitIframe.remove();
+
+    return submissionResult;
   }
 
   async submitCvv({ intentId, cvv }: { intentId: string; cvv: string }) {
