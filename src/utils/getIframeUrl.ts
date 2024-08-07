@@ -4,7 +4,7 @@
  */
 export default function getIframeUrl() {
   const IFRAME_URL =
-    window.MONEYHASH_IFRAME_URL ?? import.meta.env.VITE_IFRAME_URL;
+    window.MONEYHASH_IFRAME_URL ?? import.meta.env.VITE_CHECKOUT_URL;
 
   return IFRAME_URL;
 }

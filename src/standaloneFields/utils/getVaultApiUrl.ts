@@ -3,8 +3,8 @@
  * to support using the local vault api inside SDK
  */
 export default function getVaultApiUrl() {
-  const VAULT_API_URL = "https://vault-staging.moneyhash.io";
-  // window.MONEYHASH_VAULT_API_URL ?? import.meta.env.VITE_VAULT_API_URL;
+  const VAULT_API_URL =
+    window.MONEYHASH_VAULT_API_URL ?? import.meta.env.VITE_VAULT_URL;
 
   return VAULT_API_URL;
 }

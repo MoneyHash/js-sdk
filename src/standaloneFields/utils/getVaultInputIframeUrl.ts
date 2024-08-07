@@ -4,8 +4,7 @@
  */
 export default function getVaultInputIframeUrl() {
   const VAULT_INPUT_IFRAME_URL =
-    window.MONEYHASH_VAULT_INPUT_IFRAME_URL ??
-    import.meta.env.VITE_VAULT_IFRAME_URL;
+    window.MONEYHASH_VAULT_INPUT_IFRAME_URL ?? import.meta.env.VITE_VAULT_URL;
 
   return VAULT_INPUT_IFRAME_URL;
 }
