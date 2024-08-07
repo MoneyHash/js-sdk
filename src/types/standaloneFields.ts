@@ -11,7 +11,7 @@ export type ElementStyles = {
   placeholderColor?: string;
 };
 
-export type ElementEvents = "focus" | "blur";
+export type ElementEvents = "focus" | "blur" | "changeInput";
 
 export type ElementsProps = {
   styles?: ElementStyles;

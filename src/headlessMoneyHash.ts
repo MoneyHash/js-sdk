@@ -464,6 +464,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             container.classList.remove("MoneyHashElement--focus");
             eventCallbacks.get(`${elementType}@blur`)?.();
           }
+          if (type === `${elementType}@changeInput`) {
+            eventCallbacks.get(`${elementType}@changeInput`)?.();
+          }
         });
 
         return {
