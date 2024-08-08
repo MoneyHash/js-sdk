@@ -58,21 +58,21 @@ export type IntentState =
   | "URL_TO_RENDER"
   | "SAVED_CARD_CVV";
 
-export type IntentStateDetails = {
-  FORM_FIELDS: FormFields;
-  URL_TO_RENDER: {
-    url: string; // the url to render
-    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT"; // recommended strategy to use for rendering
-  };
-  SAVED_CARD_CVV: {
-    card: {
-      brand: string;
-      lastFourDigits: string;
-      logo: string;
-    };
-    cvvField: Field;
-  };
-};
+export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
+
+export type CardInfo = { brand: string; lastFourDigits: string; logo: string };
+
+export type IntentStateDetails<TType extends IntentState = IntentState> =
+  TType extends "FORM_FIELDS"
+    ? FormFields
+    : TType extends "URL_TO_RENDER"
+    ? { url: string; renderStrategy: UrlRenderStrategy }
+    : TType extends "SAVED_CARD_CVV"
+    ? {
+        card: CardInfo;
+        cvvField: Field;
+      }
+    : null;
 
 export type PurchaseOperationStatus =
   | "pending"
