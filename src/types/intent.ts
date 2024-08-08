@@ -64,7 +64,7 @@ export type CardInfo = { brand: string; lastFourDigits: string; logo: string };
 
 export type IntentStateDetails<TType extends IntentState = IntentState> =
   TType extends "FORM_FIELDS"
-    ? FormFields
+    ? { formFields: FormFields }
     : TType extends "URL_TO_RENDER"
     ? { url: string; renderStrategy: UrlRenderStrategy }
     : TType extends "SAVED_CARD_CVV"
