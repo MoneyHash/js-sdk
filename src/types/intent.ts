@@ -52,7 +52,27 @@ export type IntentState =
   | "TRANSACTION_FAILED"
   | "EXPIRED"
   | "CLOSED"
-  | "NATIVE_PAY";
+  | "NATIVE_PAY"
+  // v1.x.x new states
+  | "FORM_FIELDS"
+  | "URL_TO_RENDER"
+  | "SAVED_CARD_CVV";
+
+export type IntentStateDetails = {
+  FORM_FIELDS: FormFields;
+  URL_TO_RENDER: {
+    url: string; // the url to render
+    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT"; // recommended strategy to use for rendering
+  };
+  SAVED_CARD_CVV: {
+    card: {
+      brand: string;
+      lastFourDigits: string;
+      logo: string;
+    };
+    cvvField: Field;
+  };
+};
 
 export type PurchaseOperationStatus =
   | "pending"
@@ -227,10 +247,9 @@ export type FieldType =
   | "email"
   | "date"
   | "phoneNumber"
-  | "select"
-  | "depSelect";
+  | "select";
 
-export type Field<TType extends FieldType = FieldType> = {
+export type Field = {
   type: FieldType;
   name: string;
   label: string;
@@ -242,11 +261,12 @@ export type Field<TType extends FieldType = FieldType> = {
     minLength: number | null;
     maxLength: number | null;
   };
-  options: TType extends "select" ? { label: string; value: string }[] : never;
   dependsOn?: string;
+  optionsList?: Array<{ label: string; value: string }>;
+  optionsMap?: Record<string, Array<{ label: string; value: string }>>;
 };
 
-export type FormFields = {
+type FormFields = {
   billing: Array<Field> | null;
   shipping: Array<Field> | null;
   card: {
