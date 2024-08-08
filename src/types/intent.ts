@@ -131,6 +131,13 @@ type TransactionOperation = {
   };
 }[keyof TransactionOperationStatusMap];
 
+export type SupportedLanguages = "ar" | "en" | "fr";
+
+export interface FeesItem {
+  title: Record<SupportedLanguages, string>;
+  value: string;
+}
+
 export interface AbstractIntent {
   id: string;
   status: IntentStatus;
@@ -140,6 +147,9 @@ export interface AbstractIntent {
     formatted: number;
     maxPayout?: number | null;
   };
+  subtotalAmount: string | null;
+  fees: Array<FeesItem> | null;
+  totalDiscounts: string | null;
   secret: string;
   isLive: boolean;
 }
