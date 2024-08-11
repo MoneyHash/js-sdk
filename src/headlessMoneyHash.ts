@@ -569,8 +569,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const iframe = document.createElement("iframe");
     iframe.src = url;
     iframe.style.setProperty("border", "0", "important");
-    iframe.style.setProperty("width", "100vw", "important");
-    iframe.style.setProperty("height", "100vh", "important");
+    iframe.style.setProperty("width", "100%", "important");
+    iframe.style.setProperty("height", "100%", "important");
 
     container?.replaceChildren(iframe);
 
