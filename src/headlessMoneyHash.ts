@@ -6,8 +6,10 @@ import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframe
 import type { IntentType } from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
 import {
+  Element,
   ElementEvents,
   ElementProps,
+  Elements,
   ElementsProps,
   ElementStyles,
   ElementType,
@@ -430,12 +432,45 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return this.sdkEmbed.abortService();
   }
 
-  elements({ styles }: ElementsProps) {
+  /**
+   * Creates Elements context used to render each card field
+   * @description Elements context is used to create and manage card fields
+   * such as card number, card holder name, card expiry month, card expiry year and card cvv.
+   *
+   * @example
+   * ```
+   * const elements = moneyHash.elements({ styles: ElementsStyles });
+   * ```
+   *
+   * @returns { Elements }
+   */
+  elements({ styles }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     this.#setupVaultFieldsListeners(fieldsListeners);
 
     return {
-      create: ({ elementType, elementOptions }: ElementProps) => {
+      /**
+       * Creates card field element
+       * @description
+       *
+       * @example
+       * ```
+       * const cardField = elements.create({
+       *                            elementType: "<element-type>",
+       *                            elementOptions: {
+       *                              selector: "<css-selector>",
+       *                              height: "<height>",
+       *                              placeholder: "<placeholder>",
+       *                              styles: { color: "<color>",
+       *                              backgroundColor: "<background-color>",
+       *                              placeholderColor: "<placeholder-color>"
+       *                            }
+       *                        });
+       * ```
+       *
+       * @returns { Elements }
+       */
+      create: ({ elementType, elementOptions }: ElementProps): Element => {
         const eventCallbacks = new Map<string, () => void>();
 
         const container = document.querySelector(
@@ -485,6 +520,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
   }
 
+  /**
+   * Submits the form with the form fields data (card, billing, shipping)
+   * @example
+   * ```
+   * await moneyHash.submitForm({
+   *                        intentId: '<intent-id>',
+   *                        accessToken : '<access-token>',
+   *                        billingData: {},
+   *                        shippingData: {},
+   *                      });
+   * ```
+   *
+   * @returns { Promise<IntentDetails<TType>> }
+   */
   async submitForm({
     intentId,
     accessToken,
@@ -495,7 +544,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
-  }) {
+  }): Promise<IntentDetails<TType>> {
     const vaultFieldsDefPromise = new DeferredPromise();
 
     let cardEmbedData: any;
@@ -536,7 +585,23 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return submissionResult;
   }
 
-  async submitCvv({ intentId, cvv }: { intentId: string; cvv: string }) {
+  /**
+   * Submits the CVV for the tokenized card
+   *
+   * @example
+   * ```
+   * await moneyHash.submitCvv({ intentId: '<intent-id>', cvv: '<cvv>' });
+   * ```
+   *
+   * @returns { Promise<IntentDetails<TType>> }
+   */
+  async submitCvv({
+    intentId,
+    cvv,
+  }: {
+    intentId: string;
+    cvv: string;
+  }): Promise<IntentDetails<TType>> {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:submitCardCvv",
       payload: {
@@ -547,6 +612,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
+  /**
+   * Render the received url in an iframe, popup iframe or redirect
+   *
+   * @example
+   * ```
+   * moneyHash.renderUrl('<url>', 'IFRAME');
+   * ```
+   *
+   */
   renderUrl(
     url: string,
     renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",

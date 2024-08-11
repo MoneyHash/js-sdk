@@ -1,3 +1,12 @@
+export type Elements = {
+  create: (elementProps: ElementProps) => Element;
+};
+
+export type Element = {
+  mount: () => void;
+  on: (event: ElementEvents, callback: () => void) => void;
+};
+
 export type ElementType =
   | "cardHolderName"
   | "cardNumber"
