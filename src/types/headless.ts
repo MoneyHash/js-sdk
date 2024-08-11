@@ -26,7 +26,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
-      stateDetails: IntentStateDetails;
+      stateDetails: IntentStateDetails<IntentState>;
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
       nativePayData: AppleNativePayData | null;
@@ -40,7 +40,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
-      stateDetails: IntentStateDetails;
+      stateDetails: IntentStateDetails<IntentState>;
       __providerId__: never;
     };
 

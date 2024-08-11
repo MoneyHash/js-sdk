@@ -62,7 +62,7 @@ export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
 
 export type CardInfo = { brand: string; lastFourDigits: string; logo: string };
 
-export type IntentStateDetails<TType extends IntentState = IntentState> =
+export type IntentStateDetails<TType extends IntentState> =
   TType extends "FORM_FIELDS"
     ? { formFields: FormFields }
     : TType extends "URL_TO_RENDER"
