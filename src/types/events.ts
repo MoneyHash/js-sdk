@@ -4,20 +4,20 @@ import type {
   PayoutIntent,
   PaymentTransaction,
   PayoutTransaction,
-  Redirect,
   PaymentMethodSlugs,
   IntentState,
   Shipping,
   ProductItem,
   AppleNativePayData,
+  IntentStateDetails,
 } from "./intent";
 
 export type PaymentIntentEventOptions = {
   intent: PaymentIntent;
   transaction: PaymentTransaction;
-  redirect: Redirect | null;
   selectedMethod: PaymentMethodSlugs | null;
   state: IntentState;
+  stateDetails: IntentStateDetails<IntentState>;
   shippingData: Shipping | null;
   productItems: ProductItem[] | null;
   nativePayData: AppleNativePayData | null;
@@ -28,6 +28,7 @@ export type PayoutIntentEventOptions = {
   transaction: PayoutTransaction;
   selectedMethod: PaymentMethodSlugs | null;
   state: IntentState;
+  stateDetails: IntentStateDetails<IntentState>;
 };
 
 export type OnCompleteEventOptions<TType extends IntentType> =

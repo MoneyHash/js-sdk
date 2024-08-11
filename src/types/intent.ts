@@ -206,10 +206,6 @@ export interface PayoutTransaction extends Transaction {
   payoutMethod: PaymentMethodSlugs;
 }
 
-export interface Redirect {
-  redirectUrl: string;
-}
-
 export interface ProductItem {
   name: string;
   type: string;
