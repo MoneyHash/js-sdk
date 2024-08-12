@@ -3,7 +3,11 @@ import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
 import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
-import type { IntentType } from "./types";
+import type {
+  IntentType,
+  OnCompleteEventOptions,
+  OnFailEventOptions,
+} from "./types";
 import type { IntentDetails, IntentMethods } from "./types/headless";
 import {
   Element,
@@ -648,7 +652,42 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
+    this.#setupIframeListener(iframe);
+
     return iframe;
+  }
+
+  #setupIframeListener(iframe: HTMLIFrameElement) {
+    const onReceiveMessage = (event: MessageEvent) => {
+      const { type, data } = event.data;
+
+      switch (type) {
+        case "onComplete":
+          this.options.onComplete?.({
+            type: this.options.type,
+            ...data,
+          } as OnCompleteEventOptions<TType>);
+
+          iframe.remove();
+          window.removeEventListener("message", onReceiveMessage);
+
+          break;
+        case "onFail":
+          this.options.onFail?.({
+            type: this.options.type,
+            ...data,
+          } as unknown as OnFailEventOptions<TType>);
+
+          iframe.remove();
+          window.removeEventListener("message", onReceiveMessage);
+
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("message", onReceiveMessage);
   }
 
   #renderUrlInPopUpIframe(url: string) {
