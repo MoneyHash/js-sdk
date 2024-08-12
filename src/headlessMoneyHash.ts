@@ -775,7 +775,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       `${VAULT_INPUT_IFRAME_URL}/vaultSubmit/vaultSubmit.html`,
     );
 
-    url.searchParams.set("parent", window.location.origin); // the application that is using the SDK
+    url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
 
