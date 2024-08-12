@@ -5,11 +5,11 @@ import {
   PaymentTransaction,
   PayoutIntent,
   PayoutTransaction,
-  Redirect,
   IntentState,
   Shipping,
   ProductItem,
   AppleNativePayData,
+  IntentStateDetails,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -21,12 +21,12 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
   ? {
       intent: PaymentIntent;
       transaction: PaymentTransaction;
-      redirect: Redirect | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
+      stateDetails: IntentStateDetails<IntentState>;
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
       nativePayData: AppleNativePayData | null;
@@ -41,6 +41,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */
       state: IntentState;
+      stateDetails: IntentStateDetails<IntentState>;
       __providerId__: never;
     };
 

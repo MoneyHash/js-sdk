@@ -5,13 +5,62 @@
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@moneyhash/js-sdk playground</title>
-    <!-- <script>
+    <script>
       window.MONEYHASH_IFRAME_URL = "http://localhost:8080";
-    </script> -->
+      window.MONEYHASH_VAULT_INPUT_IFRAME_URL = "http://localhost:5173";
+    </script>
+    <style>
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+
+        width: 70%;
+        margin: auto;
+      }
+
+      .moneyhash-element {
+        border: 2px solid red;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .moneyhash-focus {
+        border-color: green;
+      }
+
+      .moneyhash-submit {
+        background-color: blue;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .moneyhash-submit:focus {
+        border: 1px solid red;
+      }
+
+      #message {
+        text-align: center;
+        margin-top: 2rem;
+      }
+    </style>
   </head>
   <body style="margin: 0">
     <button id="start">Start payment</button>
     <button id="apple-btn">Apple btn</button>
+    <div class="container">
+      <div id="card-holder-name"></div>
+      <div id="card-number"></div>
+      <div id="card-cvv"></div>
+      <div id="card-expiry-month"></div>
+      <div id="card-expiry-year"></div>
+    </div>
+    <div id="message"></div>
+
     <div id="app" style="height: 100vh"></div>
     <script type="module" src="/src/playground.ts"></script>
   </body>

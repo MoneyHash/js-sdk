@@ -52,7 +52,27 @@ export type IntentState =
   | "TRANSACTION_FAILED"
   | "EXPIRED"
   | "CLOSED"
-  | "NATIVE_PAY";
+  | "NATIVE_PAY"
+  // v1.x.x new states
+  | "FORM_FIELDS"
+  | "URL_TO_RENDER"
+  | "SAVED_CARD_CVV";
+
+export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
+
+export type CardInfo = { brand: string; lastFourDigits: string; logo: string };
+
+export type IntentStateDetails<TType extends IntentState> =
+  TType extends "FORM_FIELDS"
+    ? { formFields: FormFields }
+    : TType extends "URL_TO_RENDER"
+    ? { url: string; renderStrategy: UrlRenderStrategy }
+    : TType extends "SAVED_CARD_CVV"
+    ? {
+        card: CardInfo;
+        cvvField: Field;
+      }
+    : null;
 
 export type PurchaseOperationStatus =
   | "pending"
@@ -111,6 +131,13 @@ type TransactionOperation = {
   };
 }[keyof TransactionOperationStatusMap];
 
+export type SupportedLanguages = "ar" | "en" | "fr";
+
+export interface FeesItem {
+  title: Record<SupportedLanguages, string>;
+  value: string;
+}
+
 export interface AbstractIntent {
   id: string;
   status: IntentStatus;
@@ -120,6 +147,9 @@ export interface AbstractIntent {
     formatted: number;
     maxPayout?: number | null;
   };
+  subtotalAmount: string | null;
+  fees: Array<FeesItem> | null;
+  totalDiscounts: string | null;
   secret: string;
   isLive: boolean;
 }
@@ -176,10 +206,6 @@ export interface PayoutTransaction extends Transaction {
   payoutMethod: PaymentMethodSlugs;
 }
 
-export interface Redirect {
-  redirectUrl: string;
-}
-
 export interface ProductItem {
   name: string;
   type: string;
@@ -219,3 +245,37 @@ export interface AppleNativePayData {
   amount: string;
   supportedNetworks: string[];
 }
+
+// formFields received in intentDetails
+export type FieldType =
+  | "text"
+  | "number"
+  | "email"
+  | "date"
+  | "phoneNumber"
+  | "select";
+
+export type Field = {
+  type: FieldType;
+  name: string;
+  label: string;
+  hint: string;
+  value: string;
+  readOnly: boolean;
+  validation: {
+    required: boolean;
+    minLength: number | null;
+    maxLength: number | null;
+  };
+  dependsOn?: string;
+  optionsList?: Array<{ label: string; value: string }>;
+  optionsMap?: Record<string, Array<{ label: string; value: string }>>;
+};
+
+type FormFields = {
+  billing: Array<Field> | null;
+  shipping: Array<Field> | null;
+  card: {
+    accessToken: string;
+  } | null;
+};

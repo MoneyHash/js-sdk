@@ -9,108 +9,243 @@ declare global {
 
 window.MoneyHash = window.MoneyHash || MoneyHash;
 
-const paymentIntentId = "9KbKzOZ";
+// const paymentIntentId = "LnEDaJ9";
 
-let intentDetails: IntentDetails<"payment"> | null = null;
+const intentDetails: IntentDetails<"payment"> | null = null;
+console.log(intentDetails);
 
-let moneyHash: MoneyHash<"payment">;
+// const moneyHash: MoneyHash<"payment"> = new MoneyHash({
+//   type: "payment",
+//   onComplete: data => {
+//     // open modal confirmation for apple pay
+//     console.log("onComplete", data);
+//   },
+//   onFail: ({ intent, transaction }) => {
+//     console.log("onFail", { intent, transaction });
+//   },
+//   styles: {
+//     submitButton: {
+//       base: {
+//         background: "#09c",
+//         color: "white",
+//         borderRadius: "999px",
+//       },
+//       hover: {
+//         background: "green",
+//         color: "black",
+//       },
+//       focus: {
+//         background: "yellow",
+//         color: "black",
+//       },
+//     },
+//     input: {
+//       base: {
+//         borderRadius: "0px",
+//         borderColor: "#09c",
+//       },
+//       focus: {
+//         boxShadow: "none",
+//       },
+//       error: {
+//         borderColor: "red",
+//         borderWidth: 1,
+//         boxShadow: "none",
+//       },
+//     },
+//   },
+// });
 
-document.getElementById("start")?.addEventListener("click", async () => {
-  moneyHash?.removeEventListeners();
-  moneyHash = new MoneyHash({
-    type: "payment",
-    onComplete: data => {
-      // open modal confirmation for apple pay
-      console.log("onComplete", data);
-    },
-    onFail: ({ intent, transaction }) => {
-      console.log("onFail", { intent, transaction });
-    },
-    styles: {
-      submitButton: {
-        base: {
-          background: "#09c",
-          color: "white",
-          borderRadius: "999px",
-        },
-        hover: {
-          background: "green",
-          color: "black",
-        },
-        focus: {
-          background: "yellow",
-          color: "black",
-        },
-      },
-      input: {
-        base: {
-          borderRadius: "0px",
-          borderColor: "#09c",
-        },
-        focus: {
-          boxShadow: "none",
-        },
-        error: {
-          borderColor: "red",
-          borderWidth: 1,
-          boxShadow: "none",
-        },
-      },
-    },
-  });
+// document.getElementById("start")?.addEventListener("click", async () => {
+//   moneyHash?.removeEventListeners();
 
-  // await moneyHash.start({ selector: "#app", intentId: paymentIntentId });
-  intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+//   const x = await moneyHash.getIntentDetails(paymentIntentId);
+//   console.log(x);
 
-  console.log(intentDetails);
+//   const elements = await moneyHash.elements({
+//     styles: {
+//       color: "white", // color of the text
+//       backgroundColor: "grey", // background color of the input
+//       placeholderColor: "#ccc", // placeholder color
+//     },
+//   });
 
-  // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+//   const cardHolderName = elements.create({
+//     elementType: "cardHolderName",
+//     elementOptions: {
+//       selector: "#card-holder-name",
+//       // height: "80px",
+//       placeholder: "Card Holder Name",
+//       styles: {
+//         // color: "red",
+//         // backgroundColor: "black", // background color of the input
+//         // placeholderColor: "#ccc", // placeholder color
+//       },
+//     },
+//   });
 
-  // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
+//   const cardNumber = elements.create({
+//     elementType: "cardNumber",
+//     elementOptions: {
+//       selector: "#card-number",
+//       styles: {
+//         // color: "red",
+//       },
+//     },
+//   });
 
-  // const response = await moneyHash.proceedWith({
-  //   intentId: paymentIntentId,
-  //   type: "method", // method | savedCard | customerBalance
-  //   id: "MOBILE_WALLET",
-  // });
+//   const cardCvv = elements.create({
+//     elementType: "cardCvv",
+//     elementOptions: {
+//       selector: "#card-cvv",
+//       styles: {
+//         // color: "blue",
+//       },
+//     },
+//   });
 
-  // console.log(response);
-});
+//   const cardExpiryMonth = elements.create({
+//     elementType: "cardExpiryMonth",
+//     elementOptions: {
+//       selector: "#card-expiry-month",
+//       styles: {
+//         // color: "green",
+//       },
+//     },
+//   });
 
-document.getElementById("apple-btn")?.addEventListener("click", () => {
-  if (!intentDetails) return;
+//   const cardExpiryYear = elements.create({
+//     elementType: "cardExpiryYear",
+//     elementOptions: {
+//       selector: "#card-expiry-year",
+//       styles: {},
+//     },
+//   });
 
-  moneyHash
-    .payWithApplePay({
-      intentId: paymentIntentId,
-      countryCode: "AE",
-      amount: intentDetails.intent.amount.formatted,
-      currency: intentDetails.intent.amount.currency,
-      billingData: {
-        email: "test@test.com",
-      },
-      onCancel: () => console.log("CANCEL"),
-      onComplete: async () => {
-        // Will fire after a successful payment
-        console.log("COMPLETE");
-      },
-      onError: async () => {
-        // Will fire after a failure payment
-        console.log("ERROR");
-      },
-    })
-    .catch(error => {
-      console.log(error);
-      /**
-       *
-       * error.message
-          - Must create a new ApplePaySession from a user gesture handler. // Native apple pay button need to be triggered from click event directly
-          - Billing data is missing while calling payWithApplePay // intent requires billing data to proceed with the native integration
-       */
+//   cardHolderName.on("focus", () => {
+//     console.log("focus card holder");
+//   });
 
-      /**
-       * error
-       *  { email: "Enter a valid email address." }
-       */
-    });
-});
+//   cardHolderName.mount();
+//   cardNumber.mount();
+//   cardCvv.mount();
+//   cardExpiryMonth.mount();
+//   cardExpiryYear.mount();
+
+//   const message = document.querySelector("#message")!;
+//   const submit = document.createElement("button");
+//   submit.innerText = "Submit";
+
+//   submit.addEventListener("click", async () => {
+//     message.innerHTML = "";
+//     try {
+//       submit.innerText = "Submitting...";
+//       const { formFields, __providerId__: providerId } =
+//         await moneyHash.proceedWith({
+//           intentId: paymentIntentId,
+//           type: "method",
+//           id: "CARD",
+//         });
+
+//       const billingData = {
+//         first_name: "Alaa",
+//         last_name: "Othman",
+//         email: "a.a@a.com",
+//         phone_number: "+201001234567",
+//       };
+
+//       const shippingData = {};
+
+//       const res = await moneyHash.submitForm({
+//         intentId: paymentIntentId,
+//         accessToken: formFields?.card?.accessToken,
+//         providerId,
+//         billingData,
+//         shippingData,
+//       });
+//       console.log("Success! Intent Processed", { res });
+//       submit.innerText = "Submit";
+//       message.innerHTML = "Success! Intent Processed";
+//       message.setAttribute("style", "color: green");
+//     } catch (error) {
+//       console.log("playground", error);
+//       submit.innerText = "Submit";
+//       message.innerHTML = `${error}`;
+//       message.setAttribute("style", "color: red");
+//     }
+//   });
+
+//   const container = document.querySelector(".container");
+//   container!.appendChild(submit);
+
+//   // cardName.on("ready", event => {
+//   //   // Handle ready event
+//   //   cardName.focus();
+//   // });
+
+//   // cardName.on("focus", () => {
+//   //   // Handle focus event
+//   // });
+
+//   // cardName.on("blur", () => {
+//   //   // Handle blur event
+//   // });
+
+//   // moneyHash.renderField({ selector: "#app", inputType: "text", options: {} });
+
+//   // await moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+//   // intentDetails = await moneyHash.getIntentDetails(paymentIntentId);
+
+//   // console.log(intentDetails);
+
+//   // moneyHash.renderForm({ selector: "#app", intentId: paymentIntentId });
+
+//   // const intentMethods = await moneyHash.getIntentMethods(paymentIntentId);
+
+//   // const response = await moneyHash.proceedWith({
+//   //   intentId: paymentIntentId,
+//   //   type: "method", // method | savedCard | customerBalance
+//   //   id: "MOBILE_WALLET",
+//   // });
+
+//   // console.log(response);
+// });
+
+// document.getElementById("start")?.click();
+// document.getElementById("apple-btn")?.addEventListener("click", () => {
+//   if (!intentDetails) return;
+
+//   moneyHash
+//     .payWithApplePay({
+//       intentId: paymentIntentId,
+//       countryCode: "AE",
+//       amount: intentDetails.intent.amount.formatted,
+//       currency: intentDetails.intent.amount.currency,
+//       billingData: {
+//         email: "test@test.com",
+//       },
+//       onCancel: () => console.log("CANCEL"),
+//       onComplete: async () => {
+//         // Will fire after a successful payment
+//         console.log("COMPLETE");
+//       },
+//       onError: async () => {
+//         // Will fire after a failure payment
+//         console.log("ERROR");
+//       },
+//     })
+//     .catch(error => {
+//       console.log(error);
+//       /**
+//        *
+//        * error.message
+//           - Must create a new ApplePaySession from a user gesture handler. // Native apple pay button need to be triggered from click event directly
+//           - Billing data is missing while calling payWithApplePay // intent requires billing data to proceed with the native integration
+//        */
+
+//       /**
+//        * error
+//        *  { email: "Enter a valid email address." }
+//        */
+//     });
+// });
