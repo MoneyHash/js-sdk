@@ -736,7 +736,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
 
-    url.searchParams.set("parent", window.location.origin); // the application that is using the SDK
+    url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
 
