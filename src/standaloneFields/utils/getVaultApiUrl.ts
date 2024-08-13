@@ -4,7 +4,7 @@
  */
 export default function getVaultApiUrl() {
   const VAULT_API_URL =
-    window.MONEYHASH_VAULT_API_URL ?? import.meta.env.VITE_VAULT_URL;
+    window.MONEYHASH_VAULT_API_URL ?? import.meta.env.VITE_VAULT_API_URL;
 
   return VAULT_API_URL;
 }

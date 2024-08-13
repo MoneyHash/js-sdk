@@ -620,7 +620,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
-  renderUrl(
+  async renderUrl(
     url: string,
     renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
   ) {
@@ -636,8 +636,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     }
   }
 
-  #renderUrlInIframe(url: string) {
+  async #renderUrlInIframe(url: string) {
     const container = document.querySelector("#rendered-url-iframe-container");
+
+    throwIf(
+      !container,
+      "Couldn't find an element with id rendered-url-iframe-container to render the iframe!",
+    );
 
     const iframe = document.createElement("iframe");
     iframe.src = url;
@@ -647,12 +652,32 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    this.#setupIframeListener(iframe);
+    await this.#setupExternalWindowListener();
 
-    return iframe;
+    iframe.remove();
   }
 
-  #setupIframeListener(iframe: HTMLIFrameElement) {
+  async #renderUrlInPopUpIframe(url: string) {
+    const windowRef = window.open(
+      `${url}`,
+      "",
+      "width=600,height=400,left=200,top=200",
+    );
+
+    throwIf(!windowRef, "Popup blocked by browser!");
+
+    await this.#setupExternalWindowListener();
+
+    windowRef?.close();
+  }
+
+  async #renderUrlInRedirect(url: string) {
+    window.open(url, "_blank");
+  }
+
+  async #setupExternalWindowListener() {
+    const resultDefPromise = new DeferredPromise();
+
     const onReceiveMessage = (event: MessageEvent) => {
       const { type, data } = event.data;
 
@@ -663,7 +688,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             ...data,
           } as OnCompleteEventOptions<TType>);
 
-          iframe.remove();
+          resultDefPromise.resolve(() => null);
           window.removeEventListener("message", onReceiveMessage);
 
           break;
@@ -673,24 +698,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             ...data,
           } as unknown as OnFailEventOptions<TType>);
 
-          iframe.remove();
+          resultDefPromise.resolve(() => null);
           window.removeEventListener("message", onReceiveMessage);
 
           break;
         default:
+          resultDefPromise.resolve(() => null);
+
           break;
       }
     };
 
     window.addEventListener("message", onReceiveMessage);
-  }
 
-  #renderUrlInPopUpIframe(url: string) {
-    return window.open(`${url}`, "", "width=600,height=400,left=200,top=200");
-  }
-
-  #renderUrlInRedirect(url: string) {
-    return window.open(url, "_blank");
+    return resultDefPromise.promise;
   }
 
   #setupVaultFieldsListeners(
