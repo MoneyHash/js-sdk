@@ -3,8 +3,7 @@ import { ElementType } from "../types/standaloneFields";
 export default function getMissingCardElement(
   mountedElements: Array<ElementType>,
 ) {
-  const allElements: Array<ElementType> = [
-    "cardHolderName",
+  const requiredElements: Array<ElementType> = [
     "cardNumber",
     "cardCvv",
     "cardExpiryMonth",
@@ -12,7 +11,7 @@ export default function getMissingCardElement(
   ];
 
   // eslint-disable-next-line no-restricted-syntax
-  for (const element of allElements) {
+  for (const element of requiredElements) {
     if (!mountedElements.includes(element)) {
       return element;
     }
