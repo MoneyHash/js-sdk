@@ -4,7 +4,7 @@ export type Elements = {
 
 export type Element = {
   mount: () => void;
-  on: (event: ElementEvents, callback: () => void) => void;
+  on: (event: ElementEvents, callback: (data?: any) => void) => void;
 };
 
 export type ElementType =
@@ -20,7 +20,11 @@ export type ElementStyles = {
   placeholderColor?: string;
 };
 
-export type ElementEvents = "focus" | "blur" | "changeInput";
+export type ElementEvents =
+  | "focus"
+  | "blur"
+  | "changeInput"
+  | "cardNumberChange";
 
 export type ElementsProps = {
   styles?: ElementStyles;

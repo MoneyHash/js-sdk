@@ -473,7 +473,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
        * @returns { Elements }
        */
       create: ({ elementType, elementOptions }: ElementProps): Element => {
-        const eventCallbacks = new Map<string, () => void>();
+        const eventCallbacks = new Map<string, (data?: any) => void>();
 
         const container = document.querySelector(
           elementOptions.selector,
@@ -487,7 +487,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         container.classList.add("MoneyHashElement");
 
         fieldsListeners.push((event: MessageEvent) => {
-          const { type } = event.data;
+          const { type, data } = event.data;
 
           // if (type === `${elementType}:init`) {
           //   //console.log(elementType, "init");
@@ -504,6 +504,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           if (type === `${elementType}@changeInput`) {
             eventCallbacks.get(`${elementType}@changeInput`)?.();
           }
+          if (type === `${elementType}@cardNumberChange`) {
+            eventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
+          }
         });
 
         return {
@@ -517,7 +520,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               styles: { ...styles, ...elementOptions.styles },
             });
           },
-          on: (eventName: ElementEvents, callback: () => void) => {
+          on: (eventName: ElementEvents, callback: (data?: any) => void) => {
             eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
         };
