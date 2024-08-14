@@ -133,9 +133,15 @@ type TransactionOperation = {
 
 export type SupportedLanguages = "ar" | "en" | "fr";
 
-export interface FeesItem {
+export interface Discount {
   title: Record<SupportedLanguages, string>;
-  value: string;
+  type: "amount" | "percentage";
+  value: string | number;
+}
+
+export interface Fee {
+  title: Record<SupportedLanguages, string>;
+  value: string | number;
 }
 
 export interface AbstractIntent {
@@ -148,7 +154,7 @@ export interface AbstractIntent {
     maxPayout?: number | null;
   };
   subtotalAmount: string | null;
-  fees: Array<FeesItem> | null;
+  fees: Array<Fee> | null;
   totalDiscounts: string | null;
   secret: string;
   isLive: boolean;

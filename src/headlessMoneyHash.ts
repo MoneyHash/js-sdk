@@ -4,6 +4,8 @@ import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type {
+  Discount,
+  Fee,
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
@@ -432,6 +434,42 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
+  }
+
+  /**
+   * Update the intent metadata
+   *
+   * @description Can be used for updating the discounts and fees
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentMetadata({
+   *   intentId: '<intent_id>',
+   *   discounts: [],
+   *   fees: [],
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentMetadata({
+    intentId,
+    discounts,
+    fees,
+  }: {
+    intentId: string;
+    discounts?: Array<Discount>;
+    fees?: Array<Fee>;
+  }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentMetadata",
+      payload: {
+        intentId,
+        discounts,
+        fees,
+        lang: this.sdkEmbed.lang,
+      },
+    });
   }
 
   /**
