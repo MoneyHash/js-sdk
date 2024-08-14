@@ -22,6 +22,7 @@ import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 import getApiUrl from "./utils/getApiUrl";
+import getMissingCardElement from "./utils/getMissingCardElement";
 
 export * from "./types";
 export * from "./types/headless";
@@ -46,6 +47,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   } = {
     current: null,
   };
+
+  private mountedCardElements: Array<ElementType> = [];
 
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
@@ -504,13 +507,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         });
 
         return {
-          mount: () =>
+          mount: () => {
+            this.mountedCardElements.push(elementType);
+
             this.#renderFieldIframe({
               container,
               elementType,
               elementOptions,
               styles: { ...styles, ...elementOptions.styles },
-            }),
+            });
+          },
           on: (eventName: ElementEvents, callback: () => void) => {
             eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
@@ -544,6 +550,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
   }): Promise<IntentDetails<TType>> {
+    const missingCardElement = getMissingCardElement(this.mountedCardElements);
+
+    throwIf(
+      !!missingCardElement,
+      `You must mount ${missingCardElement} element!`,
+    );
+
     const vaultFieldsDefPromise = new DeferredPromise();
 
     let cardEmbedData: any;
