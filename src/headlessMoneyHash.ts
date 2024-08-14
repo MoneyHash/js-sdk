@@ -473,7 +473,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
        * @returns { Elements }
        */
       create: ({ elementType, elementOptions }: ElementProps): Element => {
-        const eventCallbacks = new Map<string, (data?: any) => void>();
+        const eventCallbacks = new Map<
+          `${ElementType}@${ElementEvents}`,
+          Function
+        >();
 
         const container = document.querySelector(
           elementOptions.selector,
@@ -520,7 +523,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               styles: { ...styles, ...elementOptions.styles },
             });
           },
-          on: (eventName: ElementEvents, callback: (data?: any) => void) => {
+          on: (eventName, callback) => {
             eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
         };

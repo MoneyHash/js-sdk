@@ -2,9 +2,19 @@ export type Elements = {
   create: (elementProps: ElementProps) => Element;
 };
 
+type CardNumberChangeData = {
+  first6Digits: number;
+  cardImageUrl: string;
+};
+
 export type Element = {
   mount: () => void;
-  on: (event: ElementEvents, callback: (data?: any) => void) => void;
+  on<T extends ElementEvents>(
+    event: T,
+    callback: (
+      data: T extends "cardNumberChange" ? CardNumberChangeData : never,
+    ) => void,
+  ): void;
 };
 
 export type ElementType =
