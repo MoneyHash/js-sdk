@@ -2,9 +2,19 @@ export type Elements = {
   create: (elementProps: ElementProps) => Element;
 };
 
+type CardNumberChangeData = {
+  first6Digits: number;
+  cardImageUrl: string;
+};
+
 export type Element = {
   mount: () => void;
-  on: (event: ElementEvents, callback: () => void) => void;
+  on<T extends ElementEvents>(
+    event: T,
+    callback: (
+      data: T extends "cardNumberChange" ? CardNumberChangeData : never,
+    ) => void,
+  ): void;
 };
 
 export type ElementType =
@@ -20,7 +30,11 @@ export type ElementStyles = {
   placeholderColor?: string;
 };
 
-export type ElementEvents = "focus" | "blur" | "changeInput";
+export type ElementEvents =
+  | "focus"
+  | "blur"
+  | "changeInput"
+  | "cardNumberChange";
 
 export type ElementsProps = {
   styles?: ElementStyles;
