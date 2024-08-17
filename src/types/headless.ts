@@ -110,3 +110,7 @@ export type FormField = {
     | "DateField";
   value: string;
 };
+
+export type RenderOptions = {
+  redirectTarget: "_blank" | "_self";
+};

@@ -10,7 +10,11 @@ import type {
   OnCompleteEventOptions,
   OnFailEventOptions,
 } from "./types";
-import type { IntentDetails, IntentMethods } from "./types/headless";
+import type {
+  IntentDetails,
+  IntentMethods,
+  RenderOptions,
+} from "./types/headless";
 import {
   Element,
   ElementEvents,
@@ -680,6 +684,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async renderUrl(
     url: string,
     renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
+    options?: RenderOptions,
   ) {
     switch (renderStrategy) {
       case "IFRAME":
@@ -687,7 +692,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe(url);
       case "REDIRECT":
-        return this.#renderUrlInRedirect(url);
+        return this.#renderUrlInRedirect(url, options);
       default:
         return null;
     }
@@ -728,7 +733,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     windowRef?.close();
   }
 
-  async #renderUrlInRedirect(url: string) {
+  async #renderUrlInRedirect(url: string, options?: RenderOptions) {
+    if (!options) {
+      window.location.href = url;
+      return;
+    }
+
+    const { redirectTarget } = options!;
+
+    if (!redirectTarget || redirectTarget === "_self") {
+      window.location.href = url;
+      return;
+    }
+
     window.open(url, "_blank");
   }
 
