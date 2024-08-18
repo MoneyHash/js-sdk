@@ -671,7 +671,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener();
+    await this.#setupExternalWindowListener({
+      intentResultFn: resultUrl => {
+        iframe.src = resultUrl;
+      },
+    });
 
     iframe.remove();
   }
@@ -685,7 +689,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener();
+    await this.#setupExternalWindowListener({
+      intentResultFn: resultUrl => {
+        window.location.href = resultUrl;
+      },
+    });
 
     windowRef?.close();
   }
@@ -694,13 +702,21 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     window.open(url, "_blank");
   }
 
-  async #setupExternalWindowListener() {
+  async #setupExternalWindowListener({
+    intentResultFn,
+  }: {
+    intentResultFn: (url: string) => void;
+  }) {
     const resultDefPromise = new DeferredPromise();
 
     const onReceiveMessage = (event: MessageEvent) => {
       const { type, data } = event.data;
 
       switch (type) {
+        case "intentResult":
+          intentResultFn(data.url);
+
+          break;
         case "onComplete":
           this.options.onComplete?.({
             type: this.options.type,
