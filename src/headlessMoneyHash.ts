@@ -24,11 +24,11 @@ import {
   ElementStyles,
   ElementType,
 } from "./types/standaloneFields";
+import getApiUrl from "./utils/getApiUrl";
+import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
-import getApiUrl from "./utils/getApiUrl";
-import getMissingCardElement from "./utils/getMissingCardElement";
 
 export * from "./types";
 export * from "./types/headless";
@@ -441,35 +441,57 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Update the intent metadata
+   * Update the intent discount
    *
-   * @description Can be used for updating the discounts and fees
+   * @description Can be used for updating discount on the intent level
    *
    * @example
    * ```
-   * await moneyHash.updateIntentMetadata({
+   * await moneyHash.updateIntentDiscount({
    *   intentId: '<intent_id>',
-   *   discounts: [],
-   *   fees: [],
+   *   discount: Discount,
    * });
    * ```
    *
    * @returns Promise<{@link IntentDetails}>
    */
-  updateIntentMetadata({
+  updateIntentDiscount({
     intentId,
-    discounts,
-    fees,
+    discount,
   }: {
     intentId: string;
-    discounts?: Array<Discount>;
-    fees?: Array<Fee>;
+    discount: Discount;
   }) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
-      api: "sdk:updateIntentMetadata",
+      api: "sdk:updateIntentDiscount",
       payload: {
         intentId,
-        discounts,
+        discount,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Update the intent fees
+   *
+   * @description Can be used for updating intent fees
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentFees({
+   *   intentId: '<intent_id>',
+   *   fees: Array<Fee>,
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentFees",
+      payload: {
+        intentId,
         fees,
         lang: this.sdkEmbed.lang,
       },
