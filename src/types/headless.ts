@@ -1,15 +1,15 @@
 import {
+  AppleNativePayData,
+  IntentState,
+  IntentStateDetails,
   IntentType,
   PaymentIntent,
   PaymentMethodSlugs,
   PaymentTransaction,
   PayoutIntent,
   PayoutTransaction,
-  IntentState,
-  Shipping,
   ProductItem,
-  AppleNativePayData,
-  IntentStateDetails,
+  Shipping,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -112,5 +112,5 @@ export type FormField = {
 };
 
 export type RenderOptions = {
-  redirectTarget: "_blank" | "_self";
+  redirectToNewWindow: boolean;
 };

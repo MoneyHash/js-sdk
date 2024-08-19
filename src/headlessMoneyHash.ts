@@ -9,6 +9,7 @@ import type {
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  UrlRenderStrategy,
 } from "./types";
 import type {
   IntentDetails,
@@ -703,9 +704,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
+  renderUrl(url: string, renderStrategy: UrlRenderStrategy): Promise<void>;
+  renderUrl(
+    url: string,
+    renderStrategy: UrlRenderStrategy,
+    options?: RenderOptions,
+  ): Promise<void>;
   async renderUrl(
     url: string,
-    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
+    renderStrategy: UrlRenderStrategy,
     options?: RenderOptions,
   ) {
     switch (renderStrategy) {
@@ -756,14 +763,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   async #renderUrlInRedirect(url: string, options?: RenderOptions) {
-    if (!options) {
-      window.location.href = url;
-      return;
-    }
-
-    const { redirectTarget } = options!;
-
-    if (!redirectTarget || redirectTarget === "_self") {
+    if (!options || !options.redirectToNewWindow) {
       window.location.href = url;
       return;
     }
