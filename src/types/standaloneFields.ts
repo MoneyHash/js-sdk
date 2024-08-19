@@ -4,8 +4,8 @@ export type Elements = {
 
 type CardNumberChangeData = {
   first6Digits: number;
-  brandIconUrl: string | null;
-  brand: string | null;
+  brand: string;
+  brandIconUrl: string;
 };
 
 export type Element = {
