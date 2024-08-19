@@ -29,6 +29,9 @@ export type ElementStyles = {
   color?: string;
   backgroundColor?: string;
   placeholderColor?: string;
+  fontSize?: string;
+  padding?: string;
+  height?: string;
   direction?: "ltr" | "rtl";
 };
 
@@ -46,7 +49,6 @@ export type ElementProps = {
   elementType: ElementType;
   elementOptions: {
     selector: string;
-    height?: string;
     placeholder?: string;
     styles?: ElementStyles;
   };

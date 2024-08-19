@@ -864,11 +864,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       "backgroundColor",
       styles?.backgroundColor || "transparent",
     );
+    url.searchParams.set("fontSize", styles?.fontSize || "");
+    url.searchParams.set("padding", styles?.padding || "");
 
     const fieldIframe = document.createElement("iframe");
 
     fieldIframe.src = url.toString();
-    fieldIframe.style.height = elementOptions.height ?? "40px";
+    fieldIframe.style.height = styles?.height ?? "40px";
     fieldIframe.style.setProperty("overflow", "hidden", "important");
     fieldIframe.style.setProperty("display", "block", "important");
     fieldIframe.style.setProperty("width", "100%", "important");
