@@ -53,22 +53,22 @@ export type ElementsProps = {
 export type ElementProps =
   | {
       elementType: Exclude<ElementType, "cardHolderName">;
-      elementOptions: {
-        selector: string;
-        placeholder?: string;
-        styles?: ElementStyles;
+      elementOptions: CommonElementOptions & {
         validation?: never;
       };
     }
   | {
       elementType: "cardHolderName";
-      elementOptions: {
-        selector: string;
-        placeholder?: string;
-        styles?: ElementStyles;
-        classes?: Partial<Record<ElementClassNames, string>>;
+      elementOptions: CommonElementOptions & {
         validation?: {
           required?: boolean;
         };
       };
     };
+
+type CommonElementOptions = {
+  selector: string;
+  placeholder?: string;
+  styles?: ElementStyles;
+  classes?: Partial<Record<ElementClassNames, string>>;
+};
