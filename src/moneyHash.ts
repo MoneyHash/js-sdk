@@ -1,6 +1,6 @@
 import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
+import type { IntentType, SupportedLanguages } from "./types";
 import throwIf from "./utils/throwIf";
-import type { IntentType } from "./types";
 
 export interface MoneyHashOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {}
@@ -49,7 +49,7 @@ export default class MoneyHash<TType extends IntentType> {
    *
    * @returns Promise<void>
    */
-  setLocale(locale: string) {
+  setLocale(locale: SupportedLanguages) {
     return this.sdkEmbed.setLocale(locale);
   }
 
