@@ -511,7 +511,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles }: ElementsProps): Elements {
+  elements({ styles, classNames }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     this.#setupVaultFieldsListeners(fieldsListeners);
 
@@ -554,24 +554,39 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         container.classList.add("MoneyHashElement");
 
+        const focusClassName = classNames?.focus || "MoneyHashElement--focus";
+        const errorClassName = classNames?.error || "MoneyHashElement--error";
+
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
 
-          // if (type === `${elementType}:init`) {
-          //   //console.log(elementType, "init");
-
-          // }
           if (type === `${elementType}@focus`) {
-            container.classList.add("MoneyHashElement--focus");
+            container.classList.add(focusClassName);
             eventCallbacks.get(`${elementType}@focus`)?.();
+            return;
           }
+
           if (type === `${elementType}@blur`) {
-            container.classList.remove("MoneyHashElement--focus");
+            container.classList.remove(focusClassName);
             eventCallbacks.get(`${elementType}@blur`)?.();
+            return;
           }
+
+          if (type === `${elementType}@error`) {
+            if (data.isValid) {
+              container.classList.remove(errorClassName);
+            } else {
+              container.classList.add(errorClassName);
+            }
+            eventCallbacks.get(`${elementType}@error`)?.(data);
+            return;
+          }
+
           if (type === `${elementType}@changeInput`) {
             eventCallbacks.get(`${elementType}@changeInput`)?.();
+            return;
           }
+
           if (type === `${elementType}@cardNumberChange`) {
             eventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
           }
@@ -591,6 +606,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           on: (eventName, callback) => {
             eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
+          off: eventName =>
+            eventCallbacks.delete(`${elementType}@${eventName}`),
         };
       },
     };
@@ -839,10 +856,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
-    elementOptions: {
-      height?: string;
-      placeholder?: string;
-    };
+    elementOptions: ElementProps["elementOptions"];
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
@@ -850,6 +864,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
+    if (elementOptions.validation?.required !== undefined) {
+      url.searchParams.set(
+        "required",
+        `${elementOptions.validation?.required}`,
+      );
+    }
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
 
     url.searchParams.set("color", styles?.color || "#000");
