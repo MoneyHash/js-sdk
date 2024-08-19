@@ -1,15 +1,15 @@
 import {
+  AppleNativePayData,
+  IntentState,
+  IntentStateDetails,
   IntentType,
   PaymentIntent,
   PaymentMethodSlugs,
   PaymentTransaction,
   PayoutIntent,
   PayoutTransaction,
-  IntentState,
-  Shipping,
   ProductItem,
-  AppleNativePayData,
-  IntentStateDetails,
+  Shipping,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -109,4 +109,8 @@ export type FormField = {
     | "EmailField"
     | "DateField";
   value: string;
+};
+
+export type RenderOptions = {
+  redirectToNewWindow: boolean;
 };
