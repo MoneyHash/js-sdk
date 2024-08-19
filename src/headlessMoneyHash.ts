@@ -569,31 +569,33 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           ...elementOptions.classes,
         };
 
-        const focusClassName =
-          customClasses?.focus || "MoneyHashElement--focus";
-        const errorClassName =
-          customClasses?.error || "MoneyHashElement--error";
+        const focusClassName = customClasses?.focus?.split(" ") || [
+          "MoneyHashElement--focus",
+        ];
+        const errorClassName = customClasses?.error?.split(" ") || [
+          "MoneyHashElement--error",
+        ];
 
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
 
           if (type === `${elementType}@focus`) {
-            container.classList.add(focusClassName);
+            container.classList.add(...focusClassName);
             eventCallbacks.get(`${elementType}@focus`)?.();
             return;
           }
 
           if (type === `${elementType}@blur`) {
-            container.classList.remove(focusClassName);
+            container.classList.remove(...focusClassName);
             eventCallbacks.get(`${elementType}@blur`)?.();
             return;
           }
 
           if (type === `${elementType}@error`) {
             if (data.isValid) {
-              container.classList.remove(errorClassName);
+              container.classList.remove(...errorClassName);
             } else {
-              container.classList.add(errorClassName);
+              container.classList.add(...errorClassName);
             }
             eventCallbacks.get(`${elementType}@error`)?.(data);
             return;
