@@ -1,6 +1,7 @@
-import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
+import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import type { IntentType, SupportedLanguages } from "./types";
 import throwIf from "./utils/throwIf";
+import warnIf from "./utils/warnIf";
 
 export interface MoneyHashOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {}
@@ -50,7 +51,15 @@ export default class MoneyHash<TType extends IntentType> {
    * @returns Promise<void>
    */
   setLocale(locale: SupportedLanguages) {
-    return this.sdkEmbed.setLocale(locale);
+    warnIf(
+      !!locale && !supportedLanguages.has(locale),
+      `Invalid locale. Supported languages (${[...supportedLanguages].join(
+        " | ",
+      )})`,
+    );
+
+    const validLocale = supportedLanguages.has(locale) ? locale : "en";
+    return this.sdkEmbed.setLocale(validLocale);
   }
 
   /**
