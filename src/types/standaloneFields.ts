@@ -32,6 +32,7 @@ export type ElementStyles = {
   fontSize?: string;
   padding?: string;
   height?: string;
+  direction?: "ltr" | "rtl";
 };
 
 export type ElementEvents =

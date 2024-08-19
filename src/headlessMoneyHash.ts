@@ -7,6 +7,7 @@ import type {
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
 import type {
@@ -427,7 +428,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns Promise<void>
    */
-  setLocale(locale: string) {
+  setLocale(locale: SupportedLanguages) {
     return this.sdkEmbed.setLocale(locale);
   }
 
@@ -791,6 +792,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
+    url.searchParams.set("lang", this.sdkEmbed.lang);
+    url.searchParams.set("direction", styles?.direction || "");
 
     url.searchParams.set("color", styles?.color || "#000");
     url.searchParams.set(
@@ -832,6 +835,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("lang", this.sdkEmbed.lang);
 
     const submitIframe = document.createElement("iframe");
 
