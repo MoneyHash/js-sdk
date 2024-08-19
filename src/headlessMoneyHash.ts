@@ -4,6 +4,8 @@ import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type {
+  Discount,
+  Fee,
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
@@ -432,6 +434,64 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
+  }
+
+  /**
+   * Update the intent discount
+   *
+   * @description Can be used for updating discount on the intent level
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentDiscount({
+   *   intentId: '<intent_id>',
+   *   discount: Discount,
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentDiscount({
+    intentId,
+    discount,
+  }: {
+    intentId: string;
+    discount: Discount;
+  }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentDiscount",
+      payload: {
+        intentId,
+        discount,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Update the intent fees
+   *
+   * @description Can be used for updating intent fees
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentFees({
+   *   intentId: '<intent_id>',
+   *   fees: Array<Fee>,
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentFees",
+      payload: {
+        intentId,
+        fees,
+        lang: this.sdkEmbed.lang,
+      },
+    });
   }
 
   /**
