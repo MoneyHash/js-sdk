@@ -10,10 +10,9 @@ import {
 } from "./types";
 import getIframeUrl from "./utils/getIframeUrl";
 import throwIf from "./utils/throwIf";
-import warnIf from "./utils/warnIf";
 
 const supportedTypes = new Set<IntentType>(["payment", "payout"]);
-const supportedLanguages = new Set(["en", "fr", "ar"]);
+export const supportedLanguages = new Set(["en", "fr", "ar"]);
 export interface SDKEmbedOptions<TType extends IntentType> {
   /**
    * Intent type `payment`, `payout`
@@ -75,10 +74,6 @@ export default class SDKEmbed<TType extends IntentType> {
 
   get lang() {
     const language = this.options.locale?.split("-")[0];
-    warnIf(
-      !!language && !supportedLanguages.has(language),
-      `Supported languages (${[...supportedLanguages].join(" | ")})`,
-    );
 
     return language || "en";
   }
