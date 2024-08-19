@@ -29,6 +29,7 @@ export type ElementStyles = {
   color?: string;
   backgroundColor?: string;
   placeholderColor?: string;
+  direction?: "ltr" | "rtl";
 };
 
 export type ElementEvents =
