@@ -9,8 +9,13 @@ import type {
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  UrlRenderStrategy,
 } from "./types";
-import type { IntentDetails, IntentMethods } from "./types/headless";
+import type {
+  IntentDetails,
+  IntentMethods,
+  RenderOptions,
+} from "./types/headless";
 import {
   Element,
   ElementEvents,
@@ -20,11 +25,11 @@ import {
   ElementStyles,
   ElementType,
 } from "./types/standaloneFields";
+import getApiUrl from "./utils/getApiUrl";
+import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
-import getApiUrl from "./utils/getApiUrl";
-import getMissingCardElement from "./utils/getMissingCardElement";
 
 export * from "./types";
 export * from "./types/headless";
@@ -699,9 +704,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
+  renderUrl(url: string, renderStrategy: UrlRenderStrategy): Promise<void>;
+  renderUrl(
+    url: string,
+    renderStrategy: UrlRenderStrategy,
+    options?: RenderOptions,
+  ): Promise<void>;
   async renderUrl(
     url: string,
-    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
+    renderStrategy: UrlRenderStrategy,
+    options?: RenderOptions,
   ) {
     switch (renderStrategy) {
       case "IFRAME":
@@ -709,7 +721,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe(url);
       case "REDIRECT":
-        return this.#renderUrlInRedirect(url);
+        return this.#renderUrlInRedirect(url, options);
       default:
         return null;
     }
@@ -750,7 +762,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     windowRef?.close();
   }
 
-  async #renderUrlInRedirect(url: string) {
+  async #renderUrlInRedirect(url: string, options?: RenderOptions) {
+    if (!options || !options.redirectToNewWindow) {
+      window.location.href = url;
+      return;
+    }
+
     window.open(url, "_blank");
   }
 
