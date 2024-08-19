@@ -47,7 +47,7 @@ export type ElementClassNames = "focus" | "error";
 
 export type ElementsProps = {
   styles?: ElementStyles;
-  classNames?: Partial<Record<ElementClassNames, string>>;
+  classes?: Partial<Record<ElementClassNames, string>>;
 };
 
 export type ElementProps =

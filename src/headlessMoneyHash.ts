@@ -521,7 +521,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles, classNames }: ElementsProps): Elements {
+  elements({ styles, classes }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     this.#setupVaultFieldsListeners(fieldsListeners);
 
@@ -564,8 +564,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         container.classList.add("MoneyHashElement");
 
-        const focusClassName = classNames?.focus || "MoneyHashElement--focus";
-        const errorClassName = classNames?.error || "MoneyHashElement--error";
+        const customClasses = {
+          ...classes,
+          ...elementOptions.classes,
+        };
+
+        const focusClassName =
+          customClasses?.focus || "MoneyHashElement--focus";
+        const errorClassName =
+          customClasses?.error || "MoneyHashElement--error";
 
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
