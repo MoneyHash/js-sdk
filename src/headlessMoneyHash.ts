@@ -1,5 +1,5 @@
 import SDKApiHandler from "./sdkApiHandler";
-import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
+import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
@@ -31,6 +31,7 @@ import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
+import warnIf from "./utils/warnIf";
 
 export * from "./types";
 export * from "./types/headless";
@@ -431,7 +432,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Promise<void>
    */
   setLocale(locale: SupportedLanguages) {
-    return this.sdkEmbed.setLocale(locale);
+    warnIf(
+      !!locale && !supportedLanguages.has(locale),
+      `Invalid locale. Supported languages (${[...supportedLanguages].join(
+        " | ",
+      )})`,
+    );
+
+    const validLocale = supportedLanguages.has(locale) ? locale : "en";
+    return this.sdkEmbed.setLocale(validLocale);
   }
 
   /**
