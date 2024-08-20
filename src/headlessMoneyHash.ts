@@ -25,6 +25,7 @@ import {
   ElementsProps,
   ElementStyles,
   ElementType,
+  FormEvents,
 } from "./types/standaloneFields";
 import getApiUrl from "./utils/getApiUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
@@ -523,6 +524,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   elements({ styles, classes }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
+    const elementsValidity: Partial<Record<ElementType, boolean>> = {};
+    const formEventsCallback = new Map<FormEvents, Function>();
+
+    let isAllValid = false;
     this.#setupVaultFieldsListeners(fieldsListeners);
 
     return {
@@ -548,7 +553,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
        * @returns { Elements }
        */
       create: ({ elementType, elementOptions }: ElementProps): Element => {
-        const eventCallbacks = new Map<
+        const inputEventCallbacks = new Map<
           `${ElementType}@${ElementEvents}`,
           Function
         >();
@@ -579,15 +584,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
 
+          if (type === `${elementType}:init`) {
+            elementsValidity[elementType] = data.isValid;
+          }
+
           if (type === `${elementType}@focus`) {
             container.classList.add(...focusClassName);
-            eventCallbacks.get(`${elementType}@focus`)?.();
+            inputEventCallbacks.get(`${elementType}@focus`)?.();
             return;
           }
 
           if (type === `${elementType}@blur`) {
             container.classList.remove(...focusClassName);
-            eventCallbacks.get(`${elementType}@blur`)?.();
+            inputEventCallbacks.get(`${elementType}@blur`)?.();
             return;
           }
 
@@ -597,17 +606,31 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             } else {
               container.classList.add(...errorClassName);
             }
-            eventCallbacks.get(`${elementType}@error`)?.(data);
+            inputEventCallbacks.get(`${elementType}@error`)?.(data);
             return;
           }
 
           if (type === `${elementType}@changeInput`) {
-            eventCallbacks.get(`${elementType}@changeInput`)?.();
+            inputEventCallbacks.get(`${elementType}@changeInput`)?.();
+            elementsValidity[elementType] = data.isValid;
+
+            const validityChangeCallback =
+              formEventsCallback.get("validityChange");
+
+            if (validityChangeCallback) {
+              const isAllFieldsValid =
+                Object.values(elementsValidity).every(Boolean);
+
+              if (isAllFieldsValid !== isAllValid) {
+                formEventsCallback.get("validityChange")?.(isAllFieldsValid);
+                isAllValid = isAllFieldsValid;
+              }
+            }
             return;
           }
 
           if (type === `${elementType}@cardNumberChange`) {
-            eventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
+            inputEventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
           }
         });
 
@@ -623,11 +646,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             });
           },
           on: (eventName: ElementEvents, callback: Function) => {
-            eventCallbacks.set(`${elementType}@${eventName}`, callback);
+            inputEventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
           off: eventName =>
-            eventCallbacks.delete(`${elementType}@${eventName}`),
+            inputEventCallbacks.delete(`${elementType}@${eventName}`),
         };
+      },
+      on: (eventName, callback) => {
+        formEventsCallback.set(eventName, callback);
       },
     };
   }
@@ -850,6 +876,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     fieldsListeners: Array<(event: MessageEvent) => void>,
   ) {
     const onReceiveInputMessage = (event: MessageEvent) => {
+      if (event.origin !== getVaultInputIframeUrl()) return;
       fieldsListeners.forEach(listener => {
         listener(event);
       });
