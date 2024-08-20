@@ -622,7 +622,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               styles: { ...styles, ...elementOptions.styles },
             });
           },
-          on: (eventName, callback) => {
+          on: (eventName: ElementEvents, callback: Function) => {
             eventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
           off: eventName =>
