@@ -10,11 +10,16 @@ type CardNumberChangeData = {
 
 export type Element = {
   mount: () => void;
-  on<T extends ElementEvents>(
+  on(
+    event: "cardNumberChange",
+    callback: (data: CardNumberChangeData) => void,
+  ): void;
+  on(
+    event: "error",
+    callback: (data: { isValid: boolean; error: string | null }) => void,
+  ): void;
+  on<T extends Exclude<ElementEvents, "cardNumberChange" | "error">>(
     event: T,
-    callback: (
-      data: T extends "cardNumberChange" ? CardNumberChangeData : never,
-    ) => void,
   ): void;
   off: (event: ElementEvents) => boolean;
 };
