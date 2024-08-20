@@ -651,11 +651,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     accessToken,
     billingData,
     shippingData,
+    saveCard,
   }: {
     intentId: string;
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
+    saveCard?: boolean;
   }): Promise<IntentDetails<TType>> {
     const missingCardElement = getMissingCardElement(this.mountedCardElements);
 
@@ -681,7 +683,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         }
       };
 
-      submitIframe = this.#renderVaultSubmitIframe(accessToken);
+      submitIframe = this.#renderVaultSubmitIframe({ accessToken, saveCard });
       cardEmbedData = await vaultFieldsDefPromise.promise;
     }
 
@@ -922,7 +924,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     container.replaceChildren(fieldIframe);
   }
 
-  #renderVaultSubmitIframe(accessToken: string) {
+  #renderVaultSubmitIframe({
+    accessToken,
+    saveCard,
+  }: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 
@@ -934,6 +942,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
     url.searchParams.set("lang", this.sdkEmbed.lang);
+    if (saveCard !== undefined) {
+      url.searchParams.set("save_card", `${saveCard}`);
+    }
 
     const submitIframe = document.createElement("iframe");
 
