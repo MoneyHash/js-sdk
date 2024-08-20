@@ -57,6 +57,7 @@ export interface Card {
   id: string;
   brand: string;
   logo: string;
+  first6Digits: string;
   last4: string;
   expiryMonth: string;
   expiryYear: string;
