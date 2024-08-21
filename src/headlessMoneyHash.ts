@@ -474,7 +474,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId: string;
     discount: Discount;
   }) {
-    return this.sdkApiHandler.request<IntentDetails<TType>>({
+    return this.sdkApiHandler.request<{ amount: string; discount: Discount }>({
       api: "sdk:updateIntentDiscount",
       payload: {
         intentId,
@@ -500,7 +500,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Promise<{@link IntentDetails}>
    */
   updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
-    return this.sdkApiHandler.request<IntentDetails<TType>>({
+    return this.sdkApiHandler.request<{ amount: string; fees: Fee[] }>({
       api: "sdk:updateIntentFees",
       payload: {
         intentId,
