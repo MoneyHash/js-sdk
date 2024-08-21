@@ -922,7 +922,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("lang", this.sdkEmbed.lang);
     url.searchParams.set("direction", styles?.direction || "");
 
-    url.searchParams.set("color", styles?.color || "#000");
+    url.searchParams.set(
+      "color",
+      styles?.color ? JSON.stringify(styles.color) : "#000",
+    );
     url.searchParams.set(
       "placeholderColor",
       styles?.placeholderColor || "#ccc",

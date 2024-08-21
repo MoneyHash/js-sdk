@@ -38,8 +38,15 @@ export type ElementType =
   | "cardExpiryMonth"
   | "cardExpiryYear";
 
+type VariantStyle =
+  | string
+  | {
+      base: string;
+      error?: string;
+    };
+
 export type ElementStyles = {
-  color?: string;
+  color?: VariantStyle;
   backgroundColor?: string;
   placeholderColor?: string;
   fontSize?: string;
