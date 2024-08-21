@@ -1,6 +1,4 @@
 import MessagingService, { MessagePayload } from "./messagingService";
-import throwIf from "./utils/throwIf";
-import warnIf from "./utils/warnIf";
 import {
   ButtonStyle,
   InputStyle,
@@ -8,11 +6,13 @@ import {
   LoaderStyle,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  SupportedLanguages,
 } from "./types";
 import getIframeUrl from "./utils/getIframeUrl";
+import throwIf from "./utils/throwIf";
 
 const supportedTypes = new Set<IntentType>(["payment", "payout"]);
-const supportedLanguages = new Set(["en", "fr", "ar"]);
+export const supportedLanguages = new Set(["en", "fr", "ar"]);
 export interface SDKEmbedOptions<TType extends IntentType> {
   /**
    * Intent type `payment`, `payout`
@@ -74,10 +74,6 @@ export default class SDKEmbed<TType extends IntentType> {
 
   get lang() {
     const language = this.options.locale?.split("-")[0];
-    warnIf(
-      !!language && !supportedLanguages.has(language),
-      `Supported languages (${[...supportedLanguages].join(" | ")})`,
-    );
 
     return language || "en";
   }
@@ -168,7 +164,7 @@ export default class SDKEmbed<TType extends IntentType> {
     return this.isCommunicationReady;
   }
 
-  async setLocale(locale: string) {
+  async setLocale(locale: SupportedLanguages) {
     await this?.isCommunicationReady;
     this.options.locale = locale;
     this.messagingService?.send({

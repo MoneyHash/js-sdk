@@ -1,14 +1,22 @@
 import SDKApiHandler from "./sdkApiHandler";
-import SDKEmbed, { SDKEmbedOptions } from "./sdkEmbed";
+import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type {
+  Discount,
+  Fee,
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  SupportedLanguages,
+  UrlRenderStrategy,
 } from "./types";
-import type { IntentDetails, IntentMethods } from "./types/headless";
+import type {
+  IntentDetails,
+  IntentMethods,
+  RenderOptions,
+} from "./types/headless";
 import {
   Element,
   ElementEvents,
@@ -17,12 +25,14 @@ import {
   ElementsProps,
   ElementStyles,
   ElementType,
+  FormEvents,
 } from "./types/standaloneFields";
+import getApiUrl from "./utils/getApiUrl";
+import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
-import getApiUrl from "./utils/getApiUrl";
-import getMissingCardElement from "./utils/getMissingCardElement";
+import warnIf from "./utils/warnIf";
 
 export * from "./types";
 export * from "./types/headless";
@@ -422,8 +432,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns Promise<void>
    */
-  setLocale(locale: string) {
-    return this.sdkEmbed.setLocale(locale);
+  setLocale(locale: SupportedLanguages) {
+    warnIf(
+      !!locale && !supportedLanguages.has(locale),
+      `Invalid locale. Supported languages (${[...supportedLanguages].join(
+        " | ",
+      )})`,
+    );
+
+    const validLocale = supportedLanguages.has(locale) ? locale : "en";
+    return this.sdkEmbed.setLocale(validLocale);
   }
 
   /**
@@ -432,6 +450,64 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
+  }
+
+  /**
+   * Update the intent discount
+   *
+   * @description Can be used for updating discount on the intent level
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentDiscount({
+   *   intentId: '<intent_id>',
+   *   discount: Discount,
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentDiscount({
+    intentId,
+    discount,
+  }: {
+    intentId: string;
+    discount: Discount;
+  }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentDiscount",
+      payload: {
+        intentId,
+        discount,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Update the intent fees
+   *
+   * @description Can be used for updating intent fees
+   *
+   * @example
+   * ```
+   * await moneyHash.updateIntentFees({
+   *   intentId: '<intent_id>',
+   *   fees: Array<Fee>,
+   * });
+   * ```
+   *
+   * @returns Promise<{@link IntentDetails}>
+   */
+  updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:updateIntentFees",
+      payload: {
+        intentId,
+        fees,
+        lang: this.sdkEmbed.lang,
+      },
+    });
   }
 
   /**
@@ -446,8 +522,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles }: ElementsProps): Elements {
+  elements({ styles, classes }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
+    const elementsValidity: Partial<Record<ElementType, boolean>> = {};
+    const formEventsCallback = new Map<FormEvents, Function>();
+
+    let isAllValid = false;
     this.#setupVaultFieldsListeners(fieldsListeners);
 
     return {
@@ -473,7 +553,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
        * @returns { Elements }
        */
       create: ({ elementType, elementOptions }: ElementProps): Element => {
-        const eventCallbacks = new Map<
+        const inputEventCallbacks = new Map<
           `${ElementType}@${ElementEvents}`,
           Function
         >();
@@ -489,26 +569,68 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         container.classList.add("MoneyHashElement");
 
+        const customClasses = {
+          ...classes,
+          ...elementOptions.classes,
+        };
+
+        const focusClassName = customClasses?.focus?.split(" ") || [
+          "MoneyHashElement--focus",
+        ];
+        const errorClassName = customClasses?.error?.split(" ") || [
+          "MoneyHashElement--error",
+        ];
+
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
 
-          // if (type === `${elementType}:init`) {
-          //   //console.log(elementType, "init");
+          if (type === `${elementType}:init`) {
+            elementsValidity[elementType] = data.isValid;
+          }
 
-          // }
           if (type === `${elementType}@focus`) {
-            container.classList.add("MoneyHashElement--focus");
-            eventCallbacks.get(`${elementType}@focus`)?.();
+            container.classList.add(...focusClassName);
+            inputEventCallbacks.get(`${elementType}@focus`)?.();
+            return;
           }
+
           if (type === `${elementType}@blur`) {
-            container.classList.remove("MoneyHashElement--focus");
-            eventCallbacks.get(`${elementType}@blur`)?.();
+            container.classList.remove(...focusClassName);
+            inputEventCallbacks.get(`${elementType}@blur`)?.();
+            return;
           }
+
+          if (type === `${elementType}@error`) {
+            if (data.isValid) {
+              container.classList.remove(...errorClassName);
+            } else {
+              container.classList.add(...errorClassName);
+            }
+            inputEventCallbacks.get(`${elementType}@error`)?.(data);
+            return;
+          }
+
           if (type === `${elementType}@changeInput`) {
-            eventCallbacks.get(`${elementType}@changeInput`)?.();
+            inputEventCallbacks.get(`${elementType}@changeInput`)?.();
+            elementsValidity[elementType] = data.isValid;
+
+            const validityChangeCallback =
+              formEventsCallback.get("validityChange");
+
+            if (validityChangeCallback) {
+              const isAllFieldsValid =
+                Object.values(elementsValidity).every(Boolean);
+
+              if (isAllFieldsValid !== isAllValid) {
+                formEventsCallback.get("validityChange")?.(isAllFieldsValid);
+                isAllValid = isAllFieldsValid;
+              }
+            }
+            return;
           }
+
           if (type === `${elementType}@cardNumberChange`) {
-            eventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
+            inputEventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
           }
         });
 
@@ -523,10 +645,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               styles: { ...styles, ...elementOptions.styles },
             });
           },
-          on: (eventName, callback) => {
-            eventCallbacks.set(`${elementType}@${eventName}`, callback);
+          on: (eventName: ElementEvents, callback: Function) => {
+            inputEventCallbacks.set(`${elementType}@${eventName}`, callback);
           },
+          off: eventName =>
+            inputEventCallbacks.delete(`${elementType}@${eventName}`),
         };
+      },
+      on: (eventName, callback) => {
+        formEventsCallback.set(eventName, callback);
       },
     };
   }
@@ -550,11 +677,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     accessToken,
     billingData,
     shippingData,
+    saveCard,
   }: {
     intentId: string;
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
+    saveCard?: boolean;
   }): Promise<IntentDetails<TType>> {
     const missingCardElement = getMissingCardElement(this.mountedCardElements);
 
@@ -580,7 +709,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         }
       };
 
-      submitIframe = this.#renderVaultSubmitIframe(accessToken);
+      submitIframe = this.#renderVaultSubmitIframe({ accessToken, saveCard });
       cardEmbedData = await vaultFieldsDefPromise.promise;
     }
 
@@ -639,9 +768,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
+  renderUrl(url: string, renderStrategy: UrlRenderStrategy): Promise<void>;
+  renderUrl(
+    url: string,
+    renderStrategy: UrlRenderStrategy,
+    options?: RenderOptions,
+  ): Promise<void>;
   async renderUrl(
     url: string,
-    renderStrategy: "IFRAME" | "POPUP_IFRAME" | "REDIRECT",
+    renderStrategy: UrlRenderStrategy,
+    options?: RenderOptions,
   ) {
     switch (renderStrategy) {
       case "IFRAME":
@@ -649,7 +785,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe(url);
       case "REDIRECT":
-        return this.#renderUrlInRedirect(url);
+        return this.#renderUrlInRedirect(url, options);
       default:
         return null;
     }
@@ -698,7 +834,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     windowRef?.close();
   }
 
-  async #renderUrlInRedirect(url: string) {
+  async #renderUrlInRedirect(url: string, options?: RenderOptions) {
+    if (!options || !options.redirectToNewWindow) {
+      window.location.href = url;
+      return;
+    }
+
     window.open(url, "_blank");
   }
 
@@ -753,6 +894,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     fieldsListeners: Array<(event: MessageEvent) => void>,
   ) {
     const onReceiveInputMessage = (event: MessageEvent) => {
+      if (event.origin !== getVaultInputIframeUrl()) return;
       fieldsListeners.forEach(listener => {
         listener(event);
       });
@@ -778,10 +920,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
-    elementOptions: {
-      height?: string;
-      placeholder?: string;
-    };
+    elementOptions: ElementProps["elementOptions"];
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
@@ -789,7 +928,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
+    if (elementOptions.validation?.required !== undefined) {
+      url.searchParams.set(
+        "required",
+        `${elementOptions.validation?.required}`,
+      );
+    }
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
+    url.searchParams.set("lang", this.sdkEmbed.lang);
+    url.searchParams.set("direction", styles?.direction || "");
 
     url.searchParams.set("color", styles?.color || "#000");
     url.searchParams.set(
@@ -800,11 +947,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       "backgroundColor",
       styles?.backgroundColor || "transparent",
     );
+    url.searchParams.set("fontSize", styles?.fontSize || "");
+    url.searchParams.set("padding", styles?.padding || "");
 
     const fieldIframe = document.createElement("iframe");
 
     fieldIframe.src = url.toString();
-    fieldIframe.style.height = elementOptions.height ?? "40px";
+    fieldIframe.style.height = styles?.height ?? "40px";
     fieldIframe.style.setProperty("overflow", "hidden", "important");
     fieldIframe.style.setProperty("display", "block", "important");
     fieldIframe.style.setProperty("width", "100%", "important");
@@ -818,7 +967,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     container.replaceChildren(fieldIframe);
   }
 
-  #renderVaultSubmitIframe(accessToken: string) {
+  #renderVaultSubmitIframe({
+    accessToken,
+    saveCard,
+  }: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 
@@ -829,6 +984,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("lang", this.sdkEmbed.lang);
+    if (saveCard !== undefined) {
+      url.searchParams.set("save_card", `${saveCard}`);
+    }
 
     const submitIframe = document.createElement("iframe");
 
