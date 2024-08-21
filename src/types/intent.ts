@@ -184,7 +184,6 @@ export interface Transaction {
   responseCode: string;
   responseMessage: string;
   localizedResponseMessage: string;
-
   operations: TransactionOperation[];
   createdDate: string;
   billingData: {

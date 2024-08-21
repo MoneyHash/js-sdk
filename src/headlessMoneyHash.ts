@@ -474,6 +474,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId: string;
     discount: Discount;
   }) {
+    throwIf(!discount.title.en, "English discount title is required!");
+
     return this.sdkApiHandler.request<{ amount: string; discount: Discount }>({
       api: "sdk:updateIntentDiscount",
       payload: {
@@ -500,6 +502,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Promise<{@link IntentDetails}>
    */
   updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
+    fees.forEach(fee => {
+      throwIf(!fee.title.en, "English fee title is required!");
+    });
+
     return this.sdkApiHandler.request<{ amount: string; fees: Fee[] }>({
       api: "sdk:updateIntentFees",
       payload: {
