@@ -143,6 +143,7 @@ export interface Discount {
     ar?: string;
     fr?: string;
   };
+
   type: "amount" | "percentage";
   value: string | number;
 }
@@ -153,6 +154,7 @@ export interface Fee {
     ar?: string;
     fr?: string;
   };
+
   value: string | number;
 }
 
