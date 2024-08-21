@@ -143,7 +143,6 @@ export interface Discount {
     ar?: string;
     fr?: string;
   };
-
   type: "amount" | "percentage";
   value: string | number;
 }
@@ -154,7 +153,6 @@ export interface Fee {
     ar?: string;
     fr?: string;
   };
-
   value: string | number;
 }
 
@@ -183,6 +181,9 @@ export interface PayoutIntent extends AbstractIntent {}
 export interface Transaction {
   id: string;
   status: TransactionStatus;
+  responseCode: string;
+  responseMessage: string;
+  localizedResponseMessage: string;
   operations: TransactionOperation[];
   createdDate: string;
   billingData: {
