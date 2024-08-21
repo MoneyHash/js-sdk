@@ -522,7 +522,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles, classes }: ElementsProps): Elements {
+  elements({ styles, classes, fontSourceCss }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     const elementsValidity: Partial<Record<ElementType, boolean>> = {};
     const formEventsCallback = new Map<FormEvents, Function>();
@@ -643,6 +643,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               elementType,
               elementOptions,
               styles: { ...styles, ...elementOptions.styles },
+              fontSourceCss,
             });
           },
           on: (eventName: ElementEvents, callback: Function) => {
@@ -900,16 +901,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     elementType,
     elementOptions,
     styles,
+    fontSourceCss,
   }: {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
     elementOptions: ElementProps["elementOptions"];
+    fontSourceCss?: string;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
     const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
 
+    if (fontSourceCss) url.searchParams.set("fontSourceCss", fontSourceCss);
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     if (elementOptions.validation?.required !== undefined) {
@@ -932,6 +936,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       styles?.backgroundColor || "transparent",
     );
     url.searchParams.set("fontSize", styles?.fontSize || "");
+    url.searchParams.set("fontFamily", styles?.fontFamily || "");
+    url.searchParams.set("fontWeight", `${styles?.fontWeight}`);
+    url.searchParams.set("fontStyle", styles?.fontStyle || "");
     url.searchParams.set("padding", styles?.padding || "");
 
     const fieldIframe = document.createElement("iframe");
