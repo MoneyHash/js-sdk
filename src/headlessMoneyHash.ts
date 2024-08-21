@@ -32,6 +32,7 @@ import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
+import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
 
 export * from "./types";
@@ -768,20 +769,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
-  renderUrl(url: string, renderStrategy: UrlRenderStrategy): Promise<void>;
-  renderUrl(
-    url: string,
-    renderStrategy: UrlRenderStrategy,
-    options?: RenderOptions,
-  ): Promise<void>;
-  async renderUrl(
-    url: string,
-    renderStrategy: UrlRenderStrategy,
-    options?: RenderOptions,
-  ) {
+  async renderUrl({
+    intentId,
+    url,
+    renderStrategy,
+    options,
+  }: {
+    intentId: string;
+    url: string;
+    renderStrategy: UrlRenderStrategy;
+    options?: RenderOptions;
+  }) {
     switch (renderStrategy) {
       case "IFRAME":
-        return this.#renderUrlInIframe(url);
+        return this.#renderUrlInIframe(url, intentId);
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe(url);
       case "REDIRECT":
@@ -791,7 +792,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     }
   }
 
-  async #renderUrlInIframe(url: string) {
+  async #renderUrlInIframe(url: string, intentId: string) {
     const container = document.querySelector("#rendered-url-iframe-container");
 
     throwIf(
@@ -807,11 +808,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener({
-      intentResultFn: resultUrl => {
-        iframe.src = resultUrl;
-      },
-    });
+    await this.#setupExternalWindowListener(intentId);
 
     iframe.remove();
   }
@@ -825,11 +822,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener({
-      intentResultFn: resultUrl => {
-        window.location.href = resultUrl;
-      },
-    });
+    await this.#setupExternalWindowListener("");
 
     windowRef?.close();
   }
@@ -843,45 +836,36 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     window.open(url, "_blank");
   }
 
-  async #setupExternalWindowListener({
-    intentResultFn,
-  }: {
-    intentResultFn: (url: string) => void;
-  }) {
+  async #setupExternalWindowListener(intentId: string) {
     const resultDefPromise = new DeferredPromise();
 
-    const onReceiveMessage = (event: MessageEvent) => {
-      const { type, data } = event.data;
+    const onReceiveMessage = async (event: MessageEvent) => {
+      const { type } = event.data;
 
-      switch (type) {
-        case "intentResult":
-          intentResultFn(data.url);
+      if (type === "intentResult") {
+        await waitForSeconds(2);
 
-          break;
-        case "onComplete":
+        const intentDetails = await this.getIntentDetails(intentId);
+        const transactionStatus =
+          intentDetails.transaction.status.split(".")[1];
+
+        if (
+          transactionStatus === "successful" ||
+          transactionStatus.startsWith("pending")
+        ) {
           this.options.onComplete?.({
             type: this.options.type,
-            ...data,
+            ...intentDetails,
           } as OnCompleteEventOptions<TType>);
-
-          resultDefPromise.resolve(() => null);
-          window.removeEventListener("message", onReceiveMessage);
-
-          break;
-        case "onFail":
+        } else {
           this.options.onFail?.({
             type: this.options.type,
-            ...data,
+            ...intentDetails,
           } as unknown as OnFailEventOptions<TType>);
+        }
 
-          resultDefPromise.resolve(() => null);
-          window.removeEventListener("message", onReceiveMessage);
-
-          break;
-        default:
-          resultDefPromise.resolve(() => null);
-
-          break;
+        resultDefPromise.resolve(() => null);
+        window.removeEventListener("message", onReceiveMessage);
       }
     };
 
