@@ -138,13 +138,23 @@ type TransactionOperation = {
 export type SupportedLanguages = "ar" | "en" | "fr";
 
 export interface Discount {
-  title: Record<SupportedLanguages, string>;
+  title: {
+    en: string;
+    ar?: string;
+    fr?: string;
+  };
+
   type: "amount" | "percentage";
   value: string | number;
 }
 
 export interface Fee {
-  title: Record<SupportedLanguages, string>;
+  title: {
+    en: string;
+    ar?: string;
+    fr?: string;
+  };
+
   value: string | number;
 }
 
