@@ -475,7 +475,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId: string;
     discount: Discount;
   }) {
-    return this.sdkApiHandler.request<IntentDetails<TType>>({
+    throwIf(!discount.title.en, "English discount title is required!");
+
+    return this.sdkApiHandler.request<{ amount: string; discount: Discount }>({
       api: "sdk:updateIntentDiscount",
       payload: {
         intentId,
@@ -501,7 +503,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Promise<{@link IntentDetails}>
    */
   updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
-    return this.sdkApiHandler.request<IntentDetails<TType>>({
+    fees.forEach(fee => {
+      throwIf(!fee.title.en, "English fee title is required!");
+    });
+
+    return this.sdkApiHandler.request<{ amount: string; fees: Fee[] }>({
       api: "sdk:updateIntentFees",
       payload: {
         intentId,
@@ -523,7 +529,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles, classes }: ElementsProps): Elements {
+  elements({ styles, classes, fontSourceCss }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     const elementsValidity: Partial<Record<ElementType, boolean>> = {};
     const formEventsCallback = new Map<FormEvents, Function>();
@@ -644,6 +650,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               elementType,
               elementOptions,
               styles: { ...styles, ...elementOptions.styles },
+              fontSourceCss,
             });
           },
           on: (eventName: ElementEvents, callback: Function) => {
@@ -900,16 +907,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     elementType,
     elementOptions,
     styles,
+    fontSourceCss,
   }: {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
     elementOptions: ElementProps["elementOptions"];
+    fontSourceCss?: string;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
     const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
 
+    if (fontSourceCss) url.searchParams.set("fontSourceCss", fontSourceCss);
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     if (elementOptions.validation?.required !== undefined) {
@@ -922,7 +932,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("lang", this.sdkEmbed.lang);
     url.searchParams.set("direction", styles?.direction || "");
 
-    url.searchParams.set("color", styles?.color || "#000");
+    url.searchParams.set(
+      "color",
+      styles?.color ? JSON.stringify(styles.color) : "#000",
+    );
     url.searchParams.set(
       "placeholderColor",
       styles?.placeholderColor || "#ccc",
@@ -932,6 +945,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       styles?.backgroundColor || "transparent",
     );
     url.searchParams.set("fontSize", styles?.fontSize || "");
+    url.searchParams.set("fontFamily", styles?.fontFamily || "");
+    url.searchParams.set("fontWeight", `${styles?.fontWeight}`);
+    url.searchParams.set("fontStyle", styles?.fontStyle || "");
     url.searchParams.set("padding", styles?.padding || "");
 
     const fieldIframe = document.createElement("iframe");

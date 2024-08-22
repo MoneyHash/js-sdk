@@ -60,7 +60,11 @@ export type IntentState =
 
 export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
 
-export type CardInfo = { brand: string; lastFourDigits: string; logo: string };
+export type CardInfo = {
+  brand: string;
+  brandIconUrl: string;
+  last4Digits: string;
+};
 
 export type IntentStateDetails<TType extends IntentState> =
   TType extends "FORM_FIELDS"
@@ -134,13 +138,21 @@ type TransactionOperation = {
 export type SupportedLanguages = "ar" | "en" | "fr";
 
 export interface Discount {
-  title: Record<SupportedLanguages, string>;
+  title: {
+    en: string;
+    ar?: string;
+    fr?: string;
+  };
   type: "amount" | "percentage";
   value: string | number;
 }
 
 export interface Fee {
-  title: Record<SupportedLanguages, string>;
+  title: {
+    en: string;
+    ar?: string;
+    fr?: string;
+  };
   value: string | number;
 }
 
@@ -169,6 +181,9 @@ export interface PayoutIntent extends AbstractIntent {}
 export interface Transaction {
   id: string;
   status: TransactionStatus;
+  responseCode: string;
+  responseMessage: string;
+  localizedResponseMessage: string;
   operations: TransactionOperation[];
   createdDate: string;
   billingData: {

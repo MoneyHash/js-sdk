@@ -38,11 +38,24 @@ export type ElementType =
   | "cardExpiryMonth"
   | "cardExpiryYear";
 
+type VariantStyle =
+  | string
+  | {
+      base: string;
+      error?: string;
+    };
+
 export type ElementStyles = {
-  color?: string;
+  color?: VariantStyle;
   backgroundColor?: string;
   placeholderColor?: string;
   fontSize?: string;
+  fontFamily?: string;
+  /**
+   * @default "normal"
+   */
+  fontStyle?: "normal" | "italic" | "oblique";
+  fontWeight?: number | string;
   padding?: string;
   height?: string;
   direction?: "ltr" | "rtl";
@@ -60,6 +73,11 @@ export type ElementClassNames = "focus" | "error";
 export type ElementsProps = {
   styles?: ElementStyles;
   classes?: Partial<Record<ElementClassNames, string>>;
+  /**
+   * absolute URL pointing to a CSS file with @font-face definitions,
+   * @example "https://fonts.googleapis.com/css?family=Open+Sans&display=swap"
+   */
+  fontSourceCss?: string;
 };
 
 export type ElementProps =
