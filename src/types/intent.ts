@@ -154,7 +154,7 @@ export interface Fee {
     fr?: string;
   };
   value: string | number;
-  discount: Discount;
+  discount?: Discount;
 }
 
 export interface AbstractIntent {
