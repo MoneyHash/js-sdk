@@ -934,7 +934,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     url.searchParams.set(
       "color",
-      styles?.color ? JSON.stringify(styles.color) : "#000",
+      JSON.stringify(styles?.color ? styles.color : "#000"),
     );
     url.searchParams.set(
       "placeholderColor",
