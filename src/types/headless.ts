@@ -113,5 +113,18 @@ export type FormField = {
 };
 
 export type RenderOptions = {
-  redirectToNewWindow: boolean;
+  /**
+   * Redirect to new window for `renderStrategy: "REDIRECT"`
+   */
+  redirectToNewWindow?: boolean;
+  /**
+   * Popup window size and positions for `renderStrategy: "POPUP_IFRAME"`
+   * @default "width=600,height=400,left=200,top=200"
+   */
+  window?: {
+    width?: number;
+    height?: number;
+    left?: number;
+    top?: number;
+  };
 };

@@ -28,6 +28,7 @@ import {
   FormEvents,
 } from "./types/standaloneFields";
 import getApiUrl from "./utils/getApiUrl";
+import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
@@ -789,17 +790,23 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }) {
     switch (renderStrategy) {
       case "IFRAME":
-        return this.#renderUrlInIframe(url, intentId);
+        return this.#renderUrlInIframe({ url, intentId });
       case "POPUP_IFRAME":
-        return this.#renderUrlInPopUpIframe(url);
+        return this.#renderUrlInPopUpIframe({ url, intentId, options });
       case "REDIRECT":
-        return this.#renderUrlInRedirect(url, options);
+        return this.#renderUrlInRedirect({ url, options });
       default:
         return null;
     }
   }
 
-  async #renderUrlInIframe(url: string, intentId: string) {
+  async #renderUrlInIframe({
+    intentId,
+    url,
+  }: {
+    intentId: string;
+    url: string;
+  }) {
     const container = document.querySelector("#rendered-url-iframe-container");
 
     throwIf(
@@ -820,21 +827,42 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     iframe.remove();
   }
 
-  async #renderUrlInPopUpIframe(url: string) {
+  async #renderUrlInPopUpIframe({
+    intentId,
+    url,
+    options = {},
+  }: {
+    intentId: string;
+    url: string;
+    options?: RenderOptions;
+  }) {
+    const {
+      width = 600,
+      height = 400,
+      left = 200,
+      top = 200,
+    } = options.window || {};
+
     const windowRef = window.open(
       `${url}`,
       "",
-      "width=600,height=400,left=200,top=200",
+      `width=${width},height=${height},left=${left},top=${top}`,
     );
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener("");
+    await this.#setupExternalWindowListener(intentId);
 
     windowRef?.close();
   }
 
-  async #renderUrlInRedirect(url: string, options?: RenderOptions) {
+  async #renderUrlInRedirect({
+    url,
+    options,
+  }: {
+    url: string;
+    options?: RenderOptions;
+  }) {
     if (!options || !options.redirectToNewWindow) {
       window.location.href = url;
       return;
@@ -847,12 +875,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const resultDefPromise = new DeferredPromise();
 
     const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== getIframeUrl()) return;
       const { type } = event.data;
 
       if (type === "intentResult") {
-        await waitForSeconds(2);
+        const [intentDetails] = await Promise.all([
+          this.getIntentDetails(intentId),
+          waitForSeconds(1),
+        ]);
 
-        const intentDetails = await this.getIntentDetails(intentId);
         const transactionStatus =
           intentDetails.transaction.status.split(".")[1];
 
