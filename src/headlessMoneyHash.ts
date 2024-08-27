@@ -28,10 +28,12 @@ import {
   FormEvents,
 } from "./types/standaloneFields";
 import getApiUrl from "./utils/getApiUrl";
+import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
+import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
 
 export * from "./types";
@@ -775,30 +777,36 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    */
-  renderUrl(url: string, renderStrategy: UrlRenderStrategy): Promise<void>;
-  renderUrl(
-    url: string,
-    renderStrategy: UrlRenderStrategy,
-    options?: RenderOptions,
-  ): Promise<void>;
-  async renderUrl(
-    url: string,
-    renderStrategy: UrlRenderStrategy,
-    options?: RenderOptions,
-  ) {
+  async renderUrl({
+    intentId,
+    url,
+    renderStrategy,
+    options,
+  }: {
+    intentId: string;
+    url: string;
+    renderStrategy: UrlRenderStrategy;
+    options?: RenderOptions;
+  }) {
     switch (renderStrategy) {
       case "IFRAME":
-        return this.#renderUrlInIframe(url);
+        return this.#renderUrlInIframe({ url, intentId });
       case "POPUP_IFRAME":
-        return this.#renderUrlInPopUpIframe(url);
+        return this.#renderUrlInPopUpIframe({ url, intentId, options });
       case "REDIRECT":
-        return this.#renderUrlInRedirect(url, options);
+        return this.#renderUrlInRedirect({ url, options });
       default:
         return null;
     }
   }
 
-  async #renderUrlInIframe(url: string) {
+  async #renderUrlInIframe({
+    intentId,
+    url,
+  }: {
+    intentId: string;
+    url: string;
+  }) {
     const container = document.querySelector("#rendered-url-iframe-container");
 
     throwIf(
@@ -814,26 +822,47 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener();
+    await this.#setupExternalWindowListener(intentId);
 
     iframe.remove();
   }
 
-  async #renderUrlInPopUpIframe(url: string) {
+  async #renderUrlInPopUpIframe({
+    intentId,
+    url,
+    options = {},
+  }: {
+    intentId: string;
+    url: string;
+    options?: RenderOptions;
+  }) {
+    const {
+      width = 600,
+      height = 400,
+      left = 200,
+      top = 200,
+    } = options.window || {};
+
     const windowRef = window.open(
       `${url}`,
       "",
-      "width=600,height=400,left=200,top=200",
+      `width=${width},height=${height},left=${left},top=${top}`,
     );
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener();
+    await this.#setupExternalWindowListener(intentId);
 
     windowRef?.close();
   }
 
-  async #renderUrlInRedirect(url: string, options?: RenderOptions) {
+  async #renderUrlInRedirect({
+    url,
+    options,
+  }: {
+    url: string;
+    options?: RenderOptions;
+  }) {
     if (!options || !options.redirectToNewWindow) {
       window.location.href = url;
       return;
@@ -842,37 +871,39 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     window.open(url, "_blank");
   }
 
-  async #setupExternalWindowListener() {
+  async #setupExternalWindowListener(intentId: string) {
     const resultDefPromise = new DeferredPromise();
 
-    const onReceiveMessage = (event: MessageEvent) => {
-      const { type, data } = event.data;
+    const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== getIframeUrl()) return;
+      const { type } = event.data;
 
-      switch (type) {
-        case "onComplete":
+      if (type === "intentResult") {
+        const [intentDetails] = await Promise.all([
+          this.getIntentDetails(intentId),
+          waitForSeconds(1),
+        ]);
+
+        const transactionStatus =
+          intentDetails.transaction.status.split(".")[1];
+
+        if (
+          transactionStatus === "successful" ||
+          transactionStatus.startsWith("pending")
+        ) {
           this.options.onComplete?.({
             type: this.options.type,
-            ...data,
+            ...intentDetails,
           } as OnCompleteEventOptions<TType>);
-
-          resultDefPromise.resolve(() => null);
-          window.removeEventListener("message", onReceiveMessage);
-
-          break;
-        case "onFail":
+        } else {
           this.options.onFail?.({
             type: this.options.type,
-            ...data,
+            ...intentDetails,
           } as unknown as OnFailEventOptions<TType>);
+        }
 
-          resultDefPromise.resolve(() => null);
-          window.removeEventListener("message", onReceiveMessage);
-
-          break;
-        default:
-          resultDefPromise.resolve(() => null);
-
-          break;
+        resultDefPromise.resolve(() => null);
+        window.removeEventListener("message", onReceiveMessage);
       }
     };
 
