@@ -1030,4 +1030,29 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     return submitIframe;
   }
+
+  /**
+   * Listen to expiration date of the intent passed or not and execute the callback
+   * @example
+   * ```
+   * moneyHash.onExpiration('<expiration_date>', () => {
+   *  console.log('intent expired!');
+   * });
+   * ```
+   * @see {@link IntentDetails} - for \<expiration_date>
+   * @returns Cleanup function
+   */
+  onExpiration(expirationDate: string, callback: () => void) {
+    const exp = new Date(expirationDate!);
+
+    const timerId = setInterval(async () => {
+      const now = new Date();
+      if (exp < now) {
+        clearInterval(timerId);
+        callback();
+      }
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }
 }
