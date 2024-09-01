@@ -843,8 +843,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       top = 200,
     } = options.window || {};
 
+    const urlObject = new URL(`${getIframeUrl()}/embed/iframe-popup`);
+    urlObject.searchParams.set("url", url);
+
     const windowRef = window.open(
-      `${url}`,
+      `${urlObject.toString()}`,
       "",
       `width=${width},height=${height},left=${left},top=${top}`,
     );
