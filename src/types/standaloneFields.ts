@@ -9,7 +9,7 @@ export type Elements = {
 };
 
 type CardNumberChangeData = {
-  first6Digits: number;
+  first6Digits: number | null;
   brand: string;
   brandIconUrl: string;
 };
