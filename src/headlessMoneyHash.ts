@@ -843,17 +843,23 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       top = 200,
     } = options.window || {};
 
-    const urlObject = new URL(`${getIframeUrl()}/embed/iframe-popup`);
-    urlObject.searchParams.set("url", url);
+    // const urlObject = new URL(`${getIframeUrl()}/embed/iframe-popup`);
+    // urlObject.searchParams.set("url", url);
 
     const windowRef = window.open(
-      `${urlObject.toString()}`,
+      // `${urlObject.toString()}`,
+      url,
       "",
       `width=${width},height=${height},left=${left},top=${top}`,
     );
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
+    setTimeout(() => {
+      (window as any).xx = windowRef;
+      // eslint-disable-next-line no-console
+      console.log(windowRef?.closed);
+    }, 1000);
     await this.#setupExternalWindowListener(intentId);
 
     windowRef?.close();
