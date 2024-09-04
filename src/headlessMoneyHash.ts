@@ -822,7 +822,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener(intentId);
+    await this.#setupExternalWindowListener({ intentId });
 
     iframe.remove();
   }
@@ -843,11 +843,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       top = 200,
     } = options.window || {};
 
-    // const urlObject = new URL(`${getIframeUrl()}/embed/iframe-popup`);
-    // urlObject.searchParams.set("url", url);
-
     const windowRef = window.open(
-      // `${urlObject.toString()}`,
       url,
       "",
       `width=${width},height=${height},left=${left},top=${top}`,
@@ -855,12 +851,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    setTimeout(() => {
-      (window as any).xx = windowRef;
-      // eslint-disable-next-line no-console
-      console.log(windowRef?.closed);
-    }, 1000);
-    await this.#setupExternalWindowListener(intentId);
+    await this.#setupExternalWindowListener({ intentId, isUsingPopUp: true });
 
     windowRef?.close();
   }
@@ -880,7 +871,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     window.open(url, "_blank");
   }
 
-  async #setupExternalWindowListener(intentId: string) {
+  async #setupExternalWindowListener({
+    intentId,
+    isUsingPopUp = false,
+  }: {
+    intentId: string;
+    isUsingPopUp?: boolean;
+  }) {
     const resultDefPromise = new DeferredPromise();
 
     const onReceiveMessage = async (event: MessageEvent) => {
@@ -888,6 +885,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       const { type } = event.data;
 
       if (type === "intentResult") {
+        if (isUsingPopUp) this.sdkApiHandler.postMessage("EmbedResultClose");
+
         const [intentDetails] = await Promise.all([
           this.getIntentDetails(intentId),
           waitForSeconds(1),

@@ -72,4 +72,8 @@ export default class SDKApiHandler {
       SDKApiHandler.messagingService?.onReceive(handleReceive);
     });
   }
+
+  postMessage(message: string) {
+    SDKApiHandler.messagingService?.send({ type: message });
+  }
 }
