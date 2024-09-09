@@ -575,6 +575,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           `Couldn't find an element with selector ${elementOptions.selector}!`,
         );
 
+        let fieldIframe: HTMLIFrameElement | null = null;
         container.classList.add("MoneyHashElement");
 
         const customClasses = {
@@ -592,8 +593,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         fieldsListeners.push((event: MessageEvent) => {
           const { type, data } = event.data;
 
-          if (type === `${elementType}:init`) {
+          if (type === `${elementType}@mount`) {
             elementsValidity[elementType] = data.isValid;
+            inputEventCallbacks.get(`${elementType}@mount`)?.();
           }
 
           if (type === `${elementType}@focus`) {
@@ -619,7 +621,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           }
 
           if (type === `${elementType}@changeInput`) {
-            inputEventCallbacks.get(`${elementType}@changeInput`)?.();
+            inputEventCallbacks.get(`${elementType}@changeInput`)?.({
+              isValid: data.isValid,
+              length: data.length,
+            });
             elementsValidity[elementType] = data.isValid;
 
             const validityChangeCallback =
@@ -646,7 +651,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           mount: () => {
             this.mountedCardElements.push(elementType);
 
-            this.#renderFieldIframe({
+            fieldIframe = this.#renderFieldIframe({
               container,
               elementType,
               elementOptions,
@@ -659,6 +664,24 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           },
           off: eventName =>
             inputEventCallbacks.delete(`${elementType}@${eventName}`),
+          focus: () => {
+            fieldIframe?.contentWindow?.postMessage(
+              { type: "focus" },
+              getVaultInputIframeUrl(),
+            );
+          },
+          blur: () => {
+            fieldIframe?.contentWindow?.postMessage(
+              { type: "blur" },
+              getVaultInputIframeUrl(),
+            );
+          },
+          clear: () => {
+            fieldIframe?.contentWindow?.postMessage(
+              { type: "clear" },
+              getVaultInputIframeUrl(),
+            );
+          },
         };
       },
       on: (eventName, callback) => {
@@ -889,7 +912,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         const [intentDetails] = await Promise.all([
           this.getIntentDetails(intentId),
-          waitForSeconds(1),
+          waitForSeconds(2),
         ]);
 
         const transactionStatus =
@@ -1004,6 +1027,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     fieldIframe.style.setProperty("colorScheme", "light only", "important");
 
     container.replaceChildren(fieldIframe);
+    return fieldIframe;
   }
 
   #renderVaultSubmitIframe({
@@ -1051,6 +1075,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Cleanup function
    */
   onExpiration(expirationDate: string, callback: () => void) {
+    if (!expirationDate) {
+      warnIf(
+        true,
+        `No expiration date provided!, make sure to check for it before usage
+
+if (intentDetails.intent.expirationDate) {
+  moneyHash.onExpiration(intentDetails.intent.expirationDate, () => {
+    console.log("Entity expired!");
+  })
+}`,
+      );
+      return () => undefined;
+    }
+
     const exp = new Date(expirationDate!);
 
     const timerId = setInterval(async () => {

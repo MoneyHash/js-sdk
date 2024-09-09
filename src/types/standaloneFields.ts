@@ -24,11 +24,18 @@ export type Element = {
     event: T,
     callback: (data: { isValid: boolean; error: string | null }) => void,
   ): void;
-  on<T extends Exclude<ElementEvents, "cardNumberChange" | "error">>(
+  on<T extends Extract<ElementEvents, "changeInput">>(
+    event: T,
+    callback: (data: { isValid: boolean; length: number }) => void,
+  ): void;
+  on<T extends Extract<ElementEvents, "mount" | "focus" | "blur">>(
     event: T,
     callback: () => void,
   ): void;
   off: (event: ElementEvents) => boolean;
+  focus: () => void;
+  blur: () => void;
+  clear: () => void;
 };
 
 export type ElementType =
@@ -62,6 +69,7 @@ export type ElementStyles = {
 };
 
 export type ElementEvents =
+  | "mount"
   | "focus"
   | "blur"
   | "error"
