@@ -650,6 +650,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
                 inputEventCallbacks.get(`${elementType}@cardNumberChange`)?.(
                   data,
                 );
+                return;
+              }
+
+              if (type === `${elementType}@key:Backspace`) {
+                inputEventCallbacks.get(`${elementType}@key:Backspace`)?.();
+                return;
+              }
+
+              if (type === `${elementType}@key:Enter`) {
+                inputEventCallbacks.get(`${elementType}@key:Enter`)?.();
               }
             });
 
