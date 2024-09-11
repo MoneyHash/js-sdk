@@ -2,10 +2,7 @@ export type FormEvents = "validityChange";
 
 export type Elements = {
   create: (elementProps: ElementProps) => Element;
-  on: (
-    event: FormEvents,
-    callback: (data: { isValid: boolean }) => void,
-  ) => void;
+  on: (event: FormEvents, callback: (isValid: boolean) => void) => void;
 };
 
 type CardNumberChangeData = {
