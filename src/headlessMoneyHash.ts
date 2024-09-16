@@ -731,19 +731,21 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     shippingData?: Record<string, unknown>;
     saveCard?: boolean;
   }): Promise<IntentDetails<TType>> {
-    const missingCardElement = getMissingCardElement(this.mountedCardElements);
-
-    throwIf(
-      !!missingCardElement,
-      `You must mount ${missingCardElement} element!`,
-    );
-
     const vaultFieldsDefPromise = new DeferredPromise();
 
     let cardEmbedData: any;
     let submitIframe: HTMLIFrameElement | undefined;
 
     if (accessToken) {
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       this.vaultSubmitListener.current = (event: MessageEvent) => {
         const { type, data } = event.data;
 
