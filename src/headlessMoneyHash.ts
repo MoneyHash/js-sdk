@@ -9,6 +9,7 @@ import type {
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  PaymentMethodSlugs,
   SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
@@ -724,12 +725,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData,
     shippingData,
     saveCard,
+    paymentMethod = "CARD",
   }: {
     intentId: string;
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
     saveCard?: boolean;
+    paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
     const vaultFieldsDefPromise = new DeferredPromise();
 
@@ -767,7 +770,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       api: "sdk:submitNativeForm",
       payload: {
         intentId,
-        paymentMethod: "CARD",
+        paymentMethod,
         lang: this.sdkEmbed.lang,
         billingData,
         shippingData,
