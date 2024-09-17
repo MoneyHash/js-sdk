@@ -569,7 +569,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           Function
         >();
         let fieldIframe: HTMLIFrameElement | null = null;
-        let container: HTMLDivElement;
 
         const customClasses = {
           ...classes,
@@ -585,7 +584,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
         return {
           mount: () => {
-            container = document.querySelector(
+            const container = document.querySelector(
               elementOptions.selector,
             ) as HTMLDivElement;
 
