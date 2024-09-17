@@ -381,7 +381,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token_data: e.payment.token,
+          token_data: {
+            token: e.payment.token,
+          },
           secret: intent.secret,
         }),
       })
