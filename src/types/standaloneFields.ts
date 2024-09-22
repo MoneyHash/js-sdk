@@ -2,10 +2,7 @@ export type FormEvents = "validityChange";
 
 export type Elements = {
   create: (elementProps: ElementProps) => Element;
-  on: (
-    event: FormEvents,
-    callback: (data: { isValid: boolean }) => void,
-  ) => void;
+  on: (event: FormEvents, callback: (isValid: boolean) => void) => void;
 };
 
 type CardNumberChangeData = {
@@ -28,10 +25,7 @@ export type Element = {
     event: T,
     callback: (data: { isValid: boolean; length: number }) => void,
   ): void;
-  on<T extends Extract<ElementEvents, "mount" | "focus" | "blur">>(
-    event: T,
-    callback: () => void,
-  ): void;
+  on<T extends ElementEvents>(event: T, callback: () => void): void;
   off: (event: ElementEvents) => boolean;
   focus: () => void;
   blur: () => void;
@@ -74,7 +68,9 @@ export type ElementEvents =
   | "blur"
   | "error"
   | "changeInput"
-  | "cardNumberChange";
+  | "cardNumberChange"
+  | "key:Backspace"
+  | "key:Enter";
 
 export type ElementClassNames = "focus" | "error";
 

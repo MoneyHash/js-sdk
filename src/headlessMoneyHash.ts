@@ -9,6 +9,7 @@ import type {
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  PaymentMethodSlugs,
   SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
@@ -380,7 +381,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token_data: e.payment.token,
+          token_data: {
+            token: e.payment.token,
+          },
           secret: intent.secret,
         }),
       })
@@ -565,18 +568,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           `${ElementType}@${ElementEvents}`,
           Function
         >();
-
-        const container = document.querySelector(
-          elementOptions.selector,
-        ) as HTMLDivElement;
-
-        throwIf(
-          !container,
-          `Couldn't find an element with selector ${elementOptions.selector}!`,
-        );
-
         let fieldIframe: HTMLIFrameElement | null = null;
-        container.classList.add("MoneyHashElement");
 
         const customClasses = {
           ...classes,
@@ -590,66 +582,88 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           "MoneyHashElement--error",
         ];
 
-        fieldsListeners.push((event: MessageEvent) => {
-          const { type, data } = event.data;
-
-          if (type === `${elementType}@mount`) {
-            elementsValidity[elementType] = data.isValid;
-            inputEventCallbacks.get(`${elementType}@mount`)?.();
-          }
-
-          if (type === `${elementType}@focus`) {
-            container.classList.add(...focusClassName);
-            inputEventCallbacks.get(`${elementType}@focus`)?.();
-            return;
-          }
-
-          if (type === `${elementType}@blur`) {
-            container.classList.remove(...focusClassName);
-            inputEventCallbacks.get(`${elementType}@blur`)?.();
-            return;
-          }
-
-          if (type === `${elementType}@error`) {
-            if (data.isValid) {
-              container.classList.remove(...errorClassName);
-            } else {
-              container.classList.add(...errorClassName);
-            }
-            inputEventCallbacks.get(`${elementType}@error`)?.(data);
-            return;
-          }
-
-          if (type === `${elementType}@changeInput`) {
-            inputEventCallbacks.get(`${elementType}@changeInput`)?.({
-              isValid: data.isValid,
-              length: data.length,
-            });
-            elementsValidity[elementType] = data.isValid;
-
-            const validityChangeCallback =
-              formEventsCallback.get("validityChange");
-
-            if (validityChangeCallback) {
-              const isAllFieldsValid =
-                Object.values(elementsValidity).every(Boolean);
-
-              if (isAllFieldsValid !== isAllValid) {
-                formEventsCallback.get("validityChange")?.(isAllFieldsValid);
-                isAllValid = isAllFieldsValid;
-              }
-            }
-            return;
-          }
-
-          if (type === `${elementType}@cardNumberChange`) {
-            inputEventCallbacks.get(`${elementType}@cardNumberChange`)?.(data);
-          }
-        });
-
         return {
           mount: () => {
-            this.mountedCardElements.push(elementType);
+            const container = document.querySelector(
+              elementOptions.selector,
+            ) as HTMLDivElement;
+
+            throwIf(
+              !container,
+              `Couldn't find an element with selector ${elementOptions.selector}!`,
+            );
+            container.classList.add("MoneyHashElement");
+
+            fieldsListeners.push((event: MessageEvent) => {
+              const { type, data } = event.data;
+
+              if (type === `${elementType}@mount`) {
+                elementsValidity[elementType] = data.isValid;
+                inputEventCallbacks.get(`${elementType}@mount`)?.();
+              }
+
+              if (type === `${elementType}@focus`) {
+                container.classList.add(...focusClassName);
+                inputEventCallbacks.get(`${elementType}@focus`)?.();
+                return;
+              }
+
+              if (type === `${elementType}@blur`) {
+                container.classList.remove(...focusClassName);
+                inputEventCallbacks.get(`${elementType}@blur`)?.();
+                return;
+              }
+
+              if (type === `${elementType}@error`) {
+                if (data.isValid) {
+                  container.classList.remove(...errorClassName);
+                } else {
+                  container.classList.add(...errorClassName);
+                }
+                inputEventCallbacks.get(`${elementType}@error`)?.(data);
+                return;
+              }
+
+              if (type === `${elementType}@changeInput`) {
+                inputEventCallbacks.get(`${elementType}@changeInput`)?.({
+                  isValid: data.isValid,
+                  length: data.length,
+                });
+                elementsValidity[elementType] = data.isValid;
+
+                const validityChangeCallback =
+                  formEventsCallback.get("validityChange");
+
+                if (validityChangeCallback) {
+                  const isAllFieldsValid =
+                    Object.values(elementsValidity).every(Boolean);
+
+                  if (isAllFieldsValid !== isAllValid) {
+                    formEventsCallback.get("validityChange")?.(
+                      isAllFieldsValid,
+                    );
+                    isAllValid = isAllFieldsValid;
+                  }
+                }
+                return;
+              }
+
+              if (type === `${elementType}@cardNumberChange`) {
+                inputEventCallbacks.get(`${elementType}@cardNumberChange`)?.(
+                  data,
+                );
+                return;
+              }
+
+              if (type === `${elementType}@key:Backspace`) {
+                inputEventCallbacks.get(`${elementType}@key:Backspace`)?.();
+                return;
+              }
+
+              if (type === `${elementType}@key:Enter`) {
+                inputEventCallbacks.get(`${elementType}@key:Enter`)?.();
+              }
+            });
 
             fieldIframe = this.#renderFieldIframe({
               container,
@@ -658,6 +672,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               styles: { ...styles, ...elementOptions.styles },
               fontSourceCss,
             });
+
+            this.mountedCardElements.push(elementType);
           },
           on: (eventName: ElementEvents, callback: Function) => {
             inputEventCallbacks.set(`${elementType}@${eventName}`, callback);
@@ -710,26 +726,30 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData,
     shippingData,
     saveCard,
+    paymentMethod = "CARD",
   }: {
     intentId: string;
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
     saveCard?: boolean;
+    paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
-    const missingCardElement = getMissingCardElement(this.mountedCardElements);
-
-    throwIf(
-      !!missingCardElement,
-      `You must mount ${missingCardElement} element!`,
-    );
-
     const vaultFieldsDefPromise = new DeferredPromise();
 
     let cardEmbedData: any;
     let submitIframe: HTMLIFrameElement | undefined;
 
     if (accessToken) {
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       this.vaultSubmitListener.current = (event: MessageEvent) => {
         const { type, data } = event.data;
 
@@ -751,7 +771,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       api: "sdk:submitNativeForm",
       payload: {
         intentId,
-        paymentMethod: "CARD",
+        paymentMethod,
         lang: this.sdkEmbed.lang,
         billingData,
         shippingData,
