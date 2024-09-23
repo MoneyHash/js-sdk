@@ -9,8 +9,8 @@
 // this.resolve = resolve;
 // this.reject = reject;
 
-export default class DeferredPromise {
-  promise: Promise<any>;
+export default class DeferredPromise<T> {
+  promise: Promise<T>;
 
   resolve!: (data: any) => void;
 

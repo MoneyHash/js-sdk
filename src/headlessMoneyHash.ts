@@ -4,6 +4,7 @@ import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
 import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type {
+  CardData,
   Discount,
   Fee,
   IntentType,
@@ -46,7 +47,9 @@ const supportedProceedWithTypes = new Set([
   "savedCard",
 ]);
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
-  extends SDKEmbedOptions<TType> {}
+  extends SDKEmbedOptions<TType> {
+  publicApiKey?: string;
+}
 
 export default class MoneyHashHeadless<TType extends IntentType> {
   private options: MoneyHashHeadlessOptions<TType>;
@@ -706,6 +709,58 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
   }
 
+  async #submitVaultCardForm({
+    accessToken,
+    saveCard,
+  }: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
+    const vaultFieldsDefPromise = new DeferredPromise<CardData>();
+
+    this.vaultSubmitListener.current = (event: MessageEvent) => {
+      const { type, data } = event.data;
+
+      if (type === "vaultSubmit:success") {
+        vaultFieldsDefPromise.resolve(data);
+      }
+      if (type === "vaultSubmit:error") {
+        vaultFieldsDefPromise.reject(data);
+      }
+    };
+
+    const submitIframe = this.#renderVaultSubmitIframe({
+      accessToken,
+      saveCard,
+    });
+    const cardEmbedData = await vaultFieldsDefPromise.promise;
+    submitIframe.remove();
+    return cardEmbedData;
+  }
+
+  /**
+   * Collect card data
+   * @example
+   * ```
+   * const cardData = await moneyHash.collectCard();
+   * ```
+   * @returns Promise<{@link CardData}>
+   */
+  async collectCard({ saveCard }: { saveCard?: boolean } = {}) {
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to collect card!",
+    );
+
+    const accessToken = await this.sdkApiHandler.request<string>({
+      api: "sdk:generateAccessToken",
+      payload: {
+        publicApiKey: this.options.publicApiKey,
+      },
+    });
+    return this.#submitVaultCardForm({ accessToken, saveCard });
+  }
+
   /**
    * Submits the form with the form fields data (card, billing, shipping)
    * @example
@@ -725,6 +780,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     accessToken,
     billingData,
     shippingData,
+    cardData,
     saveCard,
     paymentMethod = "CARD",
   }: {
@@ -732,37 +788,24 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
+    cardData?: CardData;
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
-    const vaultFieldsDefPromise = new DeferredPromise();
+    const missingCardElement = getMissingCardElement(this.mountedCardElements);
 
-    let cardEmbedData: any;
-    let submitIframe: HTMLIFrameElement | undefined;
+    throwIf(
+      !!missingCardElement,
+      `You must mount ${missingCardElement} element!`,
+    );
+
+    let cardEmbedData = cardData;
 
     if (accessToken) {
-      const missingCardElement = getMissingCardElement(
-        this.mountedCardElements,
-      );
-
-      throwIf(
-        !!missingCardElement,
-        `You must mount ${missingCardElement} element!`,
-      );
-
-      this.vaultSubmitListener.current = (event: MessageEvent) => {
-        const { type, data } = event.data;
-
-        if (type === "vaultSubmit:success") {
-          vaultFieldsDefPromise.resolve(data);
-        }
-        if (type === "vaultSubmit:error") {
-          vaultFieldsDefPromise.reject(data);
-        }
-      };
-
-      submitIframe = this.#renderVaultSubmitIframe({ accessToken, saveCard });
-      cardEmbedData = await vaultFieldsDefPromise.promise;
+      cardEmbedData = await this.#submitVaultCardForm({
+        accessToken,
+        saveCard,
+      });
     }
 
     const submissionResult = await this.sdkApiHandler.request<
@@ -778,8 +821,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         cardEmbed: cardEmbedData,
       },
     });
-
-    if (submitIframe) submitIframe.remove();
 
     return submissionResult;
   }
