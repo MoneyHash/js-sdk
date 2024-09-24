@@ -15,6 +15,7 @@ import type {
   UrlRenderStrategy,
 } from "./types";
 import type {
+  GetMethodsOptions,
   IntentDetails,
   IntentMethods,
   RenderOptions,
@@ -99,6 +100,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * await moneyHash.getIntentMethods('<intent_id>');
    * ```
    * @returns Promise<{@link IntentMethods}>
+   * @deprecated use {@link MoneyHashHeadless.getMethods} instead, will be removed in future versions
    */
   getIntentMethods(intentId: string) {
     return this.sdkApiHandler.request<IntentMethods<TType>>({
@@ -107,6 +109,56 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentType: this.options.type,
         intentId,
         lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Get available methods, saved cards and customer balances for account associated with the
+   * publicApiKey
+   * @example
+   * ```
+   * await moneyHash.getMethods({
+   *  currency: 'EGP',
+   *  amount: 20,
+   *  customer: '<customer_id>',
+   *  flowId: '<flow_id>',
+   * })
+   * ```
+   */
+  getMethods(options: GetMethodsOptions): Promise<IntentMethods<TType>>;
+  /**
+   * Get available methods, saved cards and customer balances for the intent
+   * @example
+   * ```
+   * await moneyHash.getMethods({
+   *  intentId: '<intent_id>',
+   * })
+   * ```
+   */
+  getMethods(options: { intentId: string }): Promise<IntentMethods<TType>>;
+  getMethods(options: GetMethodsOptions | { intentId: string }) {
+    if ("intentId" in options) {
+      return this.getIntentMethods(options.intentId);
+    }
+
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to get methods!",
+    );
+
+    throwIf(
+      this.options.type === "payout",
+      "getMethods is not allowed for payout!",
+    );
+
+    return this.sdkApiHandler.request<IntentMethods<TType>>({
+      api: "sdk:getMethods",
+      payload: {
+        intentType: this.options.type,
+        lang: this.sdkEmbed.lang,
+        publicApiKey: this.options.publicApiKey,
+        ...options,
       },
     });
   }
@@ -736,29 +788,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
     return cardEmbedData;
-  }
-
-  /**
-   * Collect card data
-   * @example
-   * ```
-   * const cardData = await moneyHash.collectCard();
-   * ```
-   * @returns Promise<{@link CardData}>
-   */
-  async collectCard({ saveCard }: { saveCard?: boolean } = {}) {
-    throwIf(
-      !this.options.publicApiKey,
-      "publicApiKey on MoneyHash instance is required to collect card!",
-    );
-
-    const accessToken = await this.sdkApiHandler.request<string>({
-      api: "sdk:generateAccessToken",
-      payload: {
-        publicApiKey: this.options.publicApiKey,
-      },
-    });
-    return this.#submitVaultCardForm({ accessToken, saveCard });
   }
 
   /**

@@ -128,3 +128,10 @@ export type RenderOptions = {
     top?: number;
   };
 };
+
+export type GetMethodsOptions = {
+  currency: string;
+  amount?: string | number;
+  customer?: string;
+  flowId?: string;
+};
