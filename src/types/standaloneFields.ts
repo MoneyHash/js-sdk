@@ -5,7 +5,7 @@ export type Elements = {
   on: (event: FormEvents, callback: (isValid: boolean) => void) => void;
 };
 
-type CardNumberChangeData = {
+export type CardNumberChangeData = {
   first6Digits: number | null;
   brand: string;
   brandIconUrl: string;
@@ -105,4 +105,19 @@ type CommonElementOptions = {
   placeholder?: string;
   styles?: ElementStyles;
   classes?: Partial<Record<ElementClassNames, string>>;
+};
+
+export type CardData = {
+  first_six_digits: string;
+  last_four_digits: string;
+  card_scheme: string;
+  card_holder_name: string;
+  expiry_year: string;
+  expiry_month: string;
+  is_live: boolean;
+  access_token: string;
+  card_token: string;
+  cvv: string;
+  save_card: boolean;
+  fingerprint: string;
 };
