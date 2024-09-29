@@ -15,6 +15,7 @@ import type {
   UrlRenderStrategy,
 } from "./types";
 import type {
+  CardIntentDetails,
   GetMethodsOptions,
   IntentDetails,
   IntentMethods,
@@ -809,7 +810,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       cardIntentId: string;
       cardData: CardData;
     }) =>
-      this.sdkApiHandler.request<IntentDetails<TType>>({
+      this.sdkApiHandler.request<CardIntentDetails>({
         api: "sdk:createCardToken",
         payload: {
           cardIntentId,
