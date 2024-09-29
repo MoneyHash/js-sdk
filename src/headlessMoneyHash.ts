@@ -863,14 +863,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData,
     shippingData,
     saveCard,
-    cardData,
     paymentMethod = "CARD",
   }: {
     intentId: string;
     accessToken?: string | null;
     billingData?: Record<string, unknown>;
     shippingData?: Record<string, unknown>;
-    cardData?: CardData;
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
@@ -881,7 +879,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       `You must mount ${missingCardElement} element!`,
     );
 
-    let cardEmbedData = cardData;
+    let cardEmbedData;
 
     if (accessToken) {
       cardEmbedData = await this.#submitVaultCardForm({
