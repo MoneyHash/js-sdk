@@ -216,11 +216,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId,
     type,
     id,
+    useWalletBalance,
     metaData,
   }: {
     type: "method" | "customerBalance" | "savedCard";
     intentId: string;
     id: string;
+    useWalletBalance?: boolean;
     metaData?: {
       cvv: string;
     };
@@ -240,6 +242,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentId,
         id,
         lang: this.sdkEmbed.lang,
+        useWalletBalance,
         metaData,
       },
     });
@@ -811,6 +814,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     shippingData,
     saveCard,
     paymentMethod = "CARD",
+    useWalletBalance,
   }: {
     intentId: string;
     accessToken?: string | null;
@@ -818,6 +822,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     shippingData?: Record<string, unknown>;
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
+    useWalletBalance?: boolean;
   }): Promise<IntentDetails<TType>> {
     const missingCardElement = getMissingCardElement(this.mountedCardElements);
 
@@ -846,6 +851,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         billingData,
         shippingData,
         cardEmbed: cardEmbedData,
+        useWalletBalance,
       },
     });
 
