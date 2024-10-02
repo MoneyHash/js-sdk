@@ -853,6 +853,31 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Selects the instalment plan for the intent
+   * @example
+   * ```
+   * await moneyHash.selectInstalmentPlan({ intentId: '<intent-id>', planId: '<plan-id>' });
+   * ```
+   * @returns { Promise<IntentDetails<TType>> }
+   */
+  async selectInstalmentPlan({
+    intentId,
+    planId,
+  }: {
+    intentId: string;
+    planId: string;
+  }): Promise<IntentDetails<TType>> {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:selectInstalmentPlan",
+      payload: {
+        planId,
+        intentId,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
    * Submits the CVV for the tokenized card
    *
    * @example
