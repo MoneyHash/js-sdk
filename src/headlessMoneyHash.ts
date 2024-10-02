@@ -899,6 +899,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     renderStrategy: UrlRenderStrategy;
     options?: RenderOptions;
   }) {
+    this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
         return this.#renderUrlInIframe({ url, intentId });
