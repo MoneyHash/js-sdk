@@ -769,6 +769,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         "publicApiKey on MoneyHash instance is required to collect card!",
       );
 
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       const accessToken = await this.sdkApiHandler.request<string>({
         api: "sdk:generateAccessToken",
         payload: {
@@ -872,16 +881,18 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
-    const missingCardElement = getMissingCardElement(this.mountedCardElements);
-
-    throwIf(
-      !!missingCardElement,
-      `You must mount ${missingCardElement} element!`,
-    );
-
     let cardEmbedData;
 
     if (accessToken) {
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       cardEmbedData = await this.#submitVaultCardForm({
         accessToken,
       });
