@@ -56,7 +56,8 @@ export type IntentState =
   // v1.x.x new states
   | "FORM_FIELDS"
   | "URL_TO_RENDER"
-  | "SAVED_CARD_CVV";
+  | "SAVED_CARD_CVV"
+  | "INSTALMENT_PLANS";
 
 export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
 
@@ -75,6 +76,10 @@ export type IntentStateDetails<TType extends IntentState> =
     ? {
         card: CardInfo;
         cvvField: Field;
+      }
+    : TType extends "INSTALMENT_PLANS"
+    ? {
+        plans: InstalmentPlan[];
       }
     : null;
 
@@ -300,4 +305,16 @@ type FormFields = {
   card: {
     accessToken: string;
   } | null;
+};
+
+export type InstalmentPlan = {
+  id: string;
+  installmentPeriod: number;
+  interestRate: number;
+  amount: {
+    value: string;
+    formatted: number;
+    currency: number;
+  };
+  upfrontFees: number;
 };
