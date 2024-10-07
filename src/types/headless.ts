@@ -135,3 +135,21 @@ export type GetMethodsOptions = {
   customer?: string;
   flowId?: string;
 };
+
+export type CardTokenState =
+  | "CARD_INTENT_SUCCESSFUL"
+  | "CARD_INTENT_FAILED"
+  | "URL_TO_RENDER";
+
+export type CardIntentDetails =
+  | {
+      state: Exclude<CardTokenState, "URL_TO_RENDER">;
+      stateDetails: null;
+    }
+  | {
+      state: Extract<CardTokenState, "URL_TO_RENDER">;
+      stateDetails: {
+        url: string;
+        renderStrategy: "REDIRECT";
+      };
+    };

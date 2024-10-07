@@ -15,6 +15,7 @@ import type {
   UrlRenderStrategy,
 } from "./types";
 import type {
+  CardIntentDetails,
   GetMethodsOptions,
   IntentDetails,
   IntentMethods,
@@ -764,13 +765,75 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
   }
 
-  async #submitVaultCardForm({
-    accessToken,
-    saveCard,
-  }: {
-    accessToken: string;
-    saveCard?: boolean;
-  }) {
+  cardForm = {
+    collect: async () => {
+      throwIf(
+        !this.options.publicApiKey,
+        "publicApiKey on MoneyHash instance is required to collect card!",
+      );
+
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
+      const accessToken = await this.sdkApiHandler.request<string>({
+        api: "sdk:generateAccessToken",
+        payload: {
+          publicApiKey: this.options.publicApiKey,
+        },
+      });
+
+      return this.#submitVaultCardForm({ accessToken });
+    },
+    pay: async ({
+      intentId,
+      cardData,
+      saveCard,
+      billingData,
+      shippingData,
+    }: {
+      intentId: string;
+      cardData: CardData;
+      saveCard?: boolean;
+      billingData?: Record<string, unknown>;
+      shippingData?: Record<string, unknown>;
+    }) =>
+      this.sdkApiHandler.request<IntentDetails<TType>>({
+        api: "sdk:submitNativeForm",
+        payload: {
+          intentId,
+          lang: this.sdkEmbed.lang,
+          paymentMethod: "CARD",
+          billingData,
+          shippingData,
+          cardEmbed: cardData,
+          saveCard,
+        },
+      }),
+    createCardToken: async ({
+      cardIntentId,
+      cardData,
+    }: {
+      cardIntentId: string;
+      cardData: CardData;
+    }) =>
+      this.sdkApiHandler.request<CardIntentDetails>({
+        api: "sdk:createCardToken",
+        payload: {
+          cardIntentId,
+          lang: this.sdkEmbed.lang,
+          paymentMethod: "CARD",
+          cardEmbed: cardData,
+        },
+      }),
+  };
+
+  async #submitVaultCardForm({ accessToken }: { accessToken: string }) {
     const vaultFieldsDefPromise = new DeferredPromise<CardData>();
 
     this.vaultSubmitListener.current = (event: MessageEvent) => {
@@ -786,7 +849,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const submitIframe = this.#renderVaultSubmitIframe({
       accessToken,
-      saveCard,
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
@@ -824,19 +886,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     paymentMethod?: PaymentMethodSlugs;
     useWalletBalance?: boolean;
   }): Promise<IntentDetails<TType>> {
-    const missingCardElement = getMissingCardElement(this.mountedCardElements);
-
-    throwIf(
-      !!missingCardElement,
-      `You must mount ${missingCardElement} element!`,
-    );
-
     let cardEmbedData;
 
     if (accessToken) {
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       cardEmbedData = await this.#submitVaultCardForm({
         accessToken,
-        saveCard,
       });
     }
 
@@ -852,6 +915,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         shippingData,
         cardEmbed: cardEmbedData,
         useWalletBalance,
+        saveCard,
       },
     });
 
@@ -905,6 +969,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     renderStrategy: UrlRenderStrategy;
     options?: RenderOptions;
   }) {
+    this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
         return this.#renderUrlInIframe({ url, intentId });
@@ -1124,13 +1189,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return fieldIframe;
   }
 
-  #renderVaultSubmitIframe({
-    accessToken,
-    saveCard,
-  }: {
-    accessToken: string;
-    saveCard?: boolean;
-  }) {
+  #renderVaultSubmitIframe({ accessToken }: { accessToken: string }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 
@@ -1142,9 +1201,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
     url.searchParams.set("lang", this.sdkEmbed.lang);
-    if (saveCard !== undefined) {
-      url.searchParams.set("save_card", `${saveCard}`);
-    }
 
     const submitIframe = document.createElement("iframe");
 
@@ -1170,16 +1226,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   onExpiration(expirationDate: string, callback: () => void) {
     if (!expirationDate) {
-      warnIf(
-        true,
-        `No expiration date provided!, make sure to check for it before usage
-
-if (intentDetails.intent.expirationDate) {
-  moneyHash.onExpiration(intentDetails.intent.expirationDate, () => {
-    console.log("Entity expired!");
-  })
-}`,
-      );
       return () => undefined;
     }
 
