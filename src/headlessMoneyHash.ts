@@ -47,6 +47,7 @@ import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
+import warnIf from "./utils/warnIf";
 
 export * from "./types";
 export * from "./types/headless";
@@ -751,6 +752,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @returns Promise<void>
    */
   setLocale(locale: SupportedLanguages) {
+    warnIf(
+      !!locale && !supportedLanguages.has(locale),
+      `Invalid locale. Supported languages (${[...supportedLanguages].join(
+        " | ",
+      )})`,
+    );
+
     const validLocale = supportedLanguages.has(locale) ? locale : "en";
     return this.sdkEmbed.setLocale(validLocale);
   }
