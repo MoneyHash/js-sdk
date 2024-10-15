@@ -259,15 +259,6 @@ export interface Shipping {
   shipping_method: string | null;
 }
 
-export interface AppleNativePayData {
-  method: "APPLE_PAY";
-  merchantId: string;
-  countryCode: string;
-  currencyCode: string;
-  amount: string;
-  supportedNetworks: string[];
-}
-
 // formFields received in intentDetails
 export type FieldType =
   | "text"
