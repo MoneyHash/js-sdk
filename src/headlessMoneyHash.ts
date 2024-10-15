@@ -63,7 +63,7 @@ export interface MoneyHashHeadlessOptions<TType extends IntentType>
   google?: {
     /**
      * Google Pay environment to target
-     * @default "TEST"
+     * @default "PRODUCTION"
      */
     environment?: GoogleEnvironment;
     /**
@@ -578,7 +578,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     );
 
     this.googlePaymentsClient = new window.google.payments.api.PaymentsClient({
-      environment: this.options.google?.environment || "TEST",
+      environment: this.options.google?.environment || "PRODUCTION",
     });
 
     const paymentDataRequest = this.#getGooglePaymentRequestData();
@@ -589,6 +589,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         if (response.result) {
           const button = this.googlePaymentsClient!.createButton({
             buttonSizeMode: "fill",
+            buttonType: "pay",
             ...googlePayButtonOptions,
             allowedPaymentMethods: paymentDataRequest.allowedPaymentMethods,
             onClick,
