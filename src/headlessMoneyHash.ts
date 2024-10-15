@@ -60,7 +60,7 @@ const supportedProceedWithTypes = new Set([
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {
   publicApiKey?: string;
-  google?: {
+  googlePay?: {
     /**
      * Google Pay environment to target
      * @default "PRODUCTION"
@@ -507,11 +507,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         {
           type: "CARD",
           parameters: {
-            allowedAuthMethods: this.options.google?.allowedAuthMethods || [
+            allowedAuthMethods: this.options.googlePay?.allowedAuthMethods || [
               "PAN_ONLY",
               "CRYPTOGRAM_3DS",
             ],
-            allowedCardNetworks: this.options.google?.allowedCardNetworks || [
+            allowedCardNetworks: this.options.googlePay
+              ?.allowedCardNetworks || [
               "AMEX",
               "DISCOVER",
               "JCB",
@@ -578,7 +579,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     );
 
     this.googlePaymentsClient = new window.google.payments.api.PaymentsClient({
-      environment: this.options.google?.environment || "PRODUCTION",
+      environment: this.options.googlePay?.environment || "PRODUCTION",
     });
 
     const paymentDataRequest = this.#getGooglePaymentRequestData();
