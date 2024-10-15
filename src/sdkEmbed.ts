@@ -78,7 +78,15 @@ export default class SDKEmbed<TType extends IntentType> {
     return language || "en";
   }
 
-  render({ selector, intentId }: { selector: string; intentId: string }) {
+  render({
+    selector,
+    intentId,
+    onHeightChange,
+  }: {
+    selector: string;
+    intentId: string;
+    onHeightChange?: (iframeHeight: number) => void;
+  }) {
     // cleanup previous listeners
     this.messagingService?.abortService();
 
@@ -88,6 +96,7 @@ export default class SDKEmbed<TType extends IntentType> {
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
+    if (onHeightChange) url.searchParams.set("onDimensionsChange", "true");
 
     const lang = this.options.locale?.split("-")[0];
     if (lang) url.searchParams.set("lang", lang);
@@ -120,6 +129,7 @@ export default class SDKEmbed<TType extends IntentType> {
 
     this.messagingService.onReceive((event, reply) => {
       const { type, data } = event.data;
+
       switch (type) {
         case "sdk:init": {
           reply({
@@ -153,6 +163,10 @@ export default class SDKEmbed<TType extends IntentType> {
           if (this.options.headless && this.iframe) {
             this.iframe.hidden = true;
           }
+          break;
+        }
+        case "dimensionsChange": {
+          onHeightChange?.((data as { iframeHeight: number }).iframeHeight);
           break;
         }
 
