@@ -731,11 +731,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
    * @returns Promise<void>
    */
-  renderForm({ selector, intentId }: { selector: string; intentId: string }) {
-    throwIf(!selector, "selector is required for renderForm");
-    throwIf(!intentId, "intentId is required for renderForm");
+  renderForm(options: Parameters<typeof this.sdkEmbed.render>[0]) {
+    throwIf(!options.selector, "selector is required for renderForm");
+    throwIf(!options.intentId, "intentId is required for renderForm");
 
-    return this.sdkEmbed.render({ selector, intentId });
+    return this.sdkEmbed.render(options);
   }
 
   /**
