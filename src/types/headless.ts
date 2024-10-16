@@ -1,5 +1,4 @@
 import {
-  AppleNativePayData,
   IntentState,
   IntentStateDetails,
   IntentType,
@@ -29,9 +28,8 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       stateDetails: IntentStateDetails<IntentState>;
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
-      nativePayData: AppleNativePayData | null;
-      __providerId__: string | null;
       recommendedMethods: Method[] | null;
+      __nativePayData__?: Record<string, any>;
     }
   : {
       intent: PayoutIntent;
@@ -42,7 +40,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        */
       state: IntentState;
       stateDetails: IntentStateDetails<IntentState>;
-      __providerId__: never;
+      __nativePayData__?: never;
     };
 
 export interface Method {
