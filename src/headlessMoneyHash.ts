@@ -646,11 +646,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "payWithGooglePay"',
     );
 
-    const {
-      state,
-      intent,
-      __nativePayData__: nativePayData,
-    } = await this.proceedWith({
+    const { state, __nativePayData__: nativePayData } = await this.proceedWith({
       intentId,
       type: "method",
       id: "GOOGLE_PAY",
@@ -684,8 +680,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       transactionInfo: {
         totalPriceStatus: "FINAL",
         totalPriceLabel: "Total",
-        totalPrice: `${intent.amount.formatted}`,
-        currencyCode: intent.amount.currency,
+        totalPrice: `${nativePayData!.amount}`,
+        currencyCode: nativePayData!.currency_code,
+        countryCode: nativePayData!.country_code,
       },
       merchantInfo: {
         merchantName: nativePayData?.merchant_name,
