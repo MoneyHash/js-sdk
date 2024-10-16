@@ -533,7 +533,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             : {}),
         },
       ],
-    } as const satisfies IsReadyToPayRequest | PaymentDataRequest;
+    } satisfies IsReadyToPayRequest | PaymentDataRequest;
     return paymentDataRequest;
   }
 
