@@ -1050,12 +1050,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       saveCard,
       billingData,
       shippingData,
+      useWalletBalance,
     }: {
       intentId: string;
       cardData: CardData;
       saveCard?: boolean;
       billingData?: Record<string, unknown>;
       shippingData?: Record<string, unknown>;
+      useWalletBalance?: boolean;
     }) =>
       this.sdkApiHandler.request<IntentDetails<TType>>({
         api: "sdk:submitNativeForm",
@@ -1066,6 +1068,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           billingData,
           shippingData,
           cardEmbed: cardData,
+          useWalletBalance,
           saveCard,
         },
       }),
