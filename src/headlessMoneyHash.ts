@@ -676,6 +676,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     }
 
     const { __nativePayData__: nativePayData } = response;
+    // not live intent moves directly to confirmation
     if (!nativePayData) return response;
 
     return this.googlePaymentsClient!.loadPaymentData({
