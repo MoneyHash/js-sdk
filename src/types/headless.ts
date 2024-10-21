@@ -132,6 +132,7 @@ export type GetMethodsOptions = {
   amount?: string | number;
   customer?: string;
   flowId?: string;
+  operation?: "purchase" | "authorize";
 };
 
 export type CardTokenState =
