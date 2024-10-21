@@ -646,21 +646,21 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "payWithGooglePay"',
     );
 
-    const { state, __nativePayData__: nativePayData } = await this.proceedWith({
+    let response = await this.proceedWith({
       intentId,
       type: "method",
       id: "GOOGLE_PAY",
     });
 
     try {
-      if (state === "FORM_FIELDS") {
+      if (response.state === "FORM_FIELDS") {
         if (isEmpty(billingData)) {
           throw new Error(
             "Billing data is missing while calling payWithGooglePay",
           );
         }
 
-        await this.sdkApiHandler.request<IntentDetails<TType>>({
+        response = await this.sdkApiHandler.request<IntentDetails<TType>>({
           api: "sdk:submitNativeForm",
           payload: {
             intentId,
@@ -674,6 +674,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       await this.resetSelectedMethod(intentId);
       throw error;
     }
+
+    const { __nativePayData__: nativePayData } = response;
+    // not live intent moves directly to confirmation
+    if (!nativePayData) return response;
 
     return this.googlePaymentsClient!.loadPaymentData({
       ...this.#getGooglePaymentRequestData(nativePayData),
@@ -731,7 +735,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
    * @returns Promise<void>
    */
-  renderForm(options: Parameters<typeof this.sdkEmbed.render>[0]) {
+  renderForm(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
     throwIf(!options.selector, "selector is required for renderForm");
     throwIf(!options.intentId, "intentId is required for renderForm");
 
