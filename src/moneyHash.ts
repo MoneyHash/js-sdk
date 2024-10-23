@@ -29,6 +29,7 @@ export default class MoneyHash<TType extends IntentType> {
    * });
    * ```
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox | iframe sandbox MDN}
    * @returns Promise<void>
    */
   start(options: Parameters<SDKEmbed<TType>["render"]>[0]) {

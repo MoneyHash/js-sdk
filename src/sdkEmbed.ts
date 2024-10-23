@@ -1,3 +1,7 @@
+import {
+  IFrameSandboxOptions,
+  IFrameSandboxOptionsType,
+} from "./types/headless";
 import MessagingService, { MessagePayload } from "./messagingService";
 import {
   ButtonStyle,
@@ -81,10 +85,12 @@ export default class SDKEmbed<TType extends IntentType> {
   render({
     selector,
     intentId,
+    sandbox,
     onHeightChange,
   }: {
     selector: string;
     intentId: string;
+    sandbox?: IFrameSandboxOptionsType[];
     onHeightChange?: (iframeHeight: number) => void;
   }) {
     // cleanup previous listeners
@@ -106,6 +112,14 @@ export default class SDKEmbed<TType extends IntentType> {
     this.iframe.style.height = "100%";
     this.iframe.style.width = "100%";
     this.iframe.style.border = "0";
+
+    if (sandbox) {
+      sandbox.forEach(option => {
+        if (IFrameSandboxOptions.includes(option)) {
+          this.iframe?.sandbox.add(option);
+        }
+      });
+    }
 
     const container = document.querySelector(selector);
     throwIf(!container, `Couldn't find an element with selector ${selector}!`);
