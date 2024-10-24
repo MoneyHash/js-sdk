@@ -55,3 +55,12 @@ export interface LoaderStyle {
   backgroundColor: string;
   color: string;
 }
+
+export interface CheckoutStyle {
+  hideAmountSidebar?: boolean;
+  hideHeader?: boolean;
+  hideLoaderMessage?: boolean;
+  hideFormHeaderMessage?: boolean;
+  hideNavigationToPaymentMethods?: boolean;
+  formOnly?: boolean;
+}
