@@ -5,6 +5,7 @@ import {
 import MessagingService, { MessagePayload } from "./messagingService";
 import {
   ButtonStyle,
+  CheckoutStyle,
   InputStyle,
   IntentType,
   LoaderStyle,
@@ -53,6 +54,7 @@ export interface SDKEmbedOptions<TType extends IntentType> {
     submitButton?: ButtonStyle;
     input?: InputStyle;
     loader?: LoaderStyle;
+    checkout?: CheckoutStyle;
   };
 }
 
