@@ -389,16 +389,16 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     /**
      * Apple pay sheet errors handler
      */
-    onError: () => void;
+    onError?: () => void;
     onComplete?: () => void;
     billingData?: Record<string, unknown>;
-  }) {
+  }): Promise<IntentDetails<TType>> {
     await loadScript(
       "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
       "moneyHash-apple-pay-sdk",
     );
 
-    if (!ApplePaySession) return;
+    if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
 
     const session = new ApplePaySession(3, {
       countryCode,
@@ -442,7 +442,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       throw error;
     }
 
-    const deferredPromise = new DeferredPromise();
+    const deferredPromise = new DeferredPromise<IntentDetails<TType>>();
 
     session.onvalidatemerchant = e => {
       fetch(`${getApiUrl()}/api/v1/providers/applepay/session/`, {
@@ -462,38 +462,34 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         .catch(onError);
     };
 
-    session.onpaymentauthorized = e => {
-      // eslint-disable-next-line no-console
-      console.log("apple pay authorized", e);
-      fetch(`${getApiUrl()}/api/v1/providers/applepay/token/`, {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token_data: {
-            token: e.payment.token,
+    session.onpaymentauthorized = e =>
+      this.sdkApiHandler
+        .request<IntentDetails<TType>>({
+          api: "sdk:submitReceipt",
+          payload: {
+            intentId,
+            lang: this.sdkEmbed.lang,
+            receipt: JSON.stringify(e.payment),
+            receiptBillingData: {
+              email: e.payment.shippingContact?.emailAddress,
+            },
           },
-          secret: intent.secret,
-        }),
-      })
-        .then(response => (response.ok ? response.json() : Promise.reject()))
-        .then(() => {
+        })
+        .then(response => {
           session.completePayment(ApplePaySession.STATUS_SUCCESS);
           onComplete?.();
-          deferredPromise.resolve(undefined);
+          deferredPromise.resolve(response);
         })
         .catch(() => {
           session.completePayment(ApplePaySession.STATUS_FAILURE);
-          onError();
+          onError?.();
           deferredPromise.reject(undefined);
         });
-    };
 
     session.oncancel = onCancel;
     session.begin();
 
-    await deferredPromise.promise;
+    return deferredPromise.promise;
   }
 
   #getGooglePaymentRequestData(): IsReadyToPayRequest;
@@ -705,7 +701,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           api: "sdk:submitReceipt",
           payload: {
             intentId,
-            paymentMethod: "GOOGLE_PAY",
             lang: this.sdkEmbed.lang,
             receipt: paymentToken,
             receiptBillingData: {
