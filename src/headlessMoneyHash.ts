@@ -462,16 +462,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         .catch(onError);
     };
 
-    session.onpaymentauthorized = e => {
-      // eslint-disable-next-line no-console
-      console.log(e);
+    session.onpaymentauthorized = e =>
       this.sdkApiHandler
         .request<IntentDetails<TType>>({
           api: "sdk:submitReceipt",
           payload: {
             intentId,
             lang: this.sdkEmbed.lang,
-            receipt: JSON.stringify(e.payment.token),
+            receipt: JSON.stringify({ token: e.payment.token }),
             receiptBillingData: {
               email: e.payment.shippingContact?.emailAddress,
             },
@@ -487,7 +485,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           onError?.();
           deferredPromise.reject(undefined);
         });
-    };
 
     session.oncancel = onCancel;
     session.begin();
