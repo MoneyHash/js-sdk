@@ -410,6 +410,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${amount}`,
       },
+      requiredShippingContactFields: ["email"],
     });
 
     const { state, intent } = await this.proceedWith({
@@ -462,6 +463,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
 
     session.onpaymentauthorized = e => {
+      // eslint-disable-next-line no-console
+      console.log("apple pay authorized", e);
       fetch(`${getApiUrl()}/api/v1/providers/applepay/token/`, {
         method: "post",
         headers: {
@@ -692,6 +695,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         merchantName: nativePayData?.merchant_name,
         merchantId: nativePayData?.merchant_id,
       },
+      emailRequired: true,
     })
       .then(paymentData => {
         const paymentToken =
@@ -704,6 +708,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             paymentMethod: "GOOGLE_PAY",
             lang: this.sdkEmbed.lang,
             receipt: paymentToken,
+            receiptBillingData: {
+              email: paymentData.email,
+            },
           },
         });
       })
