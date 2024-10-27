@@ -469,7 +469,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           payload: {
             intentId,
             lang: this.sdkEmbed.lang,
-            receipt: JSON.stringify({ token: e.payment.token }),
+            receipt: e.payment.token,
             receiptBillingData: {
               email: e.payment.shippingContact?.emailAddress,
             },
