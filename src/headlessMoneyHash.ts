@@ -1058,12 +1058,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       saveCard,
       billingData,
       shippingData,
+      installmentPlanId,
     }: {
       intentId: string;
       cardData: CardData;
       saveCard?: boolean;
       billingData?: Record<string, unknown>;
       shippingData?: Record<string, unknown>;
+      installmentPlanId?: InstallmentPlan["id"];
     }) =>
       this.sdkApiHandler.request<IntentDetails<TType>>({
         api: "sdk:submitNativeForm",
@@ -1075,6 +1077,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           shippingData,
           cardEmbed: cardData,
           saveCard,
+          installmentPlanId,
         },
       }),
     createCardToken: async ({
@@ -1138,6 +1141,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     shippingData,
     saveCard,
     paymentMethod = "CARD",
+    installmentPlanId,
   }: {
     intentId: string;
     accessToken?: string | null;
@@ -1145,6 +1149,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     shippingData?: Record<string, unknown>;
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
+    installmentPlanId?: InstallmentPlan["id"];
   }): Promise<IntentDetails<TType>> {
     let cardEmbedData;
 
@@ -1175,6 +1180,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         shippingData,
         cardEmbed: cardEmbedData,
         saveCard,
+        installmentPlanId,
       },
     });
 
@@ -1220,7 +1226,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     currency,
   }: {
     first6Digits?: string;
-    amount: number;
+    amount: string;
     currency: string;
   }): Promise<Array<InstallmentPlan>> {
     throwIf(

@@ -301,11 +301,12 @@ type FormFields = {
 export type InstallmentPlan = {
   id: string;
   installmentPeriod: number;
-  interestRate: number;
+  interestRate: number | null;
   amount: {
     value: string;
     formatted: number;
     currency: number;
   };
-  upfrontFees: number;
+  upfrontFees: number | null;
+  // issuerCode: string | null;
 };
