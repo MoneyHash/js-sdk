@@ -7,6 +7,7 @@ import type {
   CardData,
   Discount,
   Fee,
+  InstallmentPlan,
   IntentType,
   OnCompleteEventOptions,
   OnFailEventOptions,
@@ -1184,11 +1185,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * Selects the instalment plan for the intent
    * @example
    * ```
-   * await moneyHash.selectInstalmentPlan({ intentId: '<intent-id>', planId: '<plan-id>' });
+   * await moneyHash.selectInstallmentPlan({ intentId: '<intent-id>', planId: '<plan-id>' });
    * ```
    * @returns { Promise<IntentDetails<TType>> }
    */
-  async selectInstalmentPlan({
+  async selectInstallmentPlan({
     intentId,
     planId,
   }: {
@@ -1196,10 +1197,44 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     planId: string;
   }): Promise<IntentDetails<TType>> {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
-      api: "sdk:selectInstalmentPlan",
+      api: "sdk:selectInstallmentPlan",
       payload: {
         planId,
         intentId,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Get list of the instalment plan for the intent
+   * @example
+   * ```
+   * await moneyHash.getInstallmentPlans({ first6Digits: '<card-bin>', amount: <amount>, currency: '<currency>' });
+   * ```
+   * @returns { Promise<Array<InstallmentPlan>> }
+   */
+  async getInstallmentPlans({
+    first6Digits,
+    amount,
+    currency,
+  }: {
+    first6Digits?: string;
+    amount: number;
+    currency: string;
+  }): Promise<Array<InstallmentPlan>> {
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to get installment plans!",
+    );
+
+    return this.sdkApiHandler.request<Array<InstallmentPlan>>({
+      api: "sdk:getInstallmentPlans",
+      payload: {
+        first6Digits,
+        amount,
+        currency,
+        publicApiKey: this.options.publicApiKey,
         lang: this.sdkEmbed.lang,
       },
     });

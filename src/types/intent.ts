@@ -79,7 +79,7 @@ export type IntentStateDetails<TType extends IntentState> =
       }
     : TType extends "INSTALMENT_PLANS"
     ? {
-        plans: InstalmentPlan[];
+        plans: InstallmentPlan[];
       }
     : null;
 
@@ -298,7 +298,7 @@ type FormFields = {
   } | null;
 };
 
-export type InstalmentPlan = {
+export type InstallmentPlan = {
   id: string;
   installmentPeriod: number;
   interestRate: number;
