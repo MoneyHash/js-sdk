@@ -15,6 +15,16 @@ import type {
   UrlRenderStrategy,
 } from "./types";
 import type {
+  GoogleAllowedAuthMethods,
+  GoogleAllowedCardNetworks,
+  GoogleButtonOptions,
+  GoogleEnvironment,
+  IsReadyToPayRequest,
+  GooglePaymentsClient,
+  PaymentDataRequest,
+} from "./types/googlePay";
+import type {
+  CardIntentDetails,
   GetMethodsOptions,
   IntentDetails,
   IntentMethods,
@@ -50,6 +60,21 @@ const supportedProceedWithTypes = new Set([
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {
   publicApiKey?: string;
+  googlePay?: {
+    /**
+     * Google Pay environment to target
+     * @default "PRODUCTION"
+     */
+    environment?: GoogleEnvironment;
+    /**
+     * @default ["PAN_ONLY","CRYPTOGRAM_3DS"]
+     */
+    allowedAuthMethods?: GoogleAllowedAuthMethods;
+    /**
+     * @default ["AMEX","DISCOVER","JCB","MASTERCARD","VISA",]
+     */
+    allowedCardNetworks?: GoogleAllowedCardNetworks;
+  };
 }
 
 export default class MoneyHashHeadless<TType extends IntentType> {
@@ -66,6 +91,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   };
 
   private mountedCardElements: Array<ElementType> = [];
+
+  private googlePaymentsClient: GooglePaymentsClient | null = null;
 
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
@@ -216,11 +243,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId,
     type,
     id,
+    useWalletBalance,
     metaData,
   }: {
     type: "method" | "customerBalance" | "savedCard";
     intentId: string;
     id: string;
+    useWalletBalance?: boolean;
     metaData?: {
       cvv: string;
     };
@@ -240,6 +269,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentId,
         id,
         lang: this.sdkEmbed.lang,
+        useWalletBalance,
         metaData,
       },
     });
@@ -321,15 +351,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *     email: "test@test.com",
    *   },
    *   onCancel: () => console.log("CANCEL"),
-   *   onComplete: async () => {
-   *     // Will fire after a successful payment
-   *     console.log("COMPLETE");
-   *   },
    *   onError: async () => {
    *     // Will fire after a failure payment
    *     console.log("ERROR");
    *   },
    * })
+   * .then(() =>  console.log("COMPLETE"))
    * .catch(error => {
    *   console.log(error);
    *   error.message | string
@@ -359,16 +386,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     currency: string;
     amount: number;
     onCancel?: () => void;
-    onError: () => void;
-    onComplete: () => void;
+    /**
+     * Apple pay sheet errors handler
+     */
+    onError?: () => void;
+    onComplete?: () => void;
     billingData?: Record<string, unknown>;
-  }) {
+  }): Promise<IntentDetails<TType>> {
     await loadScript(
       "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
       "moneyHash-apple-pay-sdk",
     );
 
-    if (!ApplePaySession) return;
+    if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
 
     const session = new ApplePaySession(3, {
       countryCode,
@@ -380,6 +410,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${amount}`,
       },
+      requiredShippingContactFields: ["email"],
     });
 
     const { state, intent } = await this.proceedWith({
@@ -389,7 +420,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
 
     try {
-      if (state === "INTENT_FORM") {
+      if (state === "FORM_FIELDS") {
         if (isEmpty(billingData)) {
           throw new Error(
             "Billing data is missing while calling payWithApplePay",
@@ -411,6 +442,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       throw error;
     }
 
+    const deferredPromise = new DeferredPromise<IntentDetails<TType>>();
+
     session.onvalidatemerchant = e => {
       fetch(`${getApiUrl()}/api/v1/providers/applepay/session/`, {
         method: "post",
@@ -429,32 +462,263 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         .catch(onError);
     };
 
-    session.onpaymentauthorized = e => {
-      fetch(`${getApiUrl()}/api/v1/providers/applepay/token/`, {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token_data: {
-            token: e.payment.token,
+    session.onpaymentauthorized = e =>
+      this.sdkApiHandler
+        .request<IntentDetails<TType>>({
+          api: "sdk:submitReceipt",
+          payload: {
+            intentId,
+            lang: this.sdkEmbed.lang,
+            receipt: JSON.stringify({ token: e.payment.token }),
+            receiptBillingData: {
+              email: e.payment.shippingContact?.emailAddress,
+            },
           },
-          secret: intent.secret,
-        }),
-      })
-        .then(response => (response.ok ? response.json() : Promise.reject()))
-        .then(() => {
+        })
+        .then(response => {
           session.completePayment(ApplePaySession.STATUS_SUCCESS);
-          onComplete();
+          onComplete?.();
+          deferredPromise.resolve(response);
         })
         .catch(() => {
           session.completePayment(ApplePaySession.STATUS_FAILURE);
-          onError();
+          onError?.();
+          deferredPromise.reject(undefined);
         });
-    };
 
     session.oncancel = onCancel;
     session.begin();
+
+    return deferredPromise.promise;
+  }
+
+  #getGooglePaymentRequestData(): IsReadyToPayRequest;
+  #getGooglePaymentRequestData(
+    nativePayData?: Record<string, any>,
+  ): PaymentDataRequest;
+  #getGooglePaymentRequestData(
+    nativePayData?: Record<string, any>,
+  ): IsReadyToPayRequest | PaymentDataRequest {
+    const paymentDataRequest = {
+      apiVersion: 2,
+      apiVersionMinor: 0,
+      allowedPaymentMethods: [
+        {
+          type: "CARD",
+          parameters: {
+            allowedAuthMethods: this.options.googlePay?.allowedAuthMethods || [
+              "PAN_ONLY",
+              "CRYPTOGRAM_3DS",
+            ],
+            allowedCardNetworks: this.options.googlePay
+              ?.allowedCardNetworks || [
+              "AMEX",
+              "DISCOVER",
+              "JCB",
+              "MASTERCARD",
+              "VISA",
+            ],
+          },
+          ...(nativePayData
+            ? {
+                tokenizationSpecification: {
+                  type: "PAYMENT_GATEWAY",
+                  parameters: {
+                    gateway: nativePayData.gateway,
+                    gatewayMerchantId: nativePayData.gateway_merchant_id,
+                  },
+                },
+              }
+            : {}),
+        },
+      ],
+    } satisfies IsReadyToPayRequest | PaymentDataRequest;
+    return paymentDataRequest;
+  }
+
+  /**
+   * Render Google Pay button on container element with element with id `moneyHash-google-pay-button`
+   * @example
+   * ```
+   * moneyHash
+  .renderGooglePayButton({
+    buttonType: "pay",
+    onClick: () =>
+      moneyHash
+        .payWithGooglePay({
+          intentId: "<intent_id>",
+          onCancel() {
+            console.log("cancelled");
+          },
+        })
+        .then(intentDetails => {
+          console.log(intentDetails);
+        })
+        .catch(console.dir),
+  })
+  .catch(console.dir);
+   * ```
+   */
+  async renderGooglePayButton({
+    onClick,
+    ...googlePayButtonOptions
+  }: {
+    onClick: () => void;
+  } & GoogleButtonOptions) {
+    const container = document.getElementById("moneyHash-google-pay-button");
+
+    throwIf(
+      !container,
+      "Couldn't find an element with id moneyHash-google-pay-button to render the google pay button!",
+    );
+
+    await loadScript(
+      "https://pay.google.com/gp/p/js/pay.js",
+      "moneyHash-google-pay-sdk",
+    );
+
+    this.googlePaymentsClient = new window.google.payments.api.PaymentsClient({
+      environment: this.options.googlePay?.environment || "PRODUCTION",
+    });
+
+    const paymentDataRequest = this.#getGooglePaymentRequestData();
+
+    this.googlePaymentsClient
+      .isReadyToPay(paymentDataRequest)
+      .then(response => {
+        if (response.result) {
+          const button = this.googlePaymentsClient!.createButton({
+            buttonSizeMode: "fill",
+            buttonType: "pay",
+            ...googlePayButtonOptions,
+            allowedPaymentMethods: paymentDataRequest.allowedPaymentMethods,
+            onClick,
+          });
+
+          container?.replaceChildren(button);
+        } else {
+          throw new Error("Google Pay is not ready to pay!");
+        }
+      })
+      .catch(err => {
+        // eslint-disable-next-line no-console
+        console.dir(err);
+      });
+  }
+
+  /**
+   * Pay with native google pay
+   *
+   * @example
+   * ```
+   * moneyHash
+   * .payWithGooglePay({
+   *   intentId: paymentIntentId,
+   *   billingData: {
+   *     email: "test@test.com",
+   *   },
+   *   onCancel: () => console.log("CANCEL"),
+   * })
+   * .then(intentDetails => console.log(intentDetails))
+   * .catch(error => {
+   *   console.log(error);
+   *   error.message | string
+           // intent requires billing data to proceed with the native integration
+          - Billing data is missing while calling payWithApplePay
+
+       error | Record<string, string>
+          {email: "Enter a valid email address."}
+   * });
+   * ```
+   */
+  async payWithGooglePay({
+    intentId,
+    billingData = {},
+    onCancel,
+  }: {
+    intentId: string;
+    billingData?: Record<string, unknown>;
+    onCancel?: () => void;
+  }): Promise<IntentDetails<TType>> {
+    throwIf(
+      !this.googlePaymentsClient,
+      'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "payWithGooglePay"',
+    );
+
+    let response = await this.proceedWith({
+      intentId,
+      type: "method",
+      id: "GOOGLE_PAY",
+    });
+
+    try {
+      if (response.state === "FORM_FIELDS") {
+        if (isEmpty(billingData)) {
+          throw new Error(
+            "Billing data is missing while calling payWithGooglePay",
+          );
+        }
+
+        response = await this.sdkApiHandler.request<IntentDetails<TType>>({
+          api: "sdk:submitNativeForm",
+          payload: {
+            intentId,
+            paymentMethod: "GOOGLE_PAY",
+            lang: this.sdkEmbed.lang,
+            billingData,
+          },
+        });
+      }
+    } catch (error) {
+      await this.resetSelectedMethod(intentId);
+      throw error;
+    }
+
+    const { __nativePayData__: nativePayData } = response;
+    // not live intent moves directly to confirmation
+    if (!nativePayData) return response;
+
+    return this.googlePaymentsClient!.loadPaymentData({
+      ...this.#getGooglePaymentRequestData(nativePayData),
+      transactionInfo: {
+        totalPriceStatus: "FINAL",
+        totalPriceLabel: "Total",
+        totalPrice: `${nativePayData!.amount}`,
+        currencyCode: nativePayData!.currency_code,
+        countryCode: nativePayData!.country_code,
+      },
+      merchantInfo: {
+        merchantName: nativePayData?.merchant_name,
+        merchantId: nativePayData?.merchant_id,
+      },
+      emailRequired: true,
+    })
+      .then(paymentData => {
+        const paymentToken =
+          paymentData.paymentMethodData.tokenizationData.token;
+
+        return this.sdkApiHandler.request<IntentDetails<TType>>({
+          api: "sdk:submitReceipt",
+          payload: {
+            intentId,
+            lang: this.sdkEmbed.lang,
+            receipt: paymentToken,
+            receiptBillingData: {
+              email: paymentData.email,
+            },
+          },
+        });
+      })
+      .catch(err => {
+        if (err.statusCode === "CANCELED") {
+          onCancel?.();
+        } else {
+          // Show error for debugging
+          // eslint-disable-next-line no-console
+          console.dir(err);
+        }
+        return Promise.reject(err);
+      });
   }
 
   /**
@@ -471,13 +735,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * });
    * ```
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox | iframe sandbox MDN}
    * @returns Promise<void>
    */
-  renderForm({ selector, intentId }: { selector: string; intentId: string }) {
-    throwIf(!selector, "selector is required for renderForm");
-    throwIf(!intentId, "intentId is required for renderForm");
+  renderForm(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
+    throwIf(!options.selector, "selector is required for renderForm");
+    throwIf(!options.intentId, "intentId is required for renderForm");
 
-    return this.sdkEmbed.render({ selector, intentId });
+    return this.sdkEmbed.render(options);
   }
 
   /**
@@ -761,13 +1026,75 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
   }
 
-  async #submitVaultCardForm({
-    accessToken,
-    saveCard,
-  }: {
-    accessToken: string;
-    saveCard?: boolean;
-  }) {
+  cardForm = {
+    collect: async () => {
+      throwIf(
+        !this.options.publicApiKey,
+        "publicApiKey on MoneyHash instance is required to collect card!",
+      );
+
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
+      const accessToken = await this.sdkApiHandler.request<string>({
+        api: "sdk:generateAccessToken",
+        payload: {
+          publicApiKey: this.options.publicApiKey,
+        },
+      });
+
+      return this.#submitVaultCardForm({ accessToken });
+    },
+    pay: async ({
+      intentId,
+      cardData,
+      saveCard,
+      billingData,
+      shippingData,
+    }: {
+      intentId: string;
+      cardData: CardData;
+      saveCard?: boolean;
+      billingData?: Record<string, unknown>;
+      shippingData?: Record<string, unknown>;
+    }) =>
+      this.sdkApiHandler.request<IntentDetails<TType>>({
+        api: "sdk:submitNativeForm",
+        payload: {
+          intentId,
+          lang: this.sdkEmbed.lang,
+          paymentMethod: "CARD",
+          billingData,
+          shippingData,
+          cardEmbed: cardData,
+          saveCard,
+        },
+      }),
+    createCardToken: async ({
+      cardIntentId,
+      cardData,
+    }: {
+      cardIntentId: string;
+      cardData: CardData;
+    }) =>
+      this.sdkApiHandler.request<CardIntentDetails>({
+        api: "sdk:createCardToken",
+        payload: {
+          cardIntentId,
+          lang: this.sdkEmbed.lang,
+          paymentMethod: "CARD",
+          cardEmbed: cardData,
+        },
+      }),
+  };
+
+  async #submitVaultCardForm({ accessToken }: { accessToken: string }) {
     const vaultFieldsDefPromise = new DeferredPromise<CardData>();
 
     this.vaultSubmitListener.current = (event: MessageEvent) => {
@@ -783,7 +1110,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const submitIframe = this.#renderVaultSubmitIframe({
       accessToken,
-      saveCard,
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
@@ -819,19 +1145,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
   }): Promise<IntentDetails<TType>> {
-    const missingCardElement = getMissingCardElement(this.mountedCardElements);
-
-    throwIf(
-      !!missingCardElement,
-      `You must mount ${missingCardElement} element!`,
-    );
-
     let cardEmbedData;
 
     if (accessToken) {
+      const missingCardElement = getMissingCardElement(
+        this.mountedCardElements,
+      );
+
+      throwIf(
+        !!missingCardElement,
+        `You must mount ${missingCardElement} element!`,
+      );
+
       cardEmbedData = await this.#submitVaultCardForm({
         accessToken,
-        saveCard,
       });
     }
 
@@ -846,6 +1173,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         billingData,
         shippingData,
         cardEmbed: cardEmbedData,
+        saveCard,
       },
     });
 
@@ -924,6 +1252,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     renderStrategy: UrlRenderStrategy;
     options?: RenderOptions;
   }) {
+    this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
         return this.#renderUrlInIframe({ url, intentId });
@@ -1143,13 +1472,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return fieldIframe;
   }
 
-  #renderVaultSubmitIframe({
-    accessToken,
-    saveCard,
-  }: {
-    accessToken: string;
-    saveCard?: boolean;
-  }) {
+  #renderVaultSubmitIframe({ accessToken }: { accessToken: string }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 
@@ -1161,9 +1484,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
     url.searchParams.set("lang", this.sdkEmbed.lang);
-    if (saveCard !== undefined) {
-      url.searchParams.set("save_card", `${saveCard}`);
-    }
 
     const submitIframe = document.createElement("iframe");
 
@@ -1189,16 +1509,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   onExpiration(expirationDate: string, callback: () => void) {
     if (!expirationDate) {
-      warnIf(
-        true,
-        `No expiration date provided!, make sure to check for it before usage
-
-if (intentDetails.intent.expirationDate) {
-  moneyHash.onExpiration(intentDetails.intent.expirationDate, () => {
-    console.log("Entity expired!");
-  })
-}`,
-      );
       return () => undefined;
     }
 

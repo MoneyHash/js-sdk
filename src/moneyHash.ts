@@ -29,13 +29,13 @@ export default class MoneyHash<TType extends IntentType> {
    * });
    * ```
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox | iframe sandbox MDN}
    * @returns Promise<void>
    */
-  start({ selector, intentId }: { selector: string; intentId: string }) {
-    throwIf(!selector, "selector is required for start");
-    throwIf(!intentId, "intentId is required for start");
-
-    return this.sdkEmbed.render({ selector, intentId });
+  start(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
+    throwIf(!options.selector, "selector is required for start");
+    throwIf(!options.intentId, "intentId is required for start");
+    return this.sdkEmbed.render(options);
   }
 
   /**

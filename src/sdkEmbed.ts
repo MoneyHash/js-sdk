@@ -1,6 +1,11 @@
+import {
+  IFrameSandboxOptions,
+  IFrameSandboxOptionsType,
+} from "./types/headless";
 import MessagingService, { MessagePayload } from "./messagingService";
 import {
   ButtonStyle,
+  CheckoutStyle,
   InputStyle,
   IntentType,
   LoaderStyle,
@@ -49,6 +54,7 @@ export interface SDKEmbedOptions<TType extends IntentType> {
     submitButton?: ButtonStyle;
     input?: InputStyle;
     loader?: LoaderStyle;
+    checkout?: CheckoutStyle;
   };
 }
 
@@ -78,7 +84,17 @@ export default class SDKEmbed<TType extends IntentType> {
     return language || "en";
   }
 
-  render({ selector, intentId }: { selector: string; intentId: string }) {
+  render({
+    selector,
+    intentId,
+    sandbox,
+    onHeightChange,
+  }: {
+    selector: string;
+    intentId: string;
+    sandbox?: IFrameSandboxOptionsType[];
+    onHeightChange?: (iframeHeight: number) => void;
+  }) {
     // cleanup previous listeners
     this.messagingService?.abortService();
 
@@ -88,6 +104,7 @@ export default class SDKEmbed<TType extends IntentType> {
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
+    if (onHeightChange) url.searchParams.set("onDimensionsChange", "true");
 
     const lang = this.options.locale?.split("-")[0];
     if (lang) url.searchParams.set("lang", lang);
@@ -97,6 +114,14 @@ export default class SDKEmbed<TType extends IntentType> {
     this.iframe.style.height = "100%";
     this.iframe.style.width = "100%";
     this.iframe.style.border = "0";
+
+    if (sandbox) {
+      sandbox.forEach(option => {
+        if (IFrameSandboxOptions.includes(option)) {
+          this.iframe?.sandbox.add(option);
+        }
+      });
+    }
 
     const container = document.querySelector(selector);
     throwIf(!container, `Couldn't find an element with selector ${selector}!`);
@@ -120,6 +145,7 @@ export default class SDKEmbed<TType extends IntentType> {
 
     this.messagingService.onReceive((event, reply) => {
       const { type, data } = event.data;
+
       switch (type) {
         case "sdk:init": {
           reply({
@@ -153,6 +179,10 @@ export default class SDKEmbed<TType extends IntentType> {
           if (this.options.headless && this.iframe) {
             this.iframe.hidden = true;
           }
+          break;
+        }
+        case "dimensionsChange": {
+          onHeightChange?.((data as { iframeHeight: number }).iframeHeight);
           break;
         }
 

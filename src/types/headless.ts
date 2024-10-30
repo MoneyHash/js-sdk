@@ -1,5 +1,4 @@
 import {
-  AppleNativePayData,
   IntentState,
   IntentStateDetails,
   IntentType,
@@ -29,9 +28,8 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       stateDetails: IntentStateDetails<IntentState>;
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
-      nativePayData: AppleNativePayData | null;
-      __providerId__: string | null;
       recommendedMethods: Method[] | null;
+      __nativePayData__?: Record<string, any>;
     }
   : {
       intent: PayoutIntent;
@@ -42,7 +40,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        */
       state: IntentState;
       stateDetails: IntentStateDetails<IntentState>;
-      __providerId__: never;
+      __nativePayData__?: never;
     };
 
 export interface Method {
@@ -134,4 +132,41 @@ export type GetMethodsOptions = {
   amount?: string | number;
   customer?: string;
   flowId?: string;
+  operation?: "purchase" | "authorize";
 };
+
+export type CardTokenState =
+  | "CARD_INTENT_SUCCESSFUL"
+  | "CARD_INTENT_FAILED"
+  | "URL_TO_RENDER";
+
+export type CardIntentDetails =
+  | {
+      state: Exclude<CardTokenState, "URL_TO_RENDER">;
+      stateDetails: null;
+    }
+  | {
+      state: Extract<CardTokenState, "URL_TO_RENDER">;
+      stateDetails: {
+        url: string;
+        renderStrategy: "REDIRECT";
+      };
+    };
+
+export const IFrameSandboxOptions = [
+  "allow-downloads",
+  "allow-forms",
+  "allow-modals",
+  "allow-orientation-lock",
+  "allow-pointer-lock",
+  "allow-popups",
+  "allow-popups-to-escape-sandbox",
+  "allow-presentation",
+  "allow-same-origin",
+  "allow-scripts",
+  "allow-storage-access-by-user-activation",
+  "allow-top-navigation",
+  "allow-top-navigation-by-user-activation",
+] as const;
+
+export type IFrameSandboxOptionsType = typeof IFrameSandboxOptions[number];
