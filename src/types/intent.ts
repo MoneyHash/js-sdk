@@ -308,5 +308,5 @@ export type InstallmentPlan = {
     currency: number;
   };
   upfrontFees: number | null;
-  // issuerCode: string | null;
+  issuerCode: string | null;
 };
