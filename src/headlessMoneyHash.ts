@@ -1260,15 +1260,18 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async submitCvv({
     intentId,
     cvv,
+    installmentPlanData,
   }: {
     intentId: string;
     cvv: string;
+    installmentPlanData?: InstallmentPlanPayload;
   }): Promise<IntentDetails<TType>> {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:submitCardCvv",
       payload: {
         intentId,
         cvv,
+        installmentPlanData,
         lang: this.sdkEmbed.lang,
       },
     });
