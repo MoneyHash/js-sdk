@@ -310,3 +310,8 @@ export type InstallmentPlan = {
   upfrontFees: number | null;
   issuerCode: string | null;
 };
+
+export type InstallmentPlanPayload = {
+  planId: string;
+  issuerCode?: string;
+};
