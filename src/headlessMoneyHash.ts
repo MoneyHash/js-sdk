@@ -1199,15 +1199,18 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async selectInstallmentPlan({
     intentId,
     planId,
+    issuerCode,
   }: {
     intentId: string;
     planId: string;
+    issuerCode?: string;
   }): Promise<IntentDetails<TType>> {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:selectInstallmentPlan",
       payload: {
         planId,
         intentId,
+        issuerCode,
         lang: this.sdkEmbed.lang,
       },
     });
