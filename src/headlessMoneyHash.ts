@@ -42,7 +42,6 @@ import {
   ElementType,
   FormEvents,
 } from "./types/standaloneFields";
-import getApiUrl from "./utils/getApiUrl";
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
@@ -446,23 +445,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const deferredPromise = new DeferredPromise<IntentDetails<TType>>();
 
-    session.onvalidatemerchant = e => {
-      fetch(`${getApiUrl()}/api/v1/providers/applepay/session/`, {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          secret: intent.secret,
-          validation_url: e.validationURL,
-        }),
-      })
-        .then(response => (response.ok ? response.json() : Promise.reject()))
+    session.onvalidatemerchant = e =>
+      this.sdkApiHandler
+        .request({
+          api: "sdk:applePaySession",
+          payload: {
+            secret: intent.secret,
+            validationUrl: e.validationURL,
+            parentOrigin: window.location.origin,
+          },
+        })
         .then(merchantSession =>
           session.completeMerchantValidation(merchantSession),
         )
         .catch(onError);
-    };
 
     session.onpaymentauthorized = e =>
       this.sdkApiHandler
