@@ -452,6 +452,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           payload: {
             secret: intent.secret,
             validationUrl: e.validationURL,
+            parentOrigin: window.location.origin,
           },
         })
         .then(merchantSession =>
