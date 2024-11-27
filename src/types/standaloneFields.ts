@@ -103,6 +103,7 @@ export type ElementProps =
 type CommonElementOptions = {
   selector: string;
   placeholder?: string;
+  inputMode?: string;
   styles?: ElementStyles;
   classes?: Partial<Record<ElementClassNames, string>>;
 };
