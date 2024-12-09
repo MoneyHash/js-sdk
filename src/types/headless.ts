@@ -50,6 +50,7 @@ export interface Method {
   isSelected: boolean;
   confirmationRequired: boolean;
   requiredBillingFields: FormField[] | null;
+  requiredShippingFields: FormField[] | null;
 }
 export interface Card {
   id: string;
