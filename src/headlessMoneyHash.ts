@@ -246,6 +246,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     id,
     useWalletBalance,
     metaData,
+    installmentPlanData,
   }: {
     type: "method" | "customerBalance" | "savedCard";
     intentId: string;
@@ -254,6 +255,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     metaData?: {
       cvv: string;
     };
+    installmentPlanData?: InstallmentPlanPayload;
   }) {
     throwIf(
       !supportedProceedWithTypes.has(type),
@@ -272,6 +274,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         lang: this.sdkEmbed.lang,
         useWalletBalance,
         metaData,
+        installmentPlanData,
       },
     });
   }
