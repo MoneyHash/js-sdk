@@ -739,11 +739,26 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox | iframe sandbox MDN}
    * @returns Promise<void>
    */
-  renderForm(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
+  async renderForm(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
     throwIf(!options.selector, "selector is required for renderForm");
     throwIf(!options.intentId, "intentId is required for renderForm");
 
-    return this.sdkEmbed.render(options);
+    await this.sdkEmbed.render(options);
+
+    const resultDefPromise = new DeferredPromise<
+      Promise<IntentDetails<TType>>
+    >();
+    const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== getIframeUrl()) return;
+      const { type, data } = event.data;
+      if (type === "onComplete" || type === "onFail") {
+        resultDefPromise.resolve(data);
+        window.removeEventListener("message", onReceiveMessage);
+      }
+    };
+    window.addEventListener("message", onReceiveMessage);
+
+    return resultDefPromise.promise;
   }
 
   /**
@@ -1298,7 +1313,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url: string;
     renderStrategy: UrlRenderStrategy;
     options?: RenderOptions;
-  }) {
+  }): Promise<IntentDetails<TType>> {
+    await this.sdkEmbed.isCommunicationReady;
     this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
@@ -1306,9 +1322,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe({ url, intentId, options });
       case "REDIRECT":
-        return this.#renderUrlInRedirect({ url, options });
+        return this.#renderUrlInRedirect({ url, options }) as any;
       default:
-        return null;
+        throw new Error("Invalid render strategy");
     }
   }
 
@@ -1334,9 +1350,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener({ intentId });
+    const result = await this.#setupExternalWindowListener({ intentId });
 
     iframe.remove();
+    return result;
   }
 
   async #renderUrlInPopUpIframe({
@@ -1363,9 +1380,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener({ intentId, isUsingPopUp: true });
+    const result = await this.#setupExternalWindowListener({
+      intentId,
+      isUsingPopUp: true,
+    });
 
     windowRef?.close();
+    return result;
   }
 
   async #renderUrlInRedirect({
@@ -1389,16 +1410,23 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }: {
     intentId: string;
     isUsingPopUp?: boolean;
-  }) {
-    const resultDefPromise = new DeferredPromise();
+  }): Promise<IntentDetails<TType>> {
+    const resultDefPromise = new DeferredPromise<
+      Promise<IntentDetails<TType>>
+    >();
+
+    let isReceived = false;
 
     const onReceiveMessage = async (event: MessageEvent) => {
       if (event.origin !== getIframeUrl()) return;
       const { type } = event.data;
 
+      if (isReceived) return;
+
       if (type === "intentResult") {
         if (isUsingPopUp) this.sdkApiHandler.postMessage("EmbedResultClose");
 
+        isReceived = true;
         const [intentDetails] = await Promise.all([
           this.getIntentDetails(intentId),
           waitForSeconds(2),
@@ -1422,7 +1450,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           } as unknown as OnFailEventOptions<TType>);
         }
 
-        resultDefPromise.resolve(() => null);
+        resultDefPromise.resolve(intentDetails);
         window.removeEventListener("message", onReceiveMessage);
       }
     };
