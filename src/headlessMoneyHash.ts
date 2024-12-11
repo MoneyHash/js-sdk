@@ -683,7 +683,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }: {
     nativePayData: Record<string, any> | null;
     onCancel?: () => void;
-  }) {
+  }): Promise<{
+    receipt: string;
+    receiptBillingData: Partial<Record<string, string>>;
+  }> {
     await loadScript(
       "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
       "moneyHash-apple-pay-sdk",
@@ -693,7 +696,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       !nativePayData,
       "nativePayData is required to generate Apple Pay receipt!",
     );
-    if (!nativePayData) return;
+
+    if (!nativePayData) return { receipt: "", receiptBillingData: {} };
 
     throwIf(
       !nativePayData.amount,
@@ -701,7 +705,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     );
 
     if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
-
+    // eslint-disable-next-line no-console
+    console.log("generating apple pay session");
     const session = new ApplePaySession(3, {
       countryCode: nativePayData.country_code,
       currencyCode: nativePayData.currency_code,
@@ -714,10 +719,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       },
       requiredShippingContactFields: ["email"],
     });
+    // eslint-disable-next-line no-console
+    console.log({ session });
 
     const deferredPromise = new DeferredPromise<{
       receipt: string;
-      receiptBilling: Partial<Record<string, string>>;
+      receiptBillingData: Partial<Record<string, string>>;
     }>();
 
     session.onvalidatemerchant = e =>
@@ -732,7 +739,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         })
         .then(merchantSession =>
           session.completeMerchantValidation(merchantSession),
-        );
+        )
+        .catch(error => deferredPromise.reject(error));
 
     session.onpaymentauthorized = e => {
       const nativeReceiptData = {
@@ -746,6 +754,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
     session.oncancel = onCancel;
     session.begin();
+
+    return deferredPromise.promise;
   }
 
   submitPaymentReceipt({
