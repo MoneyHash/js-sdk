@@ -608,6 +608,168 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Generate Google Payment Receipt
+   * @returns nativeReceiptData
+   */
+  generateGooglePayReceipt({
+    nativePayData,
+    onCancel,
+  }: {
+    nativePayData: Record<string, any> | null;
+    onCancel?: () => void;
+  }): Promise<{
+    receipt: string;
+    receiptBillingData: Partial<Record<string, string>>;
+  }> {
+    throwIf(
+      !this.googlePaymentsClient,
+      'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "generateGooglePayReceipt"',
+    );
+
+    throwIf(
+      !nativePayData,
+      "nativePayData is required to generate Apple Pay receipt!",
+    );
+
+    throwIf(
+      !nativePayData!.amount,
+      "nativePayData.amount is required to generate Apple Pay receipt!",
+    );
+
+    return this.googlePaymentsClient!.loadPaymentData({
+      ...this.#getGooglePaymentRequestData(nativePayData!),
+      transactionInfo: {
+        totalPriceStatus: "FINAL",
+        totalPriceLabel: "Total",
+        totalPrice: `${nativePayData!.amount}`,
+        currencyCode: nativePayData!.currency_code,
+        countryCode: nativePayData!.country_code,
+      },
+      merchantInfo: {
+        merchantName: nativePayData!.merchant_name,
+        merchantId: nativePayData!.merchant_id,
+      },
+      emailRequired: true,
+    })
+      .then(paymentData => {
+        const paymentToken =
+          paymentData.paymentMethodData.tokenizationData.token;
+        return {
+          receipt: paymentToken,
+          receiptBillingData: {
+            email: paymentData.email,
+          },
+        };
+      })
+      .catch(err => {
+        if (err.statusCode === "CANCELED") {
+          onCancel?.();
+        } else {
+          // Show error for debugging
+          // eslint-disable-next-line no-console
+          console.dir(err);
+        }
+        return Promise.reject(err);
+      });
+  }
+
+  /**
+   * Generate Google Payment Receipt
+   * @returns nativeReceiptData
+   */
+  async generateApplePayReceipt({
+    nativePayData,
+    onCancel = () => {},
+  }: {
+    nativePayData: Record<string, any> | null;
+    onCancel?: () => void;
+  }) {
+    await loadScript(
+      "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
+      "moneyHash-apple-pay-sdk",
+    );
+
+    throwIf(
+      !nativePayData,
+      "nativePayData is required to generate Apple Pay receipt!",
+    );
+    if (!nativePayData) return;
+
+    throwIf(
+      !nativePayData.amount,
+      "nativePayData.amount is required to generate Apple Pay receipt!",
+    );
+
+    if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
+
+    const session = new ApplePaySession(3, {
+      countryCode: nativePayData.country_code,
+      currencyCode: nativePayData.currency_code,
+      supportedNetworks: nativePayData.supported_networks,
+      merchantCapabilities: ["supports3DS"],
+      total: {
+        label: "Apple Pay",
+        type: "final",
+        amount: `${nativePayData.amount}`,
+      },
+      requiredShippingContactFields: ["email"],
+    });
+
+    const deferredPromise = new DeferredPromise<{
+      receipt: string;
+      receiptBilling: Partial<Record<string, string>>;
+    }>();
+
+    session.onvalidatemerchant = e =>
+      this.sdkApiHandler
+        .request({
+          api: "sdk:applePaySession",
+          payload: {
+            methodId: nativePayData.method_id,
+            validationUrl: e.validationURL,
+            parentOrigin: window.location.origin,
+          },
+        })
+        .then(merchantSession =>
+          session.completeMerchantValidation(merchantSession),
+        );
+
+    session.onpaymentauthorized = e => {
+      const nativeReceiptData = {
+        receipt: JSON.stringify({ token: e.payment.token }),
+        receiptBillingData: {
+          email: e.payment.shippingContact?.emailAddress,
+        },
+      };
+      session.completePayment(ApplePaySession.STATUS_SUCCESS);
+      deferredPromise.resolve(nativeReceiptData);
+    };
+    session.oncancel = onCancel;
+    session.begin();
+  }
+
+  submitPaymentReceipt({
+    intentId,
+    nativeReceiptData,
+  }: {
+    intentId: string;
+    nativeReceiptData: {
+      receipt: string;
+      receiptBillingData: Partial<Record<string, string>>;
+    };
+  }) {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:submitReceipt",
+      payload: {
+        intentId,
+        lang: this.sdkEmbed.lang,
+        receipt: nativeReceiptData.receipt,
+        receiptBillingData: nativeReceiptData.receiptBillingData,
+      },
+    });
+  }
+
+  /**
    * Pay with native google pay
    *
    * @example
@@ -679,47 +841,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     // not live intent moves directly to confirmation
     if (!nativePayData) return response;
 
-    return this.googlePaymentsClient!.loadPaymentData({
-      ...this.#getGooglePaymentRequestData(nativePayData),
-      transactionInfo: {
-        totalPriceStatus: "FINAL",
-        totalPriceLabel: "Total",
-        totalPrice: `${nativePayData!.amount}`,
-        currencyCode: nativePayData!.currency_code,
-        countryCode: nativePayData!.country_code,
-      },
-      merchantInfo: {
-        merchantName: nativePayData?.merchant_name,
-        merchantId: nativePayData?.merchant_id,
-      },
-      emailRequired: true,
-    })
-      .then(paymentData => {
-        const paymentToken =
-          paymentData.paymentMethodData.tokenizationData.token;
-
-        return this.sdkApiHandler.request<IntentDetails<TType>>({
-          api: "sdk:submitReceipt",
-          payload: {
-            intentId,
-            lang: this.sdkEmbed.lang,
-            receipt: paymentToken,
-            receiptBillingData: {
-              email: paymentData.email,
-            },
-          },
-        });
-      })
-      .catch(err => {
-        if (err.statusCode === "CANCELED") {
-          onCancel?.();
-        } else {
-          // Show error for debugging
-          // eslint-disable-next-line no-console
-          console.dir(err);
-        }
-        return Promise.reject(err);
-      });
+    return this.generateGooglePayReceipt({
+      nativePayData: nativePayData as any,
+      onCancel,
+    }).then(nativeReceiptData =>
+      this.submitPaymentReceipt({
+        intentId,
+        nativeReceiptData,
+      }),
+    );
   }
 
   /**

@@ -51,6 +51,7 @@ export interface Method {
   confirmationRequired: boolean;
   requiredBillingFields: FormField[] | null;
   requiredShippingFields: FormField[] | null;
+  nativePayData: Record<string, any> | null;
 }
 export interface Card {
   id: string;
