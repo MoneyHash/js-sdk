@@ -705,8 +705,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     );
 
     if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
-    // eslint-disable-next-line no-console
-    console.log("generating apple pay session");
+
     const session = new ApplePaySession(3, {
       countryCode: nativePayData.country_code,
       currencyCode: nativePayData.currency_code,
@@ -719,9 +718,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       },
       requiredShippingContactFields: ["email"],
     });
-    // eslint-disable-next-line no-console
-    console.log({ session });
-
     const deferredPromise = new DeferredPromise<{
       receipt: string;
       receiptBillingData: Partial<Record<string, string>>;
