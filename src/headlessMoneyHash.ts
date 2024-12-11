@@ -628,12 +628,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(
       !nativePayData,
-      "nativePayData is required to generate Apple Pay receipt!",
+      "nativePayData is required to generate Google Pay receipt!",
     );
 
     throwIf(
       !nativePayData!.amount,
-      "nativePayData.amount is required to generate Apple Pay receipt!",
+      "nativePayData.amount is required to generate Google Pay receipt!",
     );
 
     return this.googlePaymentsClient!.loadPaymentData({
