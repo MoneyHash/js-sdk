@@ -846,7 +846,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       throw error;
     }
 
-    const { __nativePayData__: nativePayData } = response;
+    const { nativePayData } = response as IntentDetails<"payment">;
     // not live intent moves directly to confirmation
     if (!nativePayData) return response;
 
