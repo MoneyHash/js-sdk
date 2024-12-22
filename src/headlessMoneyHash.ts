@@ -45,6 +45,7 @@ import {
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isEmpty from "./utils/isEmpty";
+import isPlainObject from "./utils/isObject";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
@@ -383,7 +384,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     onCancel = () => {},
     onError,
     onComplete,
-    billingData = {},
+    billingData = true,
   }: {
     intentId: string;
     countryCode: string;
@@ -395,7 +396,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
      */
     onError?: () => void;
     onComplete?: () => void;
-    billingData?: Record<string, unknown>;
+    billingData?: boolean | Record<string, unknown>;
   }): Promise<IntentDetails<TType>> {
     await loadScript(
       "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
@@ -425,7 +426,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     try {
       if (state === "FORM_FIELDS") {
-        if (isEmpty(billingData)) {
+        if (!isPlainObject(billingData) || isEmpty(billingData)) {
           throw new Error(
             "Billing data is missing while calling payWithApplePay",
           );
@@ -608,15 +609,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * @param nativePayData - Native pay data from google express method
+   * @param onCancel - Callback to be called when user cancels the payment sheet
+   * @param billingData - Flag to enable/disable auto billing data collection
+   * @default billingData true
+   *
    * Generate Google Payment Receipt
    * @returns nativeReceiptData
    */
   generateGooglePayReceipt({
     nativePayData,
     onCancel,
+    billingData = true,
   }: {
     nativePayData: Record<string, any> | null;
     onCancel?: () => void;
+    billingData?: boolean;
   }): Promise<{
     receipt: string;
     receiptBillingData: Partial<Record<string, string>>;
@@ -649,7 +657,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         merchantName: nativePayData!.merchant_name,
         merchantId: nativePayData!.merchant_id,
       },
-      emailRequired: true,
+      emailRequired: billingData,
     })
       .then(paymentData => {
         const paymentToken =
@@ -674,15 +682,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Generate Google Payment Receipt
+   * @param nativePayData - Native pay data from apple express method
+   * @param onCancel - Callback to be called when user cancels the payment sheet
+   * @param billingData - Flag to enable/disable auto billing data collection
+   * @default billingData true
+   *
+   * Generate Apple Payment Receipt
    * @returns nativeReceiptData
    */
   async generateApplePayReceipt({
     nativePayData,
     onCancel = () => {},
+    billingData = true,
   }: {
     nativePayData: Record<string, any> | null;
     onCancel?: () => void;
+    billingData?: boolean;
   }): Promise<{
     receipt: string;
     receiptBillingData: Partial<Record<string, string>>;
@@ -716,7 +731,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${nativePayData.amount}`,
       },
-      requiredShippingContactFields: ["email"],
+      requiredShippingContactFields: billingData ? ["email"] : undefined,
     });
     const deferredPromise = new DeferredPromise<{
       receipt: string;
@@ -786,9 +801,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * moneyHash
    * .payWithGooglePay({
    *   intentId: paymentIntentId,
-   *   billingData: {
-   *     email: "test@test.com",
-   *   },
+   *   billingData: true | false, // enable/disable auto billing data collection
    *   onCancel: () => console.log("CANCEL"),
    * })
    * .then(intentDetails => console.log(intentDetails))
@@ -805,11 +818,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   async payWithGooglePay({
     intentId,
-    billingData = {},
+    billingData = true,
     onCancel,
   }: {
     intentId: string;
-    billingData?: Record<string, unknown>;
+    billingData?: Record<string, unknown> | boolean;
     onCancel?: () => void;
   }): Promise<IntentDetails<TType>> {
     throwIf(
@@ -825,7 +838,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     try {
       if (response.state === "FORM_FIELDS") {
-        if (isEmpty(billingData)) {
+        if (!isPlainObject(billingData) || isEmpty(billingData)) {
           throw new Error(
             "Billing data is missing while calling payWithGooglePay",
           );
@@ -853,6 +866,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return this.generateGooglePayReceipt({
       nativePayData: nativePayData as any,
       onCancel,
+      billingData: typeof billingData === "boolean" ? billingData : false,
     }).then(nativeReceiptData =>
       this.submitPaymentReceipt({
         intentId,
