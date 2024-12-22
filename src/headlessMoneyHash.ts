@@ -352,9 +352,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *   countryCode: "AE",
    *   amount: intentDetails.intent.amount.formatted,
    *   currency: intentDetails.intent.amount.currency,
-   *   billingData: {
-   *     email: "test@test.com",
-   *   },
+   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
    *   onCancel: () => console.log("CANCEL"),
    *   onError: async () => {
    *     // Will fire after a failure payment
@@ -801,7 +799,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * moneyHash
    * .payWithGooglePay({
    *   intentId: paymentIntentId,
-   *   billingData: true | false, // enable/disable auto billing data collection
+   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
    *   onCancel: () => console.log("CANCEL"),
    * })
    * .then(intentDetails => console.log(intentDetails))
