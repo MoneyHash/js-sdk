@@ -413,7 +413,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${amount}`,
       },
-      requiredShippingContactFields: ["email"],
+      requiredShippingContactFields:
+        billingData === true ? ["email"] : undefined,
     });
 
     const { state, intent } = await this.proceedWith({
