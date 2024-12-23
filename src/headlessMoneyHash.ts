@@ -82,7 +82,7 @@ export interface MoneyHashHeadlessOptions<TType extends IntentType>
      */
     collectibleBillingData?: NativeCollectibleBillingData[];
   };
-  applePay: {
+  applePay?: {
     /**
      * @default ['email']
      */
