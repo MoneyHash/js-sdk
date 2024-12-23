@@ -58,6 +58,8 @@ const supportedProceedWithTypes = new Set([
   "customerBalance",
   "savedCard",
 ]);
+
+export type NativeCollectibleBillingData = "email";
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
   extends SDKEmbedOptions<TType> {
   publicApiKey?: string;
@@ -75,6 +77,16 @@ export interface MoneyHashHeadlessOptions<TType extends IntentType>
      * @default ["AMEX","DISCOVER","JCB","MASTERCARD","VISA",]
      */
     allowedCardNetworks?: GoogleAllowedCardNetworks;
+    /**
+     * @default ['email']
+     */
+    collectibleBillingData?: NativeCollectibleBillingData[];
+  };
+  applePay?: {
+    /**
+     * @default ['email']
+     */
+    collectibleBillingData?: NativeCollectibleBillingData[];
   };
 }
 
@@ -351,9 +363,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *   countryCode: "AE",
    *   amount: intentDetails.intent.amount.formatted,
    *   currency: intentDetails.intent.amount.currency,
-   *   billingData: {
-   *     email: "test@test.com",
-   *   },
+   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
    *   onCancel: () => console.log("CANCEL"),
    *   onError: async () => {
    *     // Will fire after a failure payment
@@ -414,7 +424,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${amount}`,
       },
-      requiredShippingContactFields: ["email"],
+      requiredShippingContactFields: this.#appleCollectibleBillingData,
     });
 
     const { state, intent } = await this.proceedWith({
@@ -607,7 +617,20 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       });
   }
 
+  get #googleCollectibleBillingData() {
+    return this.options.googlePay?.collectibleBillingData || ["email"];
+  }
+
+  get #appleCollectibleBillingData() {
+    return this.options.applePay?.collectibleBillingData || ["email"];
+  }
+
   /**
+   * @param nativePayData - Native pay data from google express method
+   * @param onCancel - Callback to be called when user cancels the payment sheet
+   * @param enableEmailAbstraction - Flag to enable/disable auto billing data collection
+   * @default billingData true
+   *
    * Generate Google Payment Receipt
    * @returns nativeReceiptData
    */
@@ -649,7 +672,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         merchantName: nativePayData!.merchant_name,
         merchantId: nativePayData!.merchant_id,
       },
-      emailRequired: true,
+      emailRequired: this.#googleCollectibleBillingData.includes("email"),
     })
       .then(paymentData => {
         const paymentToken =
@@ -674,7 +697,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Generate Google Payment Receipt
+   * @param nativePayData - Native pay data from apple express method
+   * @param onCancel - Callback to be called when user cancels the payment sheet
+   * @param billingData - Flag to enable/disable auto billing data collection
+   * @default billingData true
+   *
+   * Generate Apple Payment Receipt
    * @returns nativeReceiptData
    */
   async generateApplePayReceipt({
@@ -716,7 +744,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         type: "final",
         amount: `${nativePayData.amount}`,
       },
-      requiredShippingContactFields: ["email"],
+      requiredShippingContactFields: this.#appleCollectibleBillingData,
     });
     const deferredPromise = new DeferredPromise<{
       receipt: string;
@@ -786,9 +814,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * moneyHash
    * .payWithGooglePay({
    *   intentId: paymentIntentId,
-   *   billingData: {
-   *     email: "test@test.com",
-   *   },
+   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
    *   onCancel: () => console.log("CANCEL"),
    * })
    * .then(intentDetails => console.log(intentDetails))
