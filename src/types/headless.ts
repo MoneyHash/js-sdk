@@ -1,4 +1,5 @@
 import {
+  Field,
   IntentState,
   IntentStateDetails,
   IntentType,
@@ -29,7 +30,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
       recommendedMethods: Method[] | null;
-      __nativePayData__?: Record<string, any>;
+      nativePayData?: Record<string, any>;
     }
   : {
       intent: PayoutIntent;
@@ -40,7 +41,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
        */
       state: IntentState;
       stateDetails: IntentStateDetails<IntentState>;
-      __nativePayData__?: never;
+      nativePayData?: never;
     };
 
 export interface Method {
@@ -49,8 +50,8 @@ export interface Method {
   icons: string[];
   isSelected: boolean;
   confirmationRequired: boolean;
-  requiredBillingFields: FormField[] | null;
-  requiredShippingFields: FormField[] | null;
+  requiredBillingFields: Field[] | null;
+  requiredShippingFields: Field[] | null;
   nativePayData: Record<string, any> | null;
 }
 export interface Card {
