@@ -210,6 +210,7 @@ export interface Transaction {
   customFields: Record<string, unknown> | null;
   providerTransactionFields: Record<string, unknown>;
   externalActionMessage: string[];
+  methodErrorMessage: string | null;
 }
 
 export interface PaymentTransaction extends Transaction {
