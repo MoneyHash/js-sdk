@@ -210,7 +210,7 @@ export interface Transaction {
   customFields: Record<string, unknown> | null;
   providerTransactionFields: Record<string, unknown>;
   externalActionMessage: string[];
-  methodErrorMessage: string | null;
+  methodErrorMessage?: string | null; // only received for TABBY payment method
 }
 
 export interface PaymentTransaction extends Transaction {
