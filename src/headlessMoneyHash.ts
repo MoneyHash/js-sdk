@@ -198,7 +198,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentType: this.options.type,
         lang: this.sdkEmbed.lang,
         publicApiKey: this.options.publicApiKey,
-        ...options,
+        operation: options.operation,
+        currency: options.currency,
+        amount: options.amount,
+        customer: options.customer,
+        flowId: options.flowId,
+        custom_fields: options.customFields,
       },
     });
   }
