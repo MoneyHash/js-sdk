@@ -30,6 +30,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       shippingData: Shipping | null;
       productItems: ProductItem[] | null;
       recommendedMethods: Method[] | null;
+      lastUsedMethod: LastUsedMethod | null;
       nativePayData?: Record<string, any>;
     }
   : {
@@ -85,6 +86,11 @@ export type IntentMethods<TType extends IntentType> = TType extends "payment"
   : {
       payoutMethods: Method[];
     };
+
+export type LastUsedMethod = {
+  type: "customer_balance" | "saved_card" | "payment_method";
+  id: PaymentMethodSlugs | (string & {});
+};
 
 export type FormField = {
   choices?: Record<string, string> | null;
