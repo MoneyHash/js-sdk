@@ -142,6 +142,10 @@ export type GetMethodsOptions = {
   customer?: string;
   flowId?: string;
   operation?: "purchase" | "authorize";
+  /**
+   * Filter the flow based on custom fields
+   */
+  customFields?: Record<string, string | number | boolean>;
 };
 
 export type CardTokenState =
