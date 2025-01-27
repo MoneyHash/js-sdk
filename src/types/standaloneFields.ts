@@ -3,6 +3,7 @@ export type FormEvents = "validityChange";
 export type Elements = {
   create: (elementProps: ElementProps) => Element;
   on: (event: FormEvents, callback: (isValid: boolean) => void) => void;
+  off: (event: FormEvents) => void;
 };
 
 export type CardNumberChangeData = {

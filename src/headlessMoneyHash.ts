@@ -1194,6 +1194,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       on: (eventName, callback) => {
         formEventsCallback.set(eventName, callback);
       },
+      off(eventName) {
+        formEventsCallback.delete(eventName);
+      },
     };
   }
 
