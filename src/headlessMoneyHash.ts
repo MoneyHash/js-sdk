@@ -413,7 +413,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     billingData?: Record<string, unknown>;
   }): Promise<IntentDetails<TType>> {
     await loadScript(
-      "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
+      "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
       "moneyHash-apple-pay-sdk",
     );
 
@@ -721,7 +721,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     receiptBillingData: Partial<Record<string, string>>;
   }> {
     await loadScript(
-      "https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js",
+      "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
       "moneyHash-apple-pay-sdk",
     );
 
