@@ -409,7 +409,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
      * Apple pay sheet errors handler
      */
     onError?: () => void;
-    onComplete?: () => void;
+    onComplete?: (intentDetails: IntentDetails<TType>) => void;
     billingData?: Record<string, unknown>;
   }): Promise<IntentDetails<TType>> {
     await loadScript(
@@ -493,7 +493,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         })
         .then(response => {
           session.completePayment(ApplePaySession.STATUS_SUCCESS);
-          onComplete?.();
+          onComplete?.(response);
           deferredPromise.resolve(response);
         })
         .catch(() => {
