@@ -1329,7 +1329,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
-    this.defaultCardHolderName = "";
     return cardEmbedData;
   }
 
