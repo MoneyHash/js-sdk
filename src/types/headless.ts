@@ -166,6 +166,15 @@ export type CardIntentDetails =
       };
     };
 
+export type CardBinLookUp = {
+  firstSixDigits: string;
+  brand: string;
+  cardType: string | null;
+  issuer: string | null;
+  issuerCountry: string | null;
+  issuerCountryCode: string | null;
+};
+
 export const IFrameSandboxOptions = [
   "allow-downloads",
   "allow-forms",

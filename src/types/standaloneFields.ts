@@ -1,7 +1,11 @@
 export type FormEvents = "validityChange";
 
+interface ElementsCreate {
+  (elementProps: { elementType: "cardHolderName"; value: string }): void;
+  (elementProps: ElementProps): Element;
+}
 export type Elements = {
-  create: (elementProps: ElementProps) => Element;
+  create: ElementsCreate;
   on: (event: FormEvents, callback: (isValid: boolean) => void) => void;
   off: (event: FormEvents) => void;
 };
