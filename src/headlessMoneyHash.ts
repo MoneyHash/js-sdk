@@ -1058,7 +1058,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         if ("value" in options) {
           throwIf(
             options.elementType !== "cardHolderName",
-            `Value is not allowed! fpr ${options.elementType}`,
+            `Value is not allowed! for ${options.elementType}`,
           );
           this.defaultCardHolderName = options.value;
           return {
@@ -1307,7 +1307,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   };
 
   /**
-   * For card holder name not mounted, but have initial value from merhcant
+   * For card holder name not mounted, but have initial value from merchant
    */
   private defaultCardHolderName: string = "";
 
