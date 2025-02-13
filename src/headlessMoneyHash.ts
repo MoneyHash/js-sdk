@@ -26,6 +26,7 @@ import type {
   PaymentDataRequest,
 } from "./types/googlePay";
 import type {
+  CardBinLookUp,
   CardIntentDetails,
   GetMethodsOptions,
   IntentDetails,
@@ -33,7 +34,6 @@ import type {
   RenderOptions,
 } from "./types/headless";
 import {
-  Element,
   ElementEvents,
   ElementProps,
   Elements,
@@ -1054,7 +1054,27 @@ export default class MoneyHashHeadless<TType extends IntentType> {
        *
        * @returns { Elements }
        */
-      create: ({ elementType, elementOptions }: ElementProps): Element => {
+      create: options => {
+        if ("value" in options) {
+          throwIf(
+            options.elementType !== "cardHolderName",
+            `Value is not allowed! for ${options.elementType}`,
+          );
+          this.defaultCardHolderName = options.value;
+          return {
+            mount: () => {},
+            on: () => {},
+            off: () => true,
+            focus: () => {},
+            blur: () => {},
+            clear: () => {
+              this.defaultCardHolderName = "";
+            },
+          };
+        }
+
+        const { elementType, elementOptions } = options;
+
         const inputEventCallbacks = new Map<
           `${ElementType}@${ElementEvents}`,
           Function
@@ -1269,7 +1289,27 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           cardEmbed: cardData,
         },
       }),
+    binLookup: async ({
+      cardData,
+      flowId,
+    }: {
+      cardData: CardData;
+      flowId?: string;
+    }) =>
+      this.sdkApiHandler.request<CardBinLookUp>({
+        api: "sdk:binLookup",
+        payload: {
+          cardData,
+          flowId,
+          publicApiKey: this.options.publicApiKey,
+        },
+      }),
   };
+
+  /**
+   * For card holder name not mounted, but have initial value from merchant
+   */
+  private defaultCardHolderName: string = "";
 
   async #submitVaultCardForm({ accessToken }: { accessToken: string }) {
     const vaultFieldsDefPromise = new DeferredPromise<CardData>();
@@ -1287,6 +1327,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const submitIframe = this.#renderVaultSubmitIframe({
       accessToken,
+      defaultCardHolderName: this.defaultCardHolderName,
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
@@ -1693,7 +1734,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return fieldIframe;
   }
 
-  #renderVaultSubmitIframe({ accessToken }: { accessToken: string }) {
+  #renderVaultSubmitIframe({
+    accessToken,
+    defaultCardHolderName,
+  }: {
+    accessToken: string;
+    defaultCardHolderName: string;
+  }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
 
@@ -1705,6 +1752,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
     url.searchParams.set("access_token", accessToken);
     url.searchParams.set("lang", this.sdkEmbed.lang);
+    if (defaultCardHolderName) {
+      url.searchParams.set("default_card_holder_name", defaultCardHolderName);
+    }
 
     const submitIframe = document.createElement("iframe");
 
