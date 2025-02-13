@@ -1067,7 +1067,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             off: () => true,
             focus: () => {},
             blur: () => {},
-            clear: () => {},
+            clear: () => {
+              this.defaultCardHolderName = "";
+            },
           };
         }
 
