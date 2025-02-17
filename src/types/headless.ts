@@ -173,6 +173,7 @@ export type CardBinLookUp = {
   issuer: string | null;
   issuerCountry: string | null;
   issuerCountryCode: string | null;
+  product: string | null;
 };
 
 export const IFrameSandboxOptions = [
