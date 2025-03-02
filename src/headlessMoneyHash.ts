@@ -44,6 +44,7 @@ import {
 } from "./types/standaloneFields";
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
+import isBrowser from "./utils/isBrowser";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
@@ -110,7 +111,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
-    this.#setupVaultSubmitListener(this.vaultSubmitListener);
+    if (isBrowser()) {
+      this.#setupVaultSubmitListener(this.vaultSubmitListener);
+    }
   }
 
   /**
