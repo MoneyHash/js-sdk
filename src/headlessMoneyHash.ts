@@ -773,8 +773,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           session.completeMerchantValidation(merchantSession),
         )
         .catch(error => {
-          session.abort();
-          deferredPromise.reject(error);
+          deferredPromise.reject(error?.message || JSON.stringify(error));
         });
 
     session.onpaymentauthorized = e => {
