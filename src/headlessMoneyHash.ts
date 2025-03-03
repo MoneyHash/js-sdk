@@ -716,9 +716,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async generateApplePayReceipt({
     nativePayData,
     onCancel = () => {},
+    logger,
   }: {
     nativePayData: Record<string, any> | null;
     onCancel?: () => void;
+    logger?: (data: { key: string; value: unknown }) => void;
   }): Promise<{
     receipt: string;
     receiptBillingData: Partial<Record<string, string>>;
@@ -769,10 +771,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
             parentOrigin: window.location.origin,
           },
         })
-        .then(merchantSession =>
-          session.completeMerchantValidation(merchantSession),
-        )
+        .then(merchantSession => {
+          logger?.({ key: "merchantSession", value: merchantSession });
+          session.completeMerchantValidation(merchantSession);
+        })
         .catch(error => {
+          logger?.({ key: "merchantSession:error", value: error });
           deferredPromise.reject(error);
         });
 
