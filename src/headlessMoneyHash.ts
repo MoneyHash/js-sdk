@@ -761,6 +761,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       receiptBillingData: Partial<Record<string, string>>;
     }>();
 
+    let isCancelled = false;
+
     session.onvalidatemerchant = e =>
       this.sdkApiHandler
         .request({
@@ -773,6 +775,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         })
         .then(merchantSession => {
           logger?.({ key: "merchantSession", value: merchantSession });
+          if (isCancelled) return;
           session.completeMerchantValidation(merchantSession);
         })
         .catch(error => {
@@ -790,7 +793,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       session.completePayment(ApplePaySession.STATUS_SUCCESS);
       deferredPromise.resolve(nativeReceiptData);
     };
-    session.oncancel = onCancel;
+    session.oncancel = () => {
+      isCancelled = true;
+      onCancel?.();
+    };
     session.begin();
 
     return deferredPromise.promise;
