@@ -1,7 +1,6 @@
 export default function loadScript(src: string, id: string) {
   return new Promise((resolve, reject) => {
     const existingScript = document.getElementById(id);
-
     if (existingScript) {
       resolve(undefined);
       return;

@@ -8,6 +8,8 @@ export default defineConfig({
     // https: true,
   },
   build: {
+    sourcemap: true,
+    minify: false,
     lib: {
       entry: {
         index: "./src/index.ts",
