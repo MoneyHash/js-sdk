@@ -725,10 +725,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     receipt: string;
     receiptBillingData: Partial<Record<string, string>>;
   }> {
-    await loadScript(
-      "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
-      "moneyHash-apple-pay-sdk",
-    );
+    // await loadScript(
+    //   "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
+    //   "moneyHash-apple-pay-sdk",
+    // );
 
     throwIf(
       !nativePayData,
