@@ -26,6 +26,7 @@ import type {
   PaymentDataRequest,
 } from "./types/googlePay";
 import type {
+  ApplePayMerchantSession,
   CardBinLookUp,
   CardIntentDetails,
   GetMethodsOptions,
@@ -806,7 +807,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     methodId: string;
     validationUrl: string;
   }) {
-    return this.sdkApiHandler.request({
+    return this.sdkApiHandler.request<ApplePayMerchantSession>({
       api: "sdk:applePaySession",
       payload: {
         methodId,

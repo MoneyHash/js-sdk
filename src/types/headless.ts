@@ -193,3 +193,5 @@ export const IFrameSandboxOptions = [
 ] as const;
 
 export type IFrameSandboxOptionsType = typeof IFrameSandboxOptions[number];
+
+export type ApplePayMerchantSession = any;
