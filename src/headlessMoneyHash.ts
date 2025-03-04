@@ -793,6 +793,29 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return deferredPromise.promise;
   }
 
+  /**
+   *
+   * @param methodId - Apple pay method id from nativePayData
+   * @param validationURL - Apple pay validation url you get from `ApplePaySession.onvalidatemerchant`
+   * @returns
+   */
+  async validateApplePayMerchantSession({
+    methodId,
+    validationUrl,
+  }: {
+    methodId: string;
+    validationUrl: string;
+  }) {
+    return this.sdkApiHandler.request({
+      api: "sdk:applePaySession",
+      payload: {
+        methodId,
+        validationUrl,
+        parentOrigin: window.location.origin,
+      },
+    });
+  }
+
   submitPaymentReceipt({
     intentId,
     nativeReceiptData,
