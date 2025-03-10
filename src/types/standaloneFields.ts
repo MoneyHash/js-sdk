@@ -67,6 +67,7 @@ export type ElementStyles = {
   padding?: string;
   height?: string;
   direction?: "ltr" | "rtl";
+  textAlign?: "left" | "right" | "center";
 };
 
 export type ElementEvents =
