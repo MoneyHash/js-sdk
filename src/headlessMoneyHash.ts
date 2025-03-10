@@ -26,6 +26,7 @@ import type {
   PaymentDataRequest,
 } from "./types/googlePay";
 import type {
+  ApplePayMerchantSession,
   CardBinLookUp,
   CardIntentDetails,
   GetMethodsOptions,
@@ -44,6 +45,7 @@ import {
 } from "./types/standaloneFields";
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
+import isBrowser from "./utils/isBrowser";
 import isEmpty from "./utils/isEmpty";
 import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
@@ -110,7 +112,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
-    this.#setupVaultSubmitListener(this.vaultSubmitListener);
+    if (isBrowser()) {
+      this.#setupVaultSubmitListener(this.vaultSubmitListener);
+    }
   }
 
   /**
@@ -788,6 +792,29 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     session.begin();
 
     return deferredPromise.promise;
+  }
+
+  /**
+   *
+   * @param methodId - Apple pay method id from nativePayData
+   * @param validationURL - Apple pay validation url you get from `ApplePaySession.onvalidatemerchant`
+   * @returns
+   */
+  async validateApplePayMerchantSession({
+    methodId,
+    validationUrl,
+  }: {
+    methodId: string;
+    validationUrl: string;
+  }) {
+    return this.sdkApiHandler.request<ApplePayMerchantSession>({
+      api: "sdk:applePaySession",
+      payload: {
+        methodId,
+        validationUrl,
+        parentOrigin: window.location.origin,
+      },
+    });
   }
 
   submitPaymentReceipt({
