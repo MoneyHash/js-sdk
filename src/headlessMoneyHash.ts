@@ -1724,6 +1724,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("inputMode", elementOptions.inputMode ?? "");
     url.searchParams.set("lang", this.sdkEmbed.lang);
     url.searchParams.set("direction", styles?.direction || "");
+    url.searchParams.set("textAlign", styles?.textAlign || "");
 
     url.searchParams.set(
       "color",
