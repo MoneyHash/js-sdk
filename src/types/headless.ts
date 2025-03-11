@@ -166,7 +166,12 @@ export type CardIntentDetails =
       };
     };
 
-export type CardBinLookUp = {
+export type NativeReceiptData = {
+  receipt: string;
+  receiptBillingData: Partial<Record<string, string>>;
+};
+
+export type BinLookUpData = {
   firstSixDigits: string;
   brand: string;
   cardType: string | null;
