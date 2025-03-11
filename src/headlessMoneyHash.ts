@@ -27,11 +27,12 @@ import type {
 } from "./types/googlePay";
 import type {
   ApplePayMerchantSession,
-  CardBinLookUp,
+  BinLookUpData,
   CardIntentDetails,
   GetMethodsOptions,
   IntentDetails,
   IntentMethods,
+  NativeReceiptData,
   RenderOptions,
 } from "./types/headless";
 import {
@@ -643,7 +644,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * Generate Google Payment Receipt
    * @returns nativeReceiptData
    */
-  generateGooglePayReceipt({
+  async generateGooglePayReceipt({
     nativePayData,
     onCancel,
   }: {
@@ -795,6 +796,34 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * @param nativeReceiptData - Native receipt data from apple pay or google pay
+   * @param methodId - Apple pay or Google pay method id from nativePayData
+   * @param flowId - (Optional) flow id to get the bin lookup service
+   *
+   * Get bin lookup data using apple pay or google pay receipt
+   * @returns BinLookUpData
+   */
+  async binLookupByReceipt({
+    nativeReceiptData,
+    methodId,
+    flowId,
+  }: {
+    nativeReceiptData: NativeReceiptData;
+    methodId: string;
+    flowId?: string;
+  }): Promise<BinLookUpData> {
+    return this.sdkApiHandler.request<BinLookUpData>({
+      api: "sdk:binLookupByReceipt",
+      payload: {
+        nativeReceiptData,
+        methodId,
+        flowId,
+        publicApiKey: this.options.publicApiKey,
+      },
+    });
+  }
+
+  /**
    *
    * @param methodId - Apple pay method id from nativePayData
    * @param validationURL - Apple pay validation url you get from `ApplePaySession.onvalidatemerchant`
@@ -822,10 +851,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     nativeReceiptData,
   }: {
     intentId: string;
-    nativeReceiptData: {
-      receipt: string;
-      receiptBillingData: Partial<Record<string, string>>;
-    };
+    nativeReceiptData: NativeReceiptData;
   }) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:submitReceipt",
@@ -1323,7 +1349,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       cardData: CardData;
       flowId?: string;
     }) =>
-      this.sdkApiHandler.request<CardBinLookUp>({
+      this.sdkApiHandler.request<BinLookUpData>({
         api: "sdk:binLookup",
         payload: {
           cardData,
