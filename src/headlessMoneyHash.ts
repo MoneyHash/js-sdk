@@ -801,6 +801,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @param flowId - (Optional) flow id to get the bin lookup service
    *
    * Get bin lookup data using apple pay or google pay receipt
+   *
    * @returns BinLookUpData
    */
   async binLookupByReceipt({
