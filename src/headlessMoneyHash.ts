@@ -1016,6 +1016,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    * @returns Promise<{@link IntentDetails}>
+   * @deprecated no longer supported, will be removed in future versions
    */
   updateIntentDiscount({
     intentId,
@@ -1050,6 +1051,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * ```
    *
    * @returns Promise<{@link IntentDetails}>
+   * @deprecated no longer supported, will be removed in future versions
    */
   updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
     fees.forEach(fee => {
