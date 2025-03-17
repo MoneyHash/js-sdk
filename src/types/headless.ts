@@ -200,3 +200,5 @@ export const IFrameSandboxOptions = [
 export type IFrameSandboxOptionsType = typeof IFrameSandboxOptions[number];
 
 export type ApplePayMerchantSession = any;
+
+export type MHErrorType = "runtime" | "network" | "cardValidation" | "unknown";
