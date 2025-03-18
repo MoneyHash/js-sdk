@@ -32,6 +32,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       recommendedMethods: Method[] | null;
       lastUsedMethod: LastUsedMethod | null;
       nativePayData?: Record<string, any>;
+      paymentStatus: PaymentStatus | null;
     }
   : {
       intent: PayoutIntent;
@@ -202,3 +203,28 @@ export type IFrameSandboxOptionsType = typeof IFrameSandboxOptions[number];
 export type ApplePayMerchantSession = any;
 
 export type MHErrorType = "runtime" | "network" | "cardValidation" | "unknown";
+
+export type PaymentStatus = {
+  status:
+    | "NO_AUTHORIZE_ATTEMPTS"
+    | "AUTHORIZE_ATTEMPT_FAILED"
+    | "AUTHORIZE_ATTEMPT_PENDING"
+    | "CAPTURED"
+    | "CLOSED"
+    | "EXPIRED"
+    | "AUTHORIZED"
+    | "REFUNDED"
+    | "VOIDED"
+    | (string & {});
+
+  balances: Record<
+    | "totalAuthorized"
+    | "totalVoided"
+    | "availableToVoid"
+    | "totalCaptured"
+    | "availableToCapture"
+    | "totalRefunded"
+    | "availableToRefund",
+    string
+  >;
+};
