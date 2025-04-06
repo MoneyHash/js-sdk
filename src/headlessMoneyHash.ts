@@ -1660,11 +1660,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }) {
     const resultDefPromise = new DeferredPromise();
 
+    let isReceived = false;
+
     const onReceiveMessage = async (event: MessageEvent) => {
       if (event.origin !== getIframeUrl()) return;
       const { type } = event.data;
 
+      if (isReceived) return;
+
       if (type === "intentResult") {
+        isReceived = true;
+
         if (isUsingPopUp) this.sdkApiHandler.postMessage("EmbedResultClose");
 
         const [intentDetails] = await Promise.all([
@@ -1673,9 +1679,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         ]);
 
         const transactionStatus =
-          intentDetails.transaction.status.split(".")[1];
+          intentDetails.transaction?.status.split(".")[1];
 
         if (
+          intentDetails.state === "CLOSED" ||
+          intentDetails.state === "EXPIRED" ||
           transactionStatus === "successful" ||
           transactionStatus.startsWith("pending")
         ) {
