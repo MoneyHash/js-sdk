@@ -161,7 +161,7 @@ export default class SDKEmbed<TType extends IntentType> {
         case "onComplete": {
           throwIf(
             !!(this.options?.onComplete && this.options.headless),
-            "onComplete is not supported in headless mode!",
+            "onComplete is not supported in headless mode, please wait for the promise to be resolved or rejected!",
           );
 
           this.options.onComplete?.({
@@ -175,7 +175,7 @@ export default class SDKEmbed<TType extends IntentType> {
         case "onFail": {
           throwIf(
             !!(this.options?.onFail && this.options.headless),
-            "onFail is not supported in headless mode!",
+            "onFail is not supported in headless mode, please wait for the promise to be resolved or rejected!",
           );
 
           this.options.onFail?.({
