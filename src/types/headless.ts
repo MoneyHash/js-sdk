@@ -20,7 +20,7 @@ export type ErrorResponse = {
 export type IntentDetails<TType extends IntentType> = TType extends "payment"
   ? {
       intent: PaymentIntent;
-      transaction: PaymentTransaction;
+      transaction: PaymentTransaction | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
@@ -36,7 +36,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
     }
   : {
       intent: PayoutIntent;
-      transaction: PayoutTransaction;
+      transaction: PayoutTransaction | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
