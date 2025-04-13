@@ -57,7 +57,9 @@ export type IntentState =
   | "FORM_FIELDS"
   | "URL_TO_RENDER"
   | "SAVED_CARD_CVV"
-  | "INSTALLMENT_PLANS";
+  | "INSTALLMENT_PLANS"
+  // v2.x.x new states
+  | "PROCESSING";
 
 export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
 

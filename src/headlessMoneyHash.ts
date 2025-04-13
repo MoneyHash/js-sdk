@@ -459,6 +459,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Change the public api key on MoneyHash instance
+   */
+  setPublicApiKey(publicApiKey: string) {
+    throwIf(!publicApiKey, "publicApiKey is required to set publicApiKey");
+    this.options.publicApiKey = publicApiKey;
+  }
+
+  /**
    * Cleanup all listeners set by the SDK
    * @returns Promise<void>
    */
