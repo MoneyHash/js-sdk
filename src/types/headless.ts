@@ -32,7 +32,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       recommendedMethods: Method[] | null;
       lastUsedMethod: LastUsedMethod | null;
       nativePayData?: Record<string, any>;
-      paymentStatus: PaymentStatus | null;
+      paymentStatus: PaymentStatus;
     }
   : {
       intent: PayoutIntent;
