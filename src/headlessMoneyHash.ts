@@ -158,6 +158,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       "getMethods is not allowed for payout!",
     );
 
+    throwIf(!options.currency, "currency is required to get methods!");
+
     return this.sdkApiHandler.request<IntentMethods<TType>>({
       api: "sdk:getMethods",
       payload: {
