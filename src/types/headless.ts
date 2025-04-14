@@ -20,7 +20,7 @@ export type ErrorResponse = {
 export type IntentDetails<TType extends IntentType> = TType extends "payment"
   ? {
       intent: PaymentIntent;
-      transaction: PaymentTransaction;
+      transaction: PaymentTransaction | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
@@ -32,10 +32,11 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       recommendedMethods: Method[] | null;
       lastUsedMethod: LastUsedMethod | null;
       nativePayData?: Record<string, any>;
+      paymentStatus: PaymentStatus;
     }
   : {
       intent: PayoutIntent;
-      transaction: PayoutTransaction;
+      transaction: PayoutTransaction | null;
       selectedMethod: PaymentMethodSlugs | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
@@ -200,3 +201,29 @@ export const IFrameSandboxOptions = [
 export type IFrameSandboxOptionsType = typeof IFrameSandboxOptions[number];
 
 export type ApplePayMerchantSession = any;
+
+export type MHErrorType = "runtime" | "network" | "cardValidation" | "unknown";
+
+export type PaymentStatus = {
+  status:
+    | "NO_AUTHORIZE_ATTEMPTS"
+    | "AUTHORIZE_ATTEMPT_FAILED"
+    | "AUTHORIZE_ATTEMPT_PENDING"
+    | "CAPTURED"
+    | "ABORTED"
+    | "AUTHORIZED"
+    | "REFUNDED"
+    | "VOIDED"
+    | (string & {});
+
+  balances: Record<
+    | "totalAuthorized"
+    | "totalVoided"
+    | "availableToVoid"
+    | "totalCaptured"
+    | "availableToCapture"
+    | "totalRefunded"
+    | "availableToRefund",
+    string
+  >;
+};

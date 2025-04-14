@@ -84,7 +84,7 @@ export default class SDKEmbed<TType extends IntentType> {
     return language || "en";
   }
 
-  render({
+  async render({
     selector,
     intentId,
     sandbox,
@@ -159,28 +159,33 @@ export default class SDKEmbed<TType extends IntentType> {
         }
 
         case "onComplete": {
+          throwIf(
+            !!(this.options?.onComplete && this.options.headless),
+            "onComplete is not supported in headless mode, please wait for the promise to be resolved or rejected!",
+          );
+
           this.options.onComplete?.({
             type: this.options.type,
             ...data,
           } as unknown as OnCompleteEventOptions<TType>);
 
-          if (this.options.headless && this.iframe) {
-            this.iframe.hidden = true;
-          }
           break;
         }
 
         case "onFail": {
+          throwIf(
+            !!(this.options?.onFail && this.options.headless),
+            "onFail is not supported in headless mode, please wait for the promise to be resolved or rejected!",
+          );
+
           this.options.onFail?.({
             type: this.options.type,
             ...data,
           } as unknown as OnFailEventOptions<TType>);
 
-          if (this.options.headless && this.iframe) {
-            this.iframe.hidden = true;
-          }
           break;
         }
+
         case "dimensionsChange": {
           onHeightChange?.((data as { iframeHeight: number }).iframeHeight);
           break;

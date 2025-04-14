@@ -5,26 +5,14 @@ import getVaultApiUrl from "./standaloneFields/utils/getVaultApiUrl";
 import getVaultInputIframeUrl from "./standaloneFields/utils/getVaultInputIframeUrl";
 import type {
   CardData,
-  Discount,
-  Fee,
   InstallmentPlan,
   InstallmentPlanPayload,
   IntentType,
-  OnCompleteEventOptions,
-  OnFailEventOptions,
   PaymentMethodSlugs,
   SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
-import type {
-  GoogleAllowedAuthMethods,
-  GoogleAllowedCardNetworks,
-  GoogleButtonOptions,
-  GoogleEnvironment,
-  IsReadyToPayRequest,
-  GooglePaymentsClient,
-  PaymentDataRequest,
-} from "./types/googlePay";
+
 import type {
   ApplePayMerchantSession,
   BinLookUpData,
@@ -47,8 +35,6 @@ import {
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isBrowser from "./utils/isBrowser";
-import isEmpty from "./utils/isEmpty";
-import loadScript from "./utils/loadScript";
 import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
@@ -64,33 +50,8 @@ const supportedProceedWithTypes = new Set([
 
 export type NativeCollectibleBillingData = "email";
 export interface MoneyHashHeadlessOptions<TType extends IntentType>
-  extends SDKEmbedOptions<TType> {
+  extends Omit<SDKEmbedOptions<TType>, "onComplete" | "onFail"> {
   publicApiKey?: string;
-  googlePay?: {
-    /**
-     * Google Pay environment to target
-     * @default "PRODUCTION"
-     */
-    environment?: GoogleEnvironment;
-    /**
-     * @default ["PAN_ONLY","CRYPTOGRAM_3DS"]
-     */
-    allowedAuthMethods?: GoogleAllowedAuthMethods;
-    /**
-     * @default ["AMEX","DISCOVER","JCB","MASTERCARD","VISA",]
-     */
-    allowedCardNetworks?: GoogleAllowedCardNetworks;
-    /**
-     * @default ['email']
-     */
-    collectibleBillingData?: NativeCollectibleBillingData[];
-  };
-  applePay?: {
-    /**
-     * @default ['email']
-     */
-    collectibleBillingData?: NativeCollectibleBillingData[];
-  };
 }
 
 export default class MoneyHashHeadless<TType extends IntentType> {
@@ -107,8 +68,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   };
 
   private mountedCardElements: Array<ElementType> = [];
-
-  private googlePaymentsClient: GooglePaymentsClient | null = null;
 
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
@@ -171,7 +130,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * })
    * ```
    */
-  getMethods(options: GetMethodsOptions): Promise<IntentMethods<TType>>;
+  async getMethods(options: GetMethodsOptions): Promise<IntentMethods<TType>>;
   /**
    * Get available methods, saved cards and customer balances for the intent
    * @example
@@ -181,8 +140,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * })
    * ```
    */
-  getMethods(options: { intentId: string }): Promise<IntentMethods<TType>>;
-  getMethods(options: GetMethodsOptions | { intentId: string }) {
+  async getMethods(options: {
+    intentId: string;
+  }): Promise<IntentMethods<TType>>;
+  async getMethods(options: GetMethodsOptions | { intentId: string }) {
     if ("intentId" in options) {
       return this.getIntentMethods(options.intentId);
     }
@@ -196,6 +157,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       this.options.type === "payout",
       "getMethods is not allowed for payout!",
     );
+
+    throwIf(!options.currency, "currency is required to get methods!");
 
     return this.sdkApiHandler.request<IntentMethods<TType>>({
       api: "sdk:getMethods",
@@ -363,439 +326,6 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Pay with native apple pay
-   *
-   * @example
-   * ```
-   * moneyHash
-   * .payWithApplePay({
-   *   intentId: paymentIntentId,
-   *   countryCode: "AE",
-   *   amount: intentDetails.intent.amount.formatted,
-   *   currency: intentDetails.intent.amount.currency,
-   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
-   *   onCancel: () => console.log("CANCEL"),
-   *   onError: async () => {
-   *     // Will fire after a failure payment
-   *     console.log("ERROR");
-   *   },
-   * })
-   * .then(() =>  console.log("COMPLETE"))
-   * .catch(error => {
-   *   console.log(error);
-   *   error.message | string
-   *       // Native apple pay button need to be triggered from click event directly
-          - Must create a new ApplePaySession from a user gesture handler.
-
-           // intent requires billing data to proceed with the native integration
-          - Billing data is missing while calling payWithApplePay
-
-       error | Record<string, string>
-          {email: "Enter a valid email address."}
-   * });
-   * ```
-   */
-  async payWithApplePay({
-    intentId,
-    currency,
-    amount,
-    countryCode,
-    onCancel = () => {},
-    onError,
-    onComplete,
-    billingData = {},
-  }: {
-    intentId: string;
-    countryCode: string;
-    currency: string;
-    amount: number;
-    onCancel?: () => void;
-    /**
-     * Apple pay sheet errors handler
-     */
-    onError?: () => void;
-    onComplete?: (intentDetails: IntentDetails<TType>) => void;
-    billingData?: Record<string, unknown>;
-  }): Promise<IntentDetails<TType>> {
-    await loadScript(
-      "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
-      "moneyHash-apple-pay-sdk",
-    );
-
-    if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
-
-    const session = new ApplePaySession(3, {
-      countryCode,
-      currencyCode: currency,
-      supportedNetworks: ["visa", "masterCard", "amex", "discover", "mada"],
-      merchantCapabilities: ["supports3DS"],
-      total: {
-        label: "Apple Pay",
-        type: "final",
-        amount: `${amount}`,
-      },
-      requiredShippingContactFields: this.#appleCollectibleBillingData,
-    });
-
-    const { state, intent } = await this.proceedWith({
-      intentId,
-      type: "method",
-      id: "APPLE_PAY",
-    });
-
-    try {
-      if (state === "FORM_FIELDS") {
-        if (isEmpty(billingData)) {
-          throw new Error(
-            "Billing data is missing while calling payWithApplePay",
-          );
-        }
-
-        await this.sdkApiHandler.request<IntentDetails<TType>>({
-          api: "sdk:submitNativeForm",
-          payload: {
-            intentId,
-            paymentMethod: "APPLE_PAY",
-            lang: this.sdkEmbed.lang,
-            billingData,
-          },
-        });
-      }
-    } catch (error) {
-      await this.resetSelectedMethod(intentId);
-      throw error;
-    }
-
-    const deferredPromise = new DeferredPromise<IntentDetails<TType>>();
-
-    session.onvalidatemerchant = e =>
-      this.sdkApiHandler
-        .request({
-          api: "sdk:applePaySession",
-          payload: {
-            secret: intent.secret,
-            validationUrl: e.validationURL,
-            parentOrigin: window.location.origin,
-          },
-        })
-        .then(merchantSession =>
-          session.completeMerchantValidation(merchantSession),
-        )
-        .catch(onError);
-
-    session.onpaymentauthorized = e =>
-      this.sdkApiHandler
-        .request<IntentDetails<TType>>({
-          api: "sdk:submitReceipt",
-          payload: {
-            intentId,
-            lang: this.sdkEmbed.lang,
-            receipt: JSON.stringify({ token: e.payment.token }),
-            receiptBillingData: {
-              email: e.payment.shippingContact?.emailAddress,
-            },
-          },
-        })
-        .then(response => {
-          session.completePayment(ApplePaySession.STATUS_SUCCESS);
-          onComplete?.(response);
-          deferredPromise.resolve(response);
-        })
-        .catch(() => {
-          session.completePayment(ApplePaySession.STATUS_FAILURE);
-          onError?.();
-          deferredPromise.reject(undefined);
-        });
-
-    session.oncancel = onCancel;
-    session.begin();
-
-    return deferredPromise.promise;
-  }
-
-  #getGooglePaymentRequestData(): IsReadyToPayRequest;
-  #getGooglePaymentRequestData(
-    nativePayData?: Record<string, any>,
-  ): PaymentDataRequest;
-  #getGooglePaymentRequestData(
-    nativePayData?: Record<string, any>,
-  ): IsReadyToPayRequest | PaymentDataRequest {
-    const paymentDataRequest = {
-      apiVersion: 2,
-      apiVersionMinor: 0,
-      allowedPaymentMethods: [
-        {
-          type: "CARD",
-          parameters: {
-            allowedAuthMethods: this.options.googlePay?.allowedAuthMethods || [
-              "PAN_ONLY",
-              "CRYPTOGRAM_3DS",
-            ],
-            allowedCardNetworks: this.options.googlePay
-              ?.allowedCardNetworks || [
-              "AMEX",
-              "DISCOVER",
-              "JCB",
-              "MASTERCARD",
-              "VISA",
-            ],
-          },
-          ...(nativePayData
-            ? {
-                tokenizationSpecification: {
-                  type: "PAYMENT_GATEWAY",
-                  parameters: {
-                    gateway: nativePayData.gateway,
-                    gatewayMerchantId: nativePayData.gateway_merchant_id,
-                  },
-                },
-              }
-            : {}),
-        },
-      ],
-    } satisfies IsReadyToPayRequest | PaymentDataRequest;
-    return paymentDataRequest;
-  }
-
-  /**
-   * Render Google Pay button on container element with element with id `moneyHash-google-pay-button`
-   * @example
-   * ```
-   * moneyHash
-  .renderGooglePayButton({
-    buttonType: "pay",
-    onClick: () =>
-      moneyHash
-        .payWithGooglePay({
-          intentId: "<intent_id>",
-          onCancel() {
-            console.log("cancelled");
-          },
-        })
-        .then(intentDetails => {
-          console.log(intentDetails);
-        })
-        .catch(console.dir),
-  })
-  .catch(console.dir);
-   * ```
-   */
-  async renderGooglePayButton({
-    onClick,
-    ...googlePayButtonOptions
-  }: {
-    onClick: () => void;
-  } & GoogleButtonOptions) {
-    const container = document.getElementById("moneyHash-google-pay-button");
-
-    throwIf(
-      !container,
-      "Couldn't find an element with id moneyHash-google-pay-button to render the google pay button!",
-    );
-
-    await loadScript(
-      "https://pay.google.com/gp/p/js/pay.js",
-      "moneyHash-google-pay-sdk",
-    );
-
-    this.googlePaymentsClient = new window.google.payments.api.PaymentsClient({
-      environment: this.options.googlePay?.environment || "PRODUCTION",
-    });
-
-    const paymentDataRequest = this.#getGooglePaymentRequestData();
-
-    this.googlePaymentsClient
-      .isReadyToPay(paymentDataRequest)
-      .then(response => {
-        if (response.result) {
-          const button = this.googlePaymentsClient!.createButton({
-            buttonSizeMode: "fill",
-            buttonType: "pay",
-            ...googlePayButtonOptions,
-            allowedPaymentMethods: paymentDataRequest.allowedPaymentMethods,
-            onClick,
-          });
-
-          container?.replaceChildren(button);
-        } else {
-          throw new Error("Google Pay is not ready to pay!");
-        }
-      })
-      .catch(err => {
-        // eslint-disable-next-line no-console
-        console.dir(err);
-      });
-  }
-
-  get #googleCollectibleBillingData() {
-    return this.options.googlePay?.collectibleBillingData || ["email"];
-  }
-
-  get #appleCollectibleBillingData() {
-    return this.options.applePay?.collectibleBillingData || ["email"];
-  }
-
-  /**
-   * @param nativePayData - Native pay data from google express method
-   * @param onCancel - Callback to be called when user cancels the payment sheet
-   * @param enableEmailAbstraction - Flag to enable/disable auto billing data collection
-   * @default billingData true
-   *
-   * Generate Google Payment Receipt
-   * @returns nativeReceiptData
-   */
-  async generateGooglePayReceipt({
-    nativePayData,
-    onCancel,
-  }: {
-    nativePayData: Record<string, any> | null;
-    onCancel?: () => void;
-  }): Promise<{
-    receipt: string;
-    receiptBillingData: Partial<Record<string, string>>;
-  }> {
-    throwIf(
-      !this.googlePaymentsClient,
-      'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "generateGooglePayReceipt"',
-    );
-
-    throwIf(
-      !nativePayData,
-      "nativePayData is required to generate Google Pay receipt!",
-    );
-
-    throwIf(
-      !nativePayData!.amount,
-      "nativePayData.amount is required to generate Google Pay receipt!",
-    );
-
-    return this.googlePaymentsClient!.loadPaymentData({
-      ...this.#getGooglePaymentRequestData(nativePayData!),
-      transactionInfo: {
-        totalPriceStatus: "FINAL",
-        totalPriceLabel: "Total",
-        totalPrice: `${nativePayData!.amount}`,
-        currencyCode: nativePayData!.currency_code,
-        countryCode: nativePayData!.country_code,
-      },
-      merchantInfo: {
-        merchantName: nativePayData!.merchant_name,
-        merchantId: nativePayData!.merchant_id,
-      },
-      emailRequired: this.#googleCollectibleBillingData.includes("email"),
-    })
-      .then(paymentData => {
-        const paymentToken =
-          paymentData.paymentMethodData.tokenizationData.token;
-        return {
-          receipt: paymentToken,
-          receiptBillingData: {
-            email: paymentData.email,
-          },
-        };
-      })
-      .catch(err => {
-        if (err.statusCode === "CANCELED") {
-          onCancel?.();
-        } else {
-          // Show error for debugging
-          // eslint-disable-next-line no-console
-          console.dir(err);
-        }
-        return Promise.reject(err);
-      });
-  }
-
-  /**
-   * @param nativePayData - Native pay data from apple express method
-   * @param onCancel - Callback to be called when user cancels the payment sheet
-   * @param billingData - Flag to enable/disable auto billing data collection
-   * @default billingData true
-   *
-   * Generate Apple Payment Receipt
-   * @returns nativeReceiptData
-   */
-  async generateApplePayReceipt({
-    nativePayData,
-    onCancel = () => {},
-  }: {
-    nativePayData: Record<string, any> | null;
-    onCancel?: () => void;
-  }): Promise<{
-    receipt: string;
-    receiptBillingData: Partial<Record<string, string>>;
-  }> {
-    await loadScript(
-      "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
-      "moneyHash-apple-pay-sdk",
-    );
-
-    throwIf(
-      !nativePayData,
-      "nativePayData is required to generate Apple Pay receipt!",
-    );
-
-    if (!nativePayData) return { receipt: "", receiptBillingData: {} };
-
-    throwIf(
-      !nativePayData.amount,
-      "nativePayData.amount is required to generate Apple Pay receipt!",
-    );
-
-    if (!ApplePaySession) throw new Error("Apple Pay is not supported!");
-
-    const session = new ApplePaySession(3, {
-      countryCode: nativePayData.country_code,
-      currencyCode: nativePayData.currency_code,
-      supportedNetworks: nativePayData.supported_networks,
-      merchantCapabilities: ["supports3DS"],
-      total: {
-        label: "Apple Pay",
-        type: "final",
-        amount: `${nativePayData.amount}`,
-      },
-      requiredShippingContactFields: this.#appleCollectibleBillingData,
-    });
-    const deferredPromise = new DeferredPromise<{
-      receipt: string;
-      receiptBillingData: Partial<Record<string, string>>;
-    }>();
-
-    session.onvalidatemerchant = e =>
-      this.sdkApiHandler
-        .request({
-          api: "sdk:applePaySession",
-          payload: {
-            methodId: nativePayData.method_id,
-            validationUrl: e.validationURL,
-            parentOrigin: window.location.origin,
-          },
-        })
-        .then(merchantSession =>
-          session.completeMerchantValidation(merchantSession),
-        )
-        .catch(error => {
-          session.abort();
-          deferredPromise.reject(error);
-        });
-
-    session.onpaymentauthorized = e => {
-      const nativeReceiptData = {
-        receipt: JSON.stringify({ token: e.payment.token }),
-        receiptBillingData: {
-          email: e.payment.shippingContact?.emailAddress,
-        },
-      };
-      session.completePayment(ApplePaySession.STATUS_SUCCESS);
-      deferredPromise.resolve(nativeReceiptData);
-    };
-    session.oncancel = onCancel;
-    session.begin();
-
-    return deferredPromise.promise;
-  }
-
-  /**
    * @param nativeReceiptData - Native receipt data from apple pay or google pay
    * @param methodId - Apple pay or Google pay method id from nativePayData
    * @param flowId - (Optional) flow id to get the bin lookup service
@@ -866,108 +396,44 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Pay with native google pay
-   *
-   * @example
-   * ```
-   * moneyHash
-   * .payWithGooglePay({
-   *   intentId: paymentIntentId,
-   *   billingData: true | false | { email: test@test.com }, // enable/disable auto billing data collection
-   *   onCancel: () => console.log("CANCEL"),
-   * })
-   * .then(intentDetails => console.log(intentDetails))
-   * .catch(error => {
-   *   console.log(error);
-   *   error.message | string
-           // intent requires billing data to proceed with the native integration
-          - Billing data is missing while calling payWithApplePay
-
-       error | Record<string, string>
-          {email: "Enter a valid email address."}
-   * });
-   * ```
-   */
-  async payWithGooglePay({
-    intentId,
-    billingData = {},
-    onCancel,
-  }: {
-    intentId: string;
-    billingData?: Record<string, unknown>;
-    onCancel?: () => void;
-  }): Promise<IntentDetails<TType>> {
-    throwIf(
-      !this.googlePaymentsClient,
-      'Google Payments Client is not initialized! Make sure to call "renderGooglePay" before calling "payWithGooglePay"',
-    );
-
-    let response = await this.proceedWith({
-      intentId,
-      type: "method",
-      id: "GOOGLE_PAY",
-    });
-
-    try {
-      if (response.state === "FORM_FIELDS") {
-        if (isEmpty(billingData)) {
-          throw new Error(
-            "Billing data is missing while calling payWithGooglePay",
-          );
-        }
-
-        response = await this.sdkApiHandler.request<IntentDetails<TType>>({
-          api: "sdk:submitNativeForm",
-          payload: {
-            intentId,
-            paymentMethod: "GOOGLE_PAY",
-            lang: this.sdkEmbed.lang,
-            billingData,
-          },
-        });
-      }
-    } catch (error) {
-      await this.resetSelectedMethod(intentId);
-      throw error;
-    }
-
-    const { nativePayData } = response as IntentDetails<"payment">;
-    // not live intent moves directly to confirmation
-    if (!nativePayData) return response;
-
-    return this.generateGooglePayReceipt({
-      nativePayData: nativePayData as any,
-      onCancel,
-    }).then(nativeReceiptData =>
-      this.submitPaymentReceipt({
-        intentId,
-        nativeReceiptData,
-      }),
-    );
-  }
-
-  /**
    * Render SDK embed forms and payment integrations
    *
    * @description must be called if `state` of an intent is `INTENT_FORM` to let MoneyHash handle the payment.
-   * you can listen for completion or failure of an intent by providing `onComplete` `onFail` callbacks on MoneyHash instance.
    *
    * @example
    * ```
-   * await moneyHash.renderForm({
+   * const intentDetails = await moneyHash.renderForm({
    *   selector: '<container_css_selector>',
    *   intentId: '<intentId>',
    * });
    * ```
    * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors | CSS Selector MDN}
    * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox | iframe sandbox MDN}
-   * @returns Promise<void>
+   * @returns Promise<IntentDetails<TType>>
    */
-  renderForm(options: Parameters<SDKEmbed<TType>["render"]>[0]) {
+  async renderForm(
+    options: Parameters<SDKEmbed<TType>["render"]>[0],
+  ): Promise<IntentDetails<TType>> {
     throwIf(!options.selector, "selector is required for renderForm");
     throwIf(!options.intentId, "intentId is required for renderForm");
 
-    return this.sdkEmbed.render(options);
+    await this.sdkEmbed.render(options);
+
+    const resultDefPromise = new DeferredPromise<
+      Promise<IntentDetails<TType>>
+    >();
+
+    const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== getIframeUrl()) return;
+      const { type, data } = event.data;
+      if (type === "onComplete" || type === "onFail") {
+        resultDefPromise.resolve(data);
+        window.removeEventListener("message", onReceiveMessage);
+      }
+    };
+    window.addEventListener("message", onReceiveMessage);
+
+    return resultDefPromise.promise;
   }
 
   /**
@@ -995,75 +461,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Change the public api key on MoneyHash instance
+   */
+  setPublicApiKey(publicApiKey: string) {
+    throwIf(!publicApiKey, "publicApiKey is required to set publicApiKey");
+    this.options.publicApiKey = publicApiKey;
+  }
+
+  /**
    * Cleanup all listeners set by the SDK
    * @returns Promise<void>
    */
   removeEventListeners() {
     return this.sdkEmbed.abortService();
-  }
-
-  /**
-   * Update the intent discount
-   *
-   * @description Can be used for updating discount on the intent level
-   *
-   * @example
-   * ```
-   * await moneyHash.updateIntentDiscount({
-   *   intentId: '<intent_id>',
-   *   discount: Discount,
-   * });
-   * ```
-   *
-   * @returns Promise<{@link IntentDetails}>
-   */
-  updateIntentDiscount({
-    intentId,
-    discount,
-  }: {
-    intentId: string;
-    discount: Discount;
-  }) {
-    throwIf(!discount.title.en, "English discount title is required!");
-
-    return this.sdkApiHandler.request<{ amount: string; discount: Discount }>({
-      api: "sdk:updateIntentDiscount",
-      payload: {
-        intentId,
-        discount,
-        lang: this.sdkEmbed.lang,
-      },
-    });
-  }
-
-  /**
-   * Update the intent fees
-   *
-   * @description Can be used for updating intent fees
-   *
-   * @example
-   * ```
-   * await moneyHash.updateIntentFees({
-   *   intentId: '<intent_id>',
-   *   fees: Array<Fee>,
-   * });
-   * ```
-   *
-   * @returns Promise<{@link IntentDetails}>
-   */
-  updateIntentFees({ intentId, fees }: { intentId: string; fees: Array<Fee> }) {
-    fees.forEach(fee => {
-      throwIf(!fee.title.en, "English fee title is required!");
-    });
-
-    return this.sdkApiHandler.request<{ amount: string; fees: Fee[] }>({
-      api: "sdk:updateIntentFees",
-      payload: {
-        intentId,
-        fees,
-        lang: this.sdkEmbed.lang,
-      },
-    });
   }
 
   /**
@@ -1549,10 +959,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   /**
    * Render the received url in an iframe, popup iframe or redirect
-   *
+   * @description must be called if `state` of an intent is `URL_TO_RENDER`.
    * @example
    * ```
-   * moneyHash.renderUrl('<url>', 'IFRAME');
+   * const intentDetails = await moneyHash.renderUrl({
+   *   intentId: '<intent_id>',
+   *   url: '<url>',
+   *   renderStrategy: 'IFRAME' | 'POPUP_IFRAME' | 'REDIRECT',
+   * });
    * ```
    *
    */
@@ -1566,7 +980,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url: string;
     renderStrategy: UrlRenderStrategy;
     options?: RenderOptions;
-  }) {
+  }): Promise<IntentDetails<TType>> {
+    await this.sdkEmbed.isCommunicationReady;
     this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
@@ -1574,9 +989,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe({ url, intentId, options });
       case "REDIRECT":
-        return this.#renderUrlInRedirect({ url, options });
+        return this.#renderUrlInRedirect({ url, options }) as any;
       default:
-        return null;
+        throw new Error("Invalid render strategy");
     }
   }
 
@@ -1602,9 +1017,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     container?.replaceChildren(iframe);
 
-    await this.#setupExternalWindowListener({ intentId });
+    const result = await this.#setupExternalWindowListener({ intentId });
 
     iframe.remove();
+    return result;
   }
 
   async #renderUrlInPopUpIframe({
@@ -1631,9 +1047,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     throwIf(!windowRef, "Popup blocked by browser!");
 
-    await this.#setupExternalWindowListener({ intentId, isUsingPopUp: true });
+    const result = await this.#setupExternalWindowListener({
+      intentId,
+      isUsingPopUp: true,
+    });
 
     windowRef?.close();
+    return result;
   }
 
   async #renderUrlInRedirect({
@@ -1657,40 +1077,27 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }: {
     intentId: string;
     isUsingPopUp?: boolean;
-  }) {
-    const resultDefPromise = new DeferredPromise();
+  }): Promise<IntentDetails<TType>> {
+    const resultDefPromise = new DeferredPromise<IntentDetails<TType>>();
+
+    let isReceived = false;
 
     const onReceiveMessage = async (event: MessageEvent) => {
       if (event.origin !== getIframeUrl()) return;
       const { type } = event.data;
 
+      if (isReceived) return;
+
       if (type === "intentResult") {
         if (isUsingPopUp) this.sdkApiHandler.postMessage("EmbedResultClose");
 
+        isReceived = true;
         const [intentDetails] = await Promise.all([
           this.getIntentDetails(intentId),
-          waitForSeconds(2),
+          waitForSeconds(1.5),
         ]);
 
-        const transactionStatus =
-          intentDetails.transaction.status.split(".")[1];
-
-        if (
-          transactionStatus === "successful" ||
-          transactionStatus.startsWith("pending")
-        ) {
-          this.options.onComplete?.({
-            type: this.options.type,
-            ...intentDetails,
-          } as OnCompleteEventOptions<TType>);
-        } else {
-          this.options.onFail?.({
-            type: this.options.type,
-            ...intentDetails,
-          } as unknown as OnFailEventOptions<TType>);
-        }
-
-        resultDefPromise.resolve(() => null);
+        resultDefPromise.resolve(intentDetails);
         window.removeEventListener("message", onReceiveMessage);
       }
     };
