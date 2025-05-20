@@ -488,7 +488,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles, classes, fontSourceCss }: ElementsProps): Elements {
+  elements({
+    styles,
+    classes,
+    fontSourceCss,
+    moneyHashTestMode = false,
+  }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     const elementsValidity: Partial<Record<ElementType, boolean>> = {};
     const formEventsCallback = new Map<FormEvents, Function>();
@@ -646,6 +651,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               elementOptions,
               styles: { ...styles, ...elementOptions.styles },
               fontSourceCss,
+              moneyHashTestMode,
             });
 
             this.mountedCardElements.push(elementType);
@@ -1182,18 +1188,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     elementOptions,
     styles,
     fontSourceCss,
+    moneyHashTestMode,
   }: {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
     elementOptions: ElementProps["elementOptions"];
     fontSourceCss?: string;
+    moneyHashTestMode: boolean;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
     const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
 
     if (fontSourceCss) url.searchParams.set("fontSourceCss", fontSourceCss);
+    if (moneyHashTestMode) url.searchParams.set("moneyHashTestMode", "true");
+
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     if (
