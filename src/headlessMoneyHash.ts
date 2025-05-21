@@ -752,31 +752,45 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
-  cardForm = {
-    collect: async () => {
+  /**
+   * Collect card data using MoneyHash Public API Key
+   */
+  private async _collect(): Promise<CardData>;
+  /**
+   * Collect card data using intent access token
+   */
+  private async _collect(options: { accessToken: string }): Promise<CardData>;
+  private async _collect(options?: { accessToken: string }) {
+    const missingCardElement = getMissingCardElement(this.mountedCardElements);
+
+    throwIf(
+      !!missingCardElement,
+      `You must mount ${missingCardElement} element!`,
+    );
+
+    let accessToken;
+
+    if (options?.accessToken) {
+      accessToken = options.accessToken;
+    } else {
       throwIf(
         !this.options.publicApiKey,
         "publicApiKey on MoneyHash instance is required to collect card!",
       );
 
-      const missingCardElement = getMissingCardElement(
-        this.mountedCardElements,
-      );
-
-      throwIf(
-        !!missingCardElement,
-        `You must mount ${missingCardElement} element!`,
-      );
-
-      const accessToken = await this.sdkApiHandler.request<string>({
+      accessToken = await this.sdkApiHandler.request<string>({
         api: "sdk:generateAccessToken",
         payload: {
           publicApiKey: this.options.publicApiKey,
         },
       });
+    }
 
-      return this.#submitVaultCardForm({ accessToken });
-    },
+    return this.#submitVaultCardForm({ accessToken });
+  }
+
+  cardForm = {
+    collect: this._collect.bind(this),
     pay: async ({
       intentId,
       cardData,
