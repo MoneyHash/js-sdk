@@ -15,6 +15,8 @@ import {
 export type ErrorResponse = {
   code: number;
   message: string;
+  type: MHErrorType;
+  errors?: Record<string, string>[];
 };
 
 export type IntentDetails<TType extends IntentType> = TType extends "payment"
