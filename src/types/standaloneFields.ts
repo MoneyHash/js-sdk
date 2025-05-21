@@ -142,4 +142,5 @@ export type CardData = {
   cvv: string;
   save_card: boolean;
   fingerprint: string;
+  cardValidation: Record<string, unknown>;
 };
