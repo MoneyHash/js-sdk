@@ -33,6 +33,7 @@
         ]
       }
     ],
-    "cypress/unsafe-to-chain-command": "off"
+    "cypress/unsafe-to-chain-command": "off",
+    "no-underscore-dangle": "off"
   }
 }
