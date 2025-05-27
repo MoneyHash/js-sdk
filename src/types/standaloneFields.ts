@@ -94,7 +94,7 @@ export type ElementsProps = {
 
 export type ElementProps =
   | {
-      elementType: Exclude<ElementType, "cardHolderName">;
+      elementType: ElementType;
       elementOptions: CommonElementOptions & {
         validation?: never;
       };
@@ -104,6 +104,14 @@ export type ElementProps =
       elementOptions: CommonElementOptions & {
         validation?: {
           required?: boolean;
+        };
+      };
+    }
+  | {
+      elementType: "cardNumber";
+      elementOptions: CommonElementOptions & {
+        validation?: {
+          cardNumber?: boolean;
         };
       };
     };

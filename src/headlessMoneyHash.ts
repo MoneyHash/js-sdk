@@ -1148,12 +1148,24 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     if (fontSourceCss) url.searchParams.set("fontSourceCss", fontSourceCss);
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
-    if (elementOptions.validation?.required !== undefined) {
+    if (
+      elementType === "cardHolderName" &&
+      elementOptions.validation &&
+      "required" in elementOptions.validation
+    ) {
+      url.searchParams.set("required", `${elementOptions.validation.required}`);
+    }
+    if (
+      elementType === "cardNumber" &&
+      elementOptions.validation &&
+      "cardNumber" in elementOptions.validation
+    ) {
       url.searchParams.set(
-        "required",
-        `${elementOptions.validation?.required}`,
+        "cardNumberValidation",
+        `${elementOptions.validation.cardNumber}`,
       );
     }
+
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
     url.searchParams.set("inputMode", elementOptions.inputMode ?? "");
     url.searchParams.set("lang", this.sdkEmbed.lang);
