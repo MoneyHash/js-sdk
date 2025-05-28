@@ -684,6 +684,68 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     };
   }
 
+  /**
+   * Bin Lookup with 8 digits card number
+   * @example
+   * ```ts
+   * cardNumber.on("changeInput", ({ length }) => {
+   *  if (length === 2) {
+   *    moneyHash.cardForm.binLookup().then(console.log).catch(console.log);
+   *  }
+   * });
+   * ```
+   */
+  private async _binLookup(): Promise<BinLookUpData>;
+  /**
+   * Bin Lookup with full collected card data
+   * @example
+   * ```ts
+   *  const cardData = await moneyHash.cardForm.collect();
+      const binLookup = await moneyHash.cardForm.binLookup({ cardData });
+   * ```
+   */
+  private async _binLookup(options: {
+    cardData: CardData;
+    flowId?: string;
+  }): Promise<BinLookUpData>;
+  private async _binLookup(options?: { cardData: CardData; flowId?: string }) {
+    if (options) {
+      return this.sdkApiHandler.request<BinLookUpData>({
+        api: "sdk:binLookup",
+        payload: {
+          cardData: options.cardData,
+          flowId: options.flowId,
+          publicApiKey: this.options.publicApiKey,
+        },
+      });
+    }
+
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to get bin lookup without the full cardData!",
+    );
+
+    const accessToken = await this.sdkApiHandler.request<string>({
+      api: "sdk:generateAccessToken",
+      payload: {
+        publicApiKey: this.options.publicApiKey,
+      },
+    });
+
+    const { card_token, first_six_digits } = await this.#generateVaultTempToken(
+      { accessToken },
+    );
+
+    return this.sdkApiHandler.request<BinLookUpData>({
+      api: "sdk:binLookup",
+      payload: {
+        firstSixDigits: first_six_digits,
+        cardToken: card_token,
+        publicApiKey: this.options.publicApiKey,
+      },
+    });
+  }
+
   cardForm = {
     collect: async () => {
       throwIf(
@@ -753,21 +815,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           cardEmbed: cardData,
         },
       }),
-    binLookup: async ({
-      cardData,
-      flowId,
-    }: {
-      cardData: CardData;
-      flowId?: string;
-    }) =>
-      this.sdkApiHandler.request<BinLookUpData>({
-        api: "sdk:binLookup",
-        payload: {
-          cardData,
-          flowId,
-          publicApiKey: this.options.publicApiKey,
-        },
-      }),
+    binLookup: this._binLookup.bind(this),
   };
 
   /**
@@ -1239,6 +1287,51 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     document.body.appendChild(submitIframe);
 
     return submitIframe;
+  }
+
+  async #generateVaultTempToken({ accessToken }: { accessToken: string }) {
+    const vaultTempTokenDefPromise = new DeferredPromise<{
+      first_six_digits: string;
+      card_token: string;
+    }>();
+
+    const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
+    const VAULT_API_URL = getVaultApiUrl();
+
+    const url = new URL(
+      `${VAULT_INPUT_IFRAME_URL}/vaultTempToken/vaultTempToken.html`,
+    );
+
+    url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
+    url.searchParams.set("vault_api_url", `${VAULT_API_URL}/api/v1/tokens/`); // the vault BE API URL
+    url.searchParams.set("access_token", accessToken);
+    url.searchParams.set("lang", this.sdkEmbed.lang);
+
+    const iframe = document.createElement("iframe");
+
+    iframe.id = "moneyhash-temp-token-iframe";
+    iframe.src = url.toString();
+    iframe.hidden = true;
+
+    const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== VAULT_INPUT_IFRAME_URL) return;
+      const { type, data } = event.data;
+      if (type === "vaultTempToken:success") {
+        vaultTempTokenDefPromise.resolve(data);
+        window.removeEventListener("message", onReceiveMessage);
+        iframe.remove();
+      } else if (type === "vaultTempToken:error") {
+        vaultTempTokenDefPromise.reject(data);
+        window.removeEventListener("message", onReceiveMessage);
+        iframe.remove();
+      }
+    };
+
+    window.addEventListener("message", onReceiveMessage);
+
+    document.body.appendChild(iframe);
+
+    return vaultTempTokenDefPromise.promise;
   }
 
   /**
