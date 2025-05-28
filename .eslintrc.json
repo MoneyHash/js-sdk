@@ -33,6 +33,28 @@
         ]
       }
     ],
-    "cypress/unsafe-to-chain-command": "off"
+    "cypress/unsafe-to-chain-command": "off",
+    "no-underscore-dangle": "off", // Turn off ESLint's native rule
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "method",
+        "modifiers": ["private"],
+        "format": ["camelCase"],
+        "leadingUnderscore": "allow" // Enforce underscore for private methods
+      },
+      {
+        "selector": "method",
+        "modifiers": ["public", "protected"],
+        "format": ["camelCase"],
+        "leadingUnderscore": "forbid"
+      },
+      {
+        "selector": "property",
+        "modifiers": ["private"],
+        "format": ["camelCase"],
+        "leadingUnderscore": "forbid" // Optional: require no underscore for fields
+      }
+    ]
   }
 }
