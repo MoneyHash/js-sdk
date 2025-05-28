@@ -689,7 +689,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    * @example
    * ```ts
    * cardNumber.on("changeInput", ({ length }) => {
-   *  if (length === 2) {
+   *  if (length === 8) {
    *    moneyHash.cardForm.binLookup().then(console.log).catch(console.log);
    *  }
    * });
