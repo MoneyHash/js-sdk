@@ -488,7 +488,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @returns { Elements }
    */
-  elements({ styles, classes, fontSourceCss }: ElementsProps): Elements {
+  elements({
+    styles,
+    classes,
+    fontSourceCss,
+    moneyHashTestMode = false,
+  }: ElementsProps): Elements {
     const fieldsListeners: Array<(event: MessageEvent) => void> = [];
     const elementsValidity: Partial<Record<ElementType, boolean>> = {};
     const formEventsCallback = new Map<FormEvents, Function>();
@@ -646,6 +651,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               elementOptions,
               styles: { ...styles, ...elementOptions.styles },
               fontSourceCss,
+              moneyHashTestMode,
             });
 
             this.mountedCardElements.push(elementType);
@@ -746,31 +752,54 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     });
   }
 
-  cardForm = {
-    collect: async () => {
+  /**
+   * Collect card data using MoneyHash Public API Key
+   */
+  private async _collect(): Promise<CardData>;
+  /**
+   * Collect card data using intent access token
+   */
+  private async _collect(options: {
+    accessToken: string;
+    saveCard?: boolean;
+  }): Promise<CardData>;
+  private async _collect(options?: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
+    const missingCardElement = getMissingCardElement(this.mountedCardElements);
+
+    throwIf(
+      !!missingCardElement,
+      `You must mount ${missingCardElement} element!`,
+    );
+
+    let accessToken;
+
+    if (options?.accessToken) {
+      accessToken = options.accessToken;
+    } else {
       throwIf(
         !this.options.publicApiKey,
         "publicApiKey on MoneyHash instance is required to collect card!",
       );
 
-      const missingCardElement = getMissingCardElement(
-        this.mountedCardElements,
-      );
-
-      throwIf(
-        !!missingCardElement,
-        `You must mount ${missingCardElement} element!`,
-      );
-
-      const accessToken = await this.sdkApiHandler.request<string>({
+      accessToken = await this.sdkApiHandler.request<string>({
         api: "sdk:generateAccessToken",
         payload: {
           publicApiKey: this.options.publicApiKey,
         },
       });
+    }
 
-      return this.#submitVaultCardForm({ accessToken });
-    },
+    return this.#submitVaultCardForm({
+      accessToken,
+      saveCard: options?.saveCard,
+    });
+  }
+
+  cardForm = {
+    collect: this._collect.bind(this),
     pay: async ({
       intentId,
       cardData,
@@ -823,7 +852,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   private defaultCardHolderName: string = "";
 
-  async #submitVaultCardForm({ accessToken }: { accessToken: string }) {
+  async #submitVaultCardForm({
+    accessToken,
+    saveCard,
+  }: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
     const vaultFieldsDefPromise = new DeferredPromise<CardData>();
 
     this.vaultSubmitListener.current = (event: MessageEvent) => {
@@ -840,6 +875,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const submitIframe = this.#renderVaultSubmitIframe({
       accessToken,
       defaultCardHolderName: this.defaultCardHolderName,
+      saveCard,
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
@@ -1182,18 +1218,22 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     elementOptions,
     styles,
     fontSourceCss,
+    moneyHashTestMode,
   }: {
     container: HTMLDivElement;
     elementType: ElementType;
     styles?: ElementStyles;
     elementOptions: ElementProps["elementOptions"];
     fontSourceCss?: string;
+    moneyHashTestMode: boolean;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
 
     const url = new URL(`${VAULT_INPUT_IFRAME_URL}/vaultField/vaultField.html`);
 
     if (fontSourceCss) url.searchParams.set("fontSourceCss", fontSourceCss);
+    if (moneyHashTestMode) url.searchParams.set("moneyHashTestMode", "true");
+
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
     url.searchParams.set("type", elementType);
     if (
@@ -1259,9 +1299,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   #renderVaultSubmitIframe({
     accessToken,
     defaultCardHolderName,
+    saveCard,
   }: {
     accessToken: string;
     defaultCardHolderName: string;
+    saveCard?: boolean;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
@@ -1276,6 +1318,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("lang", this.sdkEmbed.lang);
     if (defaultCardHolderName) {
       url.searchParams.set("default_card_holder_name", defaultCardHolderName);
+    }
+    if (saveCard) {
+      url.searchParams.set("save_card", "true");
     }
 
     const submitIframe = document.createElement("iframe");

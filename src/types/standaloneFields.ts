@@ -90,6 +90,11 @@ export type ElementsProps = {
    * @example "https://fonts.googleapis.com/css?family=Open+Sans&display=swap"
    */
   fontSourceCss?: string;
+  /**
+   * initiate card elements with test card values for MoneyHash test mode
+   * @default false
+   */
+  moneyHashTestMode?: boolean;
 };
 
 export type ElementProps =
@@ -137,4 +142,5 @@ export type CardData = {
   cvv: string;
   save_card: boolean;
   fingerprint: string;
+  cardValidation: Record<string, unknown>;
 };
