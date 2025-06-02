@@ -759,8 +759,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   /**
    * Collect card data using intent access token
    */
-  private async _collect(options: { accessToken: string }): Promise<CardData>;
-  private async _collect(options?: { accessToken: string }) {
+  private async _collect(options: {
+    accessToken: string;
+    saveCard?: boolean;
+  }): Promise<CardData>;
+  private async _collect(options?: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
     const missingCardElement = getMissingCardElement(this.mountedCardElements);
 
     throwIf(
@@ -786,7 +792,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       });
     }
 
-    return this.#submitVaultCardForm({ accessToken });
+    return this.#submitVaultCardForm({
+      accessToken,
+      saveCard: options?.saveCard,
+    });
   }
 
   cardForm = {
@@ -843,7 +852,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    */
   private defaultCardHolderName: string = "";
 
-  async #submitVaultCardForm({ accessToken }: { accessToken: string }) {
+  async #submitVaultCardForm({
+    accessToken,
+    saveCard,
+  }: {
+    accessToken: string;
+    saveCard?: boolean;
+  }) {
     const vaultFieldsDefPromise = new DeferredPromise<CardData>();
 
     this.vaultSubmitListener.current = (event: MessageEvent) => {
@@ -860,6 +875,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     const submitIframe = this.#renderVaultSubmitIframe({
       accessToken,
       defaultCardHolderName: this.defaultCardHolderName,
+      saveCard,
     });
     const cardEmbedData = await vaultFieldsDefPromise.promise;
     submitIframe.remove();
@@ -1283,9 +1299,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   #renderVaultSubmitIframe({
     accessToken,
     defaultCardHolderName,
+    saveCard,
   }: {
     accessToken: string;
     defaultCardHolderName: string;
+    saveCard?: boolean;
   }) {
     const VAULT_INPUT_IFRAME_URL = getVaultInputIframeUrl();
     const VAULT_API_URL = getVaultApiUrl();
@@ -1300,6 +1318,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("lang", this.sdkEmbed.lang);
     if (defaultCardHolderName) {
       url.searchParams.set("default_card_holder_name", defaultCardHolderName);
+    }
+    if (saveCard) {
+      url.searchParams.set("save_card", "true");
     }
 
     const submitIframe = document.createElement("iframe");
