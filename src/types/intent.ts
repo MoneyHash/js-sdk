@@ -318,3 +318,34 @@ export type InstallmentPlanPayload = {
   planId: string;
   issuerCode?: string;
 };
+
+export type SubscriptionPlan = {
+  id: string;
+  alreadySubscribed: boolean;
+  amount: number;
+  created: string;
+  currency: string;
+  description: string;
+  discountAmount: number | null;
+  discountCycles: number | null;
+  discountPercentage: number | null;
+  name: string;
+  oneTimeFee: number | null;
+  recurrency: number;
+  recurrencyUnit: "MONTH";
+  recurringCycles: number | null;
+  trialPeriod: number | null;
+  isLive: boolean;
+};
+
+export type SubscriptionStatus =
+  | "NEW"
+  | "TRIAL"
+  | "INCOMPLETE"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "PENDING_CANCELLATION"
+  | "CANCELLED"
+  | "ENDED"
+  | "TERMINATED"
+  | "PAUSED";

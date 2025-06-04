@@ -1,4 +1,4 @@
-import {
+import type {
   Field,
   IntentState,
   IntentStateDetails,
@@ -10,6 +10,8 @@ import {
   PayoutTransaction,
   ProductItem,
   Shipping,
+  SubscriptionPlan,
+  SubscriptionStatus,
 } from "./intent";
 
 export type ErrorResponse = {
@@ -33,6 +35,10 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       lastUsedMethod: LastUsedMethod | null;
       nativePayData?: Record<string, any>;
       paymentStatus: PaymentStatus;
+      subscription: {
+        plan: SubscriptionPlan;
+        status: SubscriptionStatus | null;
+      } | null;
     }
   : {
       intent: PayoutIntent;
