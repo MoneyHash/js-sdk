@@ -977,24 +977,24 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Get list of subscription plans for a subscription embed
+   * Get list of subscription plans for a specific plan group
    * @example
    * ```
-   * await moneyHash.getSubscriptionPlans({ subscriptionEmbedId: '<embed-id>', customerId '<customer_id>' });
+   * await moneyHash.getSubscriptionPlans({ planGroupId: '<plan-group-id>', customerId '<customer_id>' });
    * ```
    * @returns { Promise<Array<SubscriptionPlan>> }
    */
   async getSubscriptionPlans({
-    subscriptionEmbedId,
+    planGroupId,
     customerId,
   }: {
-    subscriptionEmbedId: string;
+    planGroupId: string;
     customerId: string;
   }): Promise<Array<SubscriptionPlan>> {
     return this.sdkApiHandler.request<Array<SubscriptionPlan>>({
       api: "sdk:getSubscriptionPlans",
       payload: {
-        subscriptionEmbedId,
+        planGroupId,
         customerId,
         lang: this.sdkEmbed.lang,
       },
@@ -1002,28 +1002,28 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Selects the instalment plan for the intent
+   * Selects a subscription plan for the customer
    * @example
    * ```
-   * await moneyHash.selectSubscriptionPlan({ customerId: '<customer_id>', planId: '<plan_id>', subscriptionEmbedId: '<embed_id>' });
+   * await moneyHash.selectSubscriptionPlan({ customerId: '<customer_id>', planId: '<plan_id>', planGroupId: '<plan-group-id>' });
    * ```
    * @returns { Promise<IntentDetails<"payment">> }
    */
   async selectSubscriptionPlan({
+    planGroupId,
     customerId,
     planId,
-    subscriptionEmbedId,
   }: {
-    subscriptionEmbedId: string;
-    planId: string;
+    planGroupId: string;
     customerId: string;
+    planId: string;
   }): Promise<IntentDetails<"payment">> {
     return this.sdkApiHandler.request<IntentDetails<"payment">>({
       api: "sdk:selectSubscriptionPlan",
       payload: {
         planId,
         customerId,
-        subscriptionEmbedId,
+        planGroupId,
         lang: this.sdkEmbed.lang,
       },
     });
