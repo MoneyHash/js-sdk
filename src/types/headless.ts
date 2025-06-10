@@ -38,6 +38,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       subscription: {
         plan: SubscriptionPlan;
         status: SubscriptionStatus | null;
+        id: string | null;
       } | null;
     }
   : {
