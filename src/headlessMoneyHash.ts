@@ -9,6 +9,7 @@ import type {
   InstallmentPlanPayload,
   IntentType,
   PaymentMethodSlugs,
+  SubscriptionPlan,
   SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
@@ -970,6 +971,59 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         amount,
         currency,
         publicApiKey: this.options.publicApiKey,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Get list of subscription plans for a specific plan group
+   * @example
+   * ```
+   * await moneyHash.getSubscriptionPlans({ planGroupId: '<plan-group-id>', customerId '<customer_id>' });
+   * ```
+   * @returns { Promise<Array<SubscriptionPlan>> }
+   */
+  async getSubscriptionPlans({
+    planGroupId,
+    customerId,
+  }: {
+    planGroupId: string;
+    customerId: string;
+  }): Promise<Array<SubscriptionPlan>> {
+    return this.sdkApiHandler.request<Array<SubscriptionPlan>>({
+      api: "sdk:getSubscriptionPlans",
+      payload: {
+        planGroupId,
+        customerId,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Selects a subscription plan for the customer
+   * @example
+   * ```
+   * await moneyHash.selectSubscriptionPlan({ customerId: '<customer_id>', planId: '<plan_id>', planGroupId: '<plan-group-id>' });
+   * ```
+   * @returns { Promise<IntentDetails<"payment">> }
+   */
+  async selectSubscriptionPlan({
+    planGroupId,
+    customerId,
+    planId,
+  }: {
+    planGroupId: string;
+    customerId: string;
+    planId: string;
+  }): Promise<IntentDetails<"payment">> {
+    return this.sdkApiHandler.request<IntentDetails<"payment">>({
+      api: "sdk:selectSubscriptionPlan",
+      payload: {
+        planId,
+        customerId,
+        planGroupId,
         lang: this.sdkEmbed.lang,
       },
     });
