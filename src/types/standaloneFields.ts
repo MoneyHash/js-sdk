@@ -111,6 +111,12 @@ export type ElementProps =
       elementType: "cardNumber";
       elementOptions: CommonElementOptions & {
         validation?: {
+          /**
+           * Enable luhn validation for card number.
+           *
+           * This helps verify that the card number follows the [Luhn algorithm](https://en.wikipedia.org/wiki/Luhn_algorithm).
+           * @default true
+           */
           cardNumber?: boolean;
         };
       };

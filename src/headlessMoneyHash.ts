@@ -1812,15 +1812,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     ) {
       url.searchParams.set("required", `${elementOptions.validation.required}`);
     }
-    if (
-      elementType === "cardNumber" &&
-      elementOptions.validation &&
-      "cardNumber" in elementOptions.validation
-    ) {
-      url.searchParams.set(
-        "cardNumberValidation",
-        `${elementOptions.validation.cardNumber}`,
-      );
+
+    if (elementType === "cardNumber") {
+      const validationEnabled =
+        elementOptions.validation && "cardNumber" in elementOptions.validation
+          ? elementOptions.validation.cardNumber
+          : true;
+      url.searchParams.set("cardNumberValidation", `${validationEnabled}`);
     }
 
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
