@@ -9,7 +9,7 @@ export default defineConfig({
           : "./src/index.ts",
       name: "MoneyHash",
       fileName: (ext, entry) => `${entry}.${ext}.js`,
-      formats: ["umd"],
+      formats: ["iife"],
     },
     emptyOutDir: false,
     rollupOptions: {},
