@@ -338,6 +338,21 @@ export type SubscriptionPlan = {
   isLive: boolean;
 };
 
+export type SubscriptionPlanGroup = {
+  created: string;
+  currency: string;
+  id: string;
+  name: string;
+  plans: SubscriptionPlan[];
+};
+
+export type SubscriptionPlanGroupsResponse = {
+  count: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  planGroups: SubscriptionPlanGroup[];
+};
+
 export type SubscriptionStatus =
   | "NEW"
   | "TRIAL"
