@@ -10,6 +10,7 @@ import type {
   IntentType,
   PaymentMethodSlugs,
   SubscriptionPlan,
+  SubscriptionPlanGroupsResponse,
   SupportedLanguages,
   UrlRenderStrategy,
 } from "./types";
@@ -970,6 +971,49 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         first6Digits,
         amount,
         currency,
+        publicApiKey: this.options.publicApiKey,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Get list of subscription plan groups
+   * @example
+   * All plan groups
+   * ```
+   * await moneyHash.getSubscriptionPlanGroups();
+   * ```
+   * @example
+   * Filtered by currency
+   * ```
+   * await moneyHash.getSubscriptionPlanGroups({ currency: '<currency>' });
+   * ```
+   * @example
+   * Change offset and limit
+   * ```
+   * await moneyHash.getSubscriptionPlanGroups({ limit: 40, offset: 0 });
+   * ```
+   *
+   * @default limit: 10, offset: 0
+   * @returns { Promise<SubscriptionPlanGroupsResponse> }
+   */
+  async getSubscriptionPlanGroups(options?: {
+    currency?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<SubscriptionPlanGroupsResponse> {
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to get subscription plan groups!",
+    );
+
+    return this.sdkApiHandler.request<SubscriptionPlanGroupsResponse>({
+      api: "sdk:getSubscriptionPlanGroups",
+      payload: {
+        currency: options?.currency,
+        offset: options?.offset,
+        limit: options?.limit,
         publicApiKey: this.options.publicApiKey,
         lang: this.sdkEmbed.lang,
       },
