@@ -438,6 +438,54 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return resultDefPromise.promise;
   }
 
+  async renderSubscriptionEmbed({
+    intentId,
+    selector,
+  }: {
+    intentId: string;
+    selector: string;
+  }): Promise<IntentDetails<TType>> {
+    const resultDefPromise = new DeferredPromise<
+      Promise<IntentDetails<TType>>
+    >();
+
+    const container = document.querySelector(selector);
+
+    throwIf(
+      !container,
+      `Couldn't find an element with selector ${selector} to render the iframe!`,
+    );
+
+    const IFRAME_URL = getIframeUrl();
+
+    const url = new URL(`${IFRAME_URL}/embed/subscription-plan/${intentId}`);
+    url.searchParams.set("sdk", "true");
+    url.searchParams.set("parent", window.location.origin);
+    url.searchParams.set("version", SDK_VERSION);
+
+    const iframe = document.createElement("iframe");
+    iframe.style.setProperty("border", "0", "important");
+    iframe.style.setProperty("width", "100%", "important");
+    iframe.style.setProperty("height", "100%", "important");
+    iframe.src = url.toString();
+
+    container?.replaceChildren(iframe);
+
+    const onReceiveMessage = async (event: MessageEvent) => {
+      if (event.origin !== getIframeUrl()) return;
+      const { type, data } = event.data;
+      if (type === "onComplete" || type === "onFail") {
+        resultDefPromise.resolve(data);
+        iframe.remove();
+
+        window.removeEventListener("message", onReceiveMessage);
+      }
+    };
+    window.addEventListener("message", onReceiveMessage);
+
+    return resultDefPromise.promise;
+  }
+
   /**
    * Change the embed localization
    *
