@@ -1,3 +1,12 @@
+class ScriptLoadError extends Error {
+  reason: string;
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.reason = "SCRIPT_LOAD_ERROR";
+  }
+}
+
 export default function loadScript(src: string, id: string) {
   return new Promise((resolve, reject) => {
     const existingScript = document.getElementById(id);
@@ -14,7 +23,7 @@ export default function loadScript(src: string, id: string) {
       resolve(undefined);
     });
     script.addEventListener("error", () => {
-      reject(new Error("Script failed to load"));
+      reject(new ScriptLoadError("Script failed to load"));
     });
     document.body.appendChild(script);
   });

@@ -24,6 +24,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
       intent: PaymentIntent;
       transaction: PaymentTransaction | null;
       selectedMethod: PaymentMethodSlugs | null;
+      customerId?: string | null;
       /**
        * Intent state to guide you through different actions required. check [README](https://docs.moneyhash.io/docs/javascript-sdk#integrating)
        */

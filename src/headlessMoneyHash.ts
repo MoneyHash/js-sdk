@@ -1,3 +1,4 @@
+import Click2Pay from "./click2pay";
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
@@ -60,6 +61,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   private options: MoneyHashHeadlessOptions<TType>;
 
   private sdkApiHandler = new SDKApiHandler();
+
+  click2Pay = new Click2Pay({ sdkApiHandler: this.sdkApiHandler });
 
   private sdkEmbed: SDKEmbed<TType>;
 
