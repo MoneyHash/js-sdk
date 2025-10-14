@@ -62,7 +62,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   private sdkApiHandler = new SDKApiHandler();
 
-  click2Pay = new Click2Pay({ sdkApiHandler: this.sdkApiHandler });
+  click2Pay: Click2Pay;
 
   private sdkEmbed: SDKEmbed<TType>;
 
@@ -77,6 +77,10 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
+    this.click2Pay = new Click2Pay({
+      sdkApiHandler: this.sdkApiHandler,
+      mountedCardElements: this.mountedCardElements,
+    });
     if (isBrowser()) {
       this.#setupVaultSubmitListener(this.vaultSubmitListener);
     }

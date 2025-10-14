@@ -12,7 +12,7 @@
 export default class DeferredPromise<T> {
   promise: Promise<T>;
 
-  resolve!: (data: any) => void;
+  resolve!: (data: T) => void;
 
   reject!: (reason: any) => void;
 
