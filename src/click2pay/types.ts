@@ -690,3 +690,21 @@ export type Click2PayAuthenticateResult =
        */
       maskedCards: MaskedCard[];
     };
+
+export type Click2PaySignOutResponse =
+  | {
+      /**
+       * Returns false if unbind is successful, else returns true.
+       */
+      recognized: false;
+    }
+  | {
+      /**
+       * Returns true if unbind is unsuccessful, else returns false.
+       */
+      recognized: true;
+      /**
+       * If unbind is unsuccessful, returns MaskedCards present in recognized user profile.
+       */
+      cards: MaskedCard[];
+    };

@@ -42,8 +42,7 @@ import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
 
-export * from "./types";
-export * from "./types/headless";
+export type * from "./types";
 
 const supportedProceedWithTypes = new Set([
   "method",
@@ -80,6 +79,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     this.click2Pay = new Click2Pay({
       sdkApiHandler: this.sdkApiHandler,
       mountedCardElements: this.mountedCardElements,
+      lang: this.sdkEmbed.lang,
     });
     if (isBrowser()) {
       this.#setupVaultSubmitListener(this.vaultSubmitListener);

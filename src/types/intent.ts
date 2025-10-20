@@ -42,7 +42,8 @@ export type PaymentMethodSlugs =
   | "BENEFIT"
   | "STC"
   | "BANK_ACCOUNT"
-  | "CASH";
+  | "CASH"
+  | "CLICK2PAY";
 
 export type IntentState =
   | "METHOD_SELECTION"

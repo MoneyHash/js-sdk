@@ -1,7 +1,7 @@
 import SDKApiHandler from "../sdkApiHandler";
 import DeferredPromise from "../standaloneFields/utils/DeferredPromise";
 import getVaultInputIframeUrl from "../standaloneFields/utils/getVaultInputIframeUrl";
-import type { ElementType } from "../types";
+import type { ElementType, IntentDetails } from "../types";
 import getMissingCardElement from "../utils/getMissingCardElement";
 import loadScript from "../utils/loadScript";
 import throwIf from "../utils/throwIf";
@@ -37,12 +37,16 @@ export default class Click2Pay {
 
   private mountedCardElements: Array<ElementType>;
 
+  lang: string;
+
   constructor(options: {
     sdkApiHandler: SDKApiHandler;
     mountedCardElements: Array<ElementType>;
+    lang: string;
   }) {
     this.sdkApiHandler = options.sdkApiHandler;
     this.mountedCardElements = options.mountedCardElements;
+    this.lang = options.lang;
   }
 
   /**
@@ -96,6 +100,10 @@ export default class Click2Pay {
     },
     /**
      * Displays the provided array of masked cards the Card List.
+     * Make sure to include the `<src-card-list>` element in your HTML with the id `mh-src-card-list`.
+     * ```html
+     * <src-card-list id="mh-src-card-list"></src-card-list>
+     * ```
      */
     async loadCards({ maskedCards }: { maskedCards: MaskedCard[] }) {
       const cardListEl = await this.getCardListEl();
@@ -108,6 +116,7 @@ export default class Click2Pay {
      * - `clickAddCardLink`: Fired when the user clicks the "Add Card" link.
      * - `clickSignOutLink`: Fired when the user clicks the "Sign Out" link.
      * - `close`: Fired when the user clicks the "Cancel" button.
+     *
      * Returns a cleanup function to remove the event listener.
      */
     addEventListener<T extends CardListEvent>(
@@ -132,7 +141,7 @@ export default class Click2Pay {
     options: CheckoutWithCardOptions,
   ): Promise<CheckoutResponse> {
     const width = 480;
-    const height = 600;
+    const height = 700;
 
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
@@ -171,7 +180,12 @@ export default class Click2Pay {
    * Initiates the authentication process by displaying the OTP input UI component.
    * Make sure to include the `<src-otp-input>` element in your HTML with the id `mh-src-otp-input`.
    * ```html
-   * <src-otp-input id="mh-src-otp-input"></src-otp-input>
+   *<src-otp-input
+      id="mh-src-otp-input"
+      style="display: none"
+      display-cancel-option
+      type="overlay"
+    ></src-otp-input>
    * ```
    */
   async authenticate(options?: Click2PayAuthenticateOptions) {
@@ -318,7 +332,7 @@ export default class Click2Pay {
     const { encryptedCard, cardBrand } = await this.#tokenizeCard();
 
     const width = 480;
-    const height = 600;
+    const height = 700;
 
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
@@ -342,5 +356,29 @@ export default class Click2Pay {
       windowRef?.close();
       return Promise.reject(error);
     }
+  }
+
+  /**
+   * Submits the checkout response obtained from the checkout process to complete the payment.
+   */
+  pay({
+    intentId,
+    checkoutResponse,
+  }: {
+    intentId: string;
+    checkoutResponse: CheckoutResponse;
+  }) {
+    return this.sdkApiHandler.request<IntentDetails<"payment">>({
+      api: "sdk:submitReceipt",
+      payload: {
+        intentId,
+        lang: this.lang,
+        receipt: JSON.stringify(checkoutResponse),
+      },
+    });
+  }
+
+  signOut(options?: { recognitionToken?: string }) {
+    return this.masterCard.signOut(options);
   }
 }
