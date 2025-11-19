@@ -40,6 +40,7 @@ export type IntentDetails<TType extends IntentType> = TType extends "payment"
         status: SubscriptionStatus | null;
         id: string | null;
       } | null;
+      customerId?: string;
     }
   : {
       intent: PayoutIntent;
@@ -74,6 +75,15 @@ export interface Card {
   country: string | null;
   requiresCvv: boolean;
 }
+export interface BankAccount {
+  id: string;
+  bankIdentifier: string;
+  status: "PENDING" | "ACTIVE" | "INACTIVE";
+  accounts: {
+    accountName: string;
+  }[];
+  logo: string;
+}
 
 export type CustomerBalances = [
   {
@@ -89,6 +99,7 @@ export type IntentMethods<TType extends IntentType> = TType extends "payment"
       paymentMethods: Method[];
       expressMethods: Method[];
       savedCards: Card[];
+      savedBankAccounts: BankAccount[];
       customerBalances: CustomerBalances;
     }
   : {
