@@ -106,6 +106,8 @@ export type ElementProps =
         validation?: {
           required?: boolean;
         };
+      } & {
+        customValidation?: Record<string, string>;
       };
     }
   | {
