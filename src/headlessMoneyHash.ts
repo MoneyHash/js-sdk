@@ -1396,6 +1396,19 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     ) {
       url.searchParams.set("required", `${elementOptions.validation.required}`);
     }
+
+    if ("customValidation" in elementOptions) {
+      throwIf(
+        elementType !== "cardHolderName",
+        '"customValidation" is allowed only for "cardHolderName".',
+      );
+
+      url.searchParams.set(
+        "customValidation",
+        JSON.stringify(elementOptions.customValidation),
+      );
+    }
+
     if (elementType === "cardNumber") {
       const validationEnabled =
         elementOptions.validation && "cardNumber" in elementOptions.validation
