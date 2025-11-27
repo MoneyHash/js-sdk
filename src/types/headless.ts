@@ -235,3 +235,5 @@ export type PaymentStatus = {
     string
   >;
 };
+
+export type CardTokenId = string;
