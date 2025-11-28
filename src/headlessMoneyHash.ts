@@ -24,6 +24,7 @@ import type {
   IntentMethods,
   NativeReceiptData,
   RenderOptions,
+  CardTokenId,
 } from "./types/headless";
 import {
   ElementEvents,
@@ -394,6 +395,26 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         lang: this.sdkEmbed.lang,
         receipt: nativeReceiptData.receipt,
         receiptBillingData: nativeReceiptData.receiptBillingData,
+      },
+    });
+  }
+
+  tokenizeReceipt({
+    receipt,
+    methodId,
+    cardTokenIntentId,
+  }: {
+    receipt: string;
+    methodId: string;
+    cardTokenIntentId: string;
+  }) {
+    return this.sdkApiHandler.request<CardTokenId>({
+      api: "sdk:tokenizeReceipt",
+      payload: {
+        receipt,
+        methodId,
+        publicApiKey: this.options.publicApiKey,
+        cardTokenIntentId,
       },
     });
   }
