@@ -520,8 +520,22 @@ export type Click2PayInitOptions = {
   checkoutExperience?: "WITHIN_CHECKOUT" | "PAYMENT_SETTINGS";
   /**
    * JWT containing the recognition token that the Integrator stored on device or browser.
+   *
+   * It is recommended to store/drop the recognition token as a first party cookie
+   * on the device/browser. Integrator must manage the security aspects and ensure
+   * that the following security measures are in place:
+   * - Expiration Date - Cookies should have a maximum lifespan of 180 days
+   * - Secure
+   * - httpOnly (only applicable for server-side tokens)
+   * - sameSite=strict
+   * - Value=JWT
    */
   recognitionToken?: string;
+};
+
+export type Click2PayInitResult = {
+  availableCardBrands: CardBrand[];
+  availableServices: ["INLINE_CHECKOUT"];
 };
 
 export type CardListEventMap = {
@@ -653,33 +667,18 @@ export type CheckoutResponse = {
   recognitionToken?: string;
 };
 
-export type Click2PayLookupOptions =
-  | { email: string }
-  | {
-      mobileNumber: DpaPhoneNumber;
-    };
-
 export type Click2PayAuthenticateOptions = {
   /**
-   * Populating supported validation channel with Not you subheader and resend code links.
-   * @default false
+   * Type of consumer identity provided by the cardholder. Valid values are EMAIL_ADDRESS, MOBILE_PHONE_NUMBER.
    */
-  loadSupportedValidationChannels?: boolean;
+  identityType: "MOBILE_PHONE_NUMBER" | "EMAIL_ADDRESS";
   /**
-   * Emitted when the user click on Not you? link
-   * Recommended: Close the OTP element and show email or phone input component to let the user change the identity
-   * to do another lookup.
+   * Value associated with the identityType.
    */
-  notYouRequestedCallback?: (options: { close: () => void }) => void;
+  identityValue: string;
 };
 
 export type Click2PayAuthenticateResult =
-  | {
-      /**
-       * The user closed the OTP element without completing authentication.
-       */
-      action: "CLOSED";
-    }
   | {
       /**
        * The user successfully completed authentication and selected one of their cards.
@@ -688,7 +687,52 @@ export type Click2PayAuthenticateResult =
       /**
        * The list of masked cards available to the user after successful authentication.
        */
-      maskedCards: MaskedCard[];
+      cards: MaskedCard[];
+      /**
+       * A JWT containing the recognition token.
+       *
+       * Conditionality: Present if a consumer opts-in through Remember Me checkbox.
+       *
+       * It is recommended to store/drop the recognition token as a first party cookie
+       * on the device/browser. Integrator must manage the security aspects and ensure
+       * that the following security measures are in place:
+       * - Expiration Date - Cookies should have a maximum lifespan of 180 days
+       * - Secure
+       * - httpOnly (only applicable for server-side tokens)
+       * - sameSite=strict
+       * - Value=JWT
+       */
+      recognitionToken?: string;
+    }
+  | {
+      /**
+       * This indicates that the consumer is not present in the Click to Pay System.
+       */
+      action: "CONSUMER_NOT_PRESENT";
+    }
+  | {
+      /**
+       * The limit for the number of retries for OTP generation was exceeded.
+       */
+      action: "RETRIES_EXCEEDED";
+    }
+  | {
+      /**
+       * The account exists but is not currently accessible (e.g., is locked).
+       */
+      action: "ACCT_INACCESSIBLE";
+    }
+  | {
+      /**
+       * One or more parameters failed validation
+       */
+      action: "UNKNOWN_ERROR";
+    }
+  | {
+      action: "OTP_SEND_FAILED";
+    }
+  | {
+      action: "NOT_YOU";
     };
 
 export type Click2PaySignOutResponse =

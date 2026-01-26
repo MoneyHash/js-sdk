@@ -11,12 +11,11 @@ import type {
   CardListEvent,
   CardListEventMap,
   CheckoutWithCardOptions,
-  Click2PayLookupOptions,
-  DpaPhoneNumber,
   Click2PayAuthenticateOptions,
   CheckoutResponse,
   Click2PayAuthenticateResult,
   CheckoutWithNewCardOptions,
+  Click2PayInitResult,
 } from "./types";
 
 declare global {
@@ -53,7 +52,12 @@ export default class Click2Pay {
    * Loads MasterCard Click2Pay SDK script and initializes it with the provided options
    * and it should be called before any other method.
    */
-  async init({ env, dpaLocale, srcDpaId, ...options }: Click2PayInitOptions) {
+  async init({
+    env,
+    dpaLocale,
+    srcDpaId,
+    ...options
+  }: Click2PayInitOptions): Promise<Click2PayInitResult> {
     const scriptUrl = `https://${
       env === "sandbox" ? "sandbox." : ""
     }src.mastercard.com/srci/integration/2/lib.js?srcDpaId=${srcDpaId}&locale=${dpaLocale}`;
@@ -62,7 +66,7 @@ export default class Click2Pay {
     this.masterCardScriptUrl = scriptUrl;
 
     this.masterCard = new window.MastercardCheckoutServices();
-    await this.masterCard.init({
+    return this.masterCard.init({
       srcDpaId,
       dpaLocale,
       ...options,
@@ -166,107 +170,67 @@ export default class Click2Pay {
   }
 
   /**
-   * Checks whether a specified email address or mobile phone number is known to the Unified Checkout Solution.
-   */
-  lookUp(options: { email: string }): Promise<{ consumerPresent: boolean }>;
-  lookUp(options: {
-    mobileNumber: DpaPhoneNumber;
-  }): Promise<{ consumerPresent: boolean }>;
-  lookUp(options: Click2PayLookupOptions) {
-    return this.masterCard.idLookup(options);
-  }
-
-  /**
-   * Initiates the authentication process by displaying the OTP input UI component.
-   * Make sure to include the `<src-otp-input>` element in your HTML with the id `mh-src-otp-input`.
+   * Initiates the authentication process.
+   *  Make sure to include a `<div />` element in your HTML with the id `mh-src-otp-container`.
+   * @example
    * ```html
-   *<src-otp-input
-      id="mh-src-otp-input"
-      style="display: none"
-      display-cancel-option
-      type="overlay"
-    ></src-otp-input>
+   * <div id="mh-src-otp-container" style="height: 422px; width: 100%; display: none"></div>
    * ```
    */
-  async authenticate(options?: Click2PayAuthenticateOptions) {
+  async authenticate({
+    identityType,
+    identityValue,
+  }: Click2PayAuthenticateOptions) {
     const deferredPromise = new DeferredPromise<Click2PayAuthenticateResult>();
+    const otpContainer = document.getElementById("mh-src-otp-container")!;
 
-    const { loadSupportedValidationChannels = false, notYouRequestedCallback } =
-      options || {};
-    const { supportedValidationChannels, maskedValidationChannel, network } =
-      await this.masterCard.initiateValidation();
-    await customElements.whenDefined("src-otp-input");
-    const srcOtpInput = document.getElementById("mh-src-otp-input") as any;
-    if (loadSupportedValidationChannels) {
-      srcOtpInput.loadSupportedValidationChannels(supportedValidationChannels);
-    }
-    srcOtpInput.setAttribute("masked-identity-value", maskedValidationChannel);
-    srcOtpInput.setAttribute("network-id", network);
-
-    // Fix resetting type attribute issue
-    const type = srcOtpInput.getAttribute("type");
-    if (type)
-      srcOtpInput.setAttribute("type", srcOtpInput.getAttribute("type"));
-    srcOtpInput.style.display = "block";
-
-    let otp: string | null = null;
-    // let rememberMe = true;
-
-    const abortController = new AbortController();
-
-    const handleClose = () => {
-      srcOtpInput.style.display = "none";
-      abortController.abort();
-      deferredPromise.resolve({ action: "CLOSED" });
-    };
-    srcOtpInput.addEventListener("close", handleClose, {
-      signal: abortController.signal,
-    });
-
-    srcOtpInput.addEventListener(
-      "otpChanged",
-      (e: CustomEvent<string>) => {
-        otp = e.detail;
-      },
-      { signal: abortController.signal },
+    throwIf(
+      !otpContainer,
+      "Couldn't find an element with id mh-src-otp-container to render the iframe!",
     );
 
-    srcOtpInput.addEventListener(
-      "continue",
-      async () => {
-        try {
-          srcOtpInput.removeAttribute("error-reason");
-          srcOtpInput.setAttribute("disable-elements", true);
-          const maskedCards = await this.masterCard.validate({
-            value: otp,
-            // rememberMe,
-          });
-          deferredPromise.resolve({
-            action: "AUTHENTICATED",
-            maskedCards,
-          });
-          handleClose();
-        } catch (error: any) {
-          srcOtpInput.setAttribute("error-reason", error.reason);
-        }
-        srcOtpInput.setAttribute("disable-elements", false);
-      },
-      { signal: abortController.signal },
-    );
+    otpContainer.style.setProperty("display", "block");
 
-    // srcOtpInput.addEventListener(
-    //   "rememberMe",
-    //   (e: CustomEvent<{ rememberMe: boolean }>) => {
-    //     rememberMe = e.detail.rememberMe;
-    //   },
-    //   { signal: abortController.signal },
-    // );
+    const iframe = document.createElement("iframe");
+    iframe.style.setProperty("display", "block");
+    iframe.style.setProperty("border", "0");
+    iframe.style.setProperty("width", "100%");
+    iframe.style.setProperty("height", "480px");
+    otpContainer.replaceChildren(iframe);
 
-    srcOtpInput.addEventListener("notYouRequested", () => {
-      notYouRequestedCallback?.({
-        close: handleClose,
+    try {
+      const result = await this.masterCard.authenticate({
+        windowRef: iframe.contentWindow,
+        requestRecognitionToken: true,
+        accountReference: {
+          consumerIdentity: {
+            identityType,
+            identityValue,
+          },
+        },
       });
-    });
+
+      iframe.remove();
+      otpContainer.style.setProperty("display", "none");
+
+      if (result.cards.length === 0) {
+        deferredPromise.resolve({ action: "CONSUMER_NOT_PRESENT" });
+      }
+
+      deferredPromise.resolve({
+        action: "AUTHENTICATED",
+        cards: result.cards,
+        recognitionToken: result.recognitionToken,
+      });
+    } catch (error: any) {
+      otpContainer.style.setProperty("display", "none");
+      iframe.remove();
+
+      const reason = error?.reason;
+      deferredPromise.resolve({
+        action: reason,
+      });
+    }
 
     return deferredPromise.promise;
   }
