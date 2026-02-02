@@ -752,3 +752,18 @@ export type Click2PaySignOutResponse =
        */
       cards: MaskedCard[];
     };
+
+export type SignOutResponse =
+  | {
+      /**
+       * Returns false if unbind is successful
+       */
+      recognized: false;
+    }
+  | {
+      /**
+       * Returns true if unbind is unsuccessful
+       */
+      recognized: true;
+      cards: MaskedCard[];
+    };

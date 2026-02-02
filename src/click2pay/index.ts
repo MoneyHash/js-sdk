@@ -16,6 +16,7 @@ import type {
   Click2PayAuthenticateResult,
   CheckoutWithNewCardOptions,
   Click2PayInitResult,
+  SignOutResponse,
 } from "./types";
 
 declare global {
@@ -342,7 +343,11 @@ export default class Click2Pay {
     });
   }
 
-  signOut(options?: { recognitionToken?: string }) {
+  /**
+   * This method disassociates a recognized Consumer Application/Device from the Consumer’s Profile.
+   * When the consumer clicks Not your cards?
+   */
+  signOut(options?: { recognitionToken?: string }): Promise<SignOutResponse> {
     return this.masterCard.signOut(options);
   }
 }
