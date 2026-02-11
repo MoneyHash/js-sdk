@@ -196,7 +196,9 @@ export default class SDKEmbed<TType extends IntentType> {
       }
     });
 
-    return this.isCommunicationReady;
+    await this.isCommunicationReady;
+
+    return this.iframe;
   }
 
   async setLocale(locale: SupportedLanguages) {
