@@ -15,16 +15,18 @@ import type {
   UrlRenderStrategy,
 } from "./types";
 
-import type {
-  ApplePayMerchantSession,
-  BinLookUpData,
-  CardIntentDetails,
-  GetMethodsOptions,
-  IntentDetails,
-  IntentMethods,
-  NativeReceiptData,
-  RenderOptions,
-  CardTokenId,
+import {
+  type ApplePayMerchantSession,
+  type BinLookUpData,
+  type CardIntentDetails,
+  type GetMethodsOptions,
+  type IntentDetails,
+  type IntentMethods,
+  type NativeReceiptData,
+  type RenderOptions,
+  type CardTokenId,
+  type IFrameSandboxOptionsType,
+  IFrameSandboxOptions,
 } from "./types/headless";
 import {
   ElementEvents,
@@ -463,9 +465,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async renderSubscriptionEmbed({
     intentId,
     selector,
+    sandbox,
   }: {
     intentId: string;
     selector: string;
+    sandbox?: IFrameSandboxOptionsType[];
   }): Promise<IntentDetails<TType>> {
     const resultDefPromise = new DeferredPromise<
       Promise<IntentDetails<TType>>
@@ -490,6 +494,14 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     iframe.style.setProperty("width", "100%", "important");
     iframe.style.setProperty("height", "100%", "important");
     iframe.src = url.toString();
+
+    if (sandbox) {
+      sandbox.forEach(option => {
+        if (IFrameSandboxOptions.includes(option)) {
+          iframe.sandbox.add(option);
+        }
+      });
+    }
 
     container?.replaceChildren(iframe);
 
