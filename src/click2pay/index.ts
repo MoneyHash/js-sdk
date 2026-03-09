@@ -48,8 +48,6 @@ export default class Click2Pay {
    */
   masterCard: any;
 
-  private masterCardScriptUrl: string | null = null;
-
   private env: string | null = null;
 
   private srcDpaId: string | null = null;
