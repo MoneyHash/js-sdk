@@ -108,15 +108,6 @@ export type DpaTransactionAmount = {
   transactionCurrencyCode: string;
 };
 
-export type DpaAuthenticationPreferences = {
-  /**
-   * Indicates if an Integrator has requested for the authentication of the payload or not. Valid values are:
-   * - AUTHENTICATED: Denotes that an Integrator has requested authentication.
-   * - NON_AUTHENTICATED: Denotes that an Integrator has requested to not opt for authentication.
-   */
-  payloadRequested?: "AUTHENTICATED" | "NON_AUTHENTICATED";
-};
-
 export type DpaPaymentOption = {
   /**
    * Type of cryptogram or token used for the card data. Supported values are:
@@ -165,13 +156,8 @@ export type DpaTransactionOptions = {
   dpaBillingPreference?: "FULL" | "NONE" | "POSTAL_COUNTRY";
   /**
    * Merchant site preferred locale. Format: ISO language_country pair (e.g., en_US ). This is needed to ensure correct language and user experience. The value of the dpaLocale will be used by Mastercard SRC to create user profile and deliver Click to Pay experience by default. Users can choose to change the default country/language passed in dpaLocale from a country/language selection option in the DCF screen before profile creation. If users opt to choose that, then the profile will be created in the user selected country and language and the same will also be used to deliver the experience in all future checkouts by the same user.
-
    */
   dpaLocale?: `${string}_${string}`;
-  /**
-   * Object to contain the parameters for Authentication.
-   */
-  authenticationPreferences?: DpaAuthenticationPreferences;
   /**
    * Whether DPA wants consumer email ID in the Payload. Default is FALSE.
    */
@@ -185,19 +171,19 @@ export type DpaTransactionOptions = {
    */
   consumerNameRequested?: boolean;
   /**
-   * Payment options requested by the DPA for this transaction.
-   */
-  paymentOptions?: DpaPaymentOption[];
-  /**
    * Describes the merchant’s type of business, product or service. The same value is expected in the authorization request.
-   * Conditionality for Click to Pay: Required when payloadRequested=AUTHENTICATED.
+   * @example
+   * // Test environment
+   * merchantCountryCode: "0001"
    */
-  merchantCategoryCode?: string;
+  merchantCategoryCode: string;
   /**
    * ISO 3166 alpha 2 country code of the merchant.
-   * Conditionality for Click to Pay: Required when payloadRequested=AUTHENTICATED.
+   * @example
+   * // Test environment
+   * merchantCountryCode: "US"
    */
-  merchantCountryCode?: string;
+  merchantCountryCode: string;
   /**
    * Digital Payment Application generated order/invoice number corresponding to a Consumer purchase.
    * Typically, used for reconciliation purposes by the merchant.
@@ -214,15 +200,25 @@ export type DpaTransactionOptions = {
    */
   threeDsPreference?: "NONE";
   /**
-   * Key parameter to distinguish if a network-specific DCF or a loading screen is displayed after card selection. Default is FALSE. When set to False, consumer is prompted to ‘Continue’ the payment on a loading screen; when set to True, consumer is prompted with a Confirm payment message on DCF. Set this parameter along with [checkoutExperience](https://developer.mastercard.com/unified-checkout-solutions/documentation/sdk-reference/init/#request-parameters) to enable Embedded checkout experience.
-   */
-  confirmPayment?: boolean;
-  /**
    * Consists of acquirerBIN and acquirerMerchantId for the supported cardBrand.
    * These values are used for initiating managed transaction authentication across different card brands/networks.
-   * Conditionality for Click to Pay: Required to be passed in init() when payloadRequested= AUTHENTICATED.
+   *
+   * @example
+   * // Test environment
+   * acquirerData: [
+   *   {
+   *     cardBrand: 'mastercard',
+   *     acquirerMerchantId: 'SRC3DS',
+   *     acquirerBIN: '545301',
+   *   },
+   *   {
+   *     cardBrand: 'visa',
+   *     acquirerMerchantId: '33334444',
+   *     acquirerBIN: '432104',
+   *   },
+   * ]
    */
-  acquirerData?: DpaAcquirerData[];
+  acquirerData: DpaAcquirerData[];
 };
 
 export type DpaConsent = {
@@ -505,19 +501,11 @@ export type Click2PayInitOptions = {
   /**
    * DPA-specific preferences and transaction configuration parameters.
    */
-  dpaTransactionOptions?: DpaTransactionOptions;
+  dpaTransactionOptions: DpaTransactionOptions;
   /**
    * Array containing the legal names of your co-branded partners.  To promote your brand, if the cardholder has one of your co-branded cards then this card will appear at the top of a card list.
    */
   coBrandNames?: string[];
-  /**
-   * Configure when card enrollment is offered to the cardholder. This only applies to Mastercard. Supported values:
-   *
-   * `WITHIN_CHECKOUT` – Enrollment during embedded checkout, allows Checkout using Click to Pay without a Profile. (Guest Checkout Option)
-   *
-   * `PAYMENT_SETTINGS` – Enrollment outside checkout, allows Checkout with Click to Pay. (No Guest Checkout Option)
-   */
-  checkoutExperience?: "WITHIN_CHECKOUT" | "PAYMENT_SETTINGS";
   /**
    * JWT containing the recognition token that the Integrator stored on device or browser.
    *
@@ -559,11 +547,7 @@ export type CheckoutWithCardOptions = {
   /**
    * This structure represents the DPA-specific preferences and transaction configuration parameters that are common across all transactions. DpaTransactionOptions data replaces the DPA configuration data that passed to the init() method.
    */
-  dpaTransactionOptions?: DpaTransactionOptions;
-  /**
-   * Consumer compliance settings.
-   */
-  complianceSettings?: DpaComplianceSettings;
+  dpaTransactionOptions: DpaTransactionOptions;
 };
 
 export type CheckoutWithNewCardOptions = {
@@ -572,13 +556,9 @@ export type CheckoutWithNewCardOptions = {
    */
   consumer?: DpaConsumer;
   /**
-   * Consumer compliance settings.
-   */
-  complianceSettings?: DpaComplianceSettings;
-  /**
    * 	This structure represents the DPA-specific preferences and transaction configuration parameters that are common across all transactions. DpaTransactionOptions data replaces the DPA configuration data that passed to the init method.
    */
-  dpaTransactionOptions?: DpaTransactionOptions;
+  dpaTransactionOptions: DpaTransactionOptions;
   /**
    * Indicates the consumer’s consent to be remembered by third-party cookies.
    */

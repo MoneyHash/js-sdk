@@ -28,12 +28,33 @@ declare global {
 export default class Click2Pay {
   private sdkApiHandler: SDKApiHandler;
 
+  complianceSettings = {
+    privacy: {
+      acceptedVersion: "LATEST",
+      latestVersion: "LATEST",
+      latestVersionUri:
+        "https://www.mastercard.com/global/click-to-pay/country-listing/privacy.html",
+    },
+    tnc: {
+      acceptedVersion: "LATEST",
+      latestVersion: "LATEST",
+      latestVersionUri:
+        "https://www.mastercard.com/global/click-to-pay/country-listing/terms.html",
+    },
+  };
+
   /**
    * Underlying MasterCard Click2Pay SDK instance
    */
   masterCard: any;
 
   private masterCardScriptUrl: string | null = null;
+
+  private env: string | null = null;
+
+  private srcDpaId: string | null = null;
+
+  private dpaLocale: string | null = null;
 
   private mountedCardElements: Array<ElementType>;
 
@@ -55,22 +76,39 @@ export default class Click2Pay {
    */
   async init({
     env,
-    dpaLocale,
     srcDpaId,
+    dpaLocale,
+    dpaTransactionOptions,
     ...options
   }: Click2PayInitOptions): Promise<Click2PayInitResult> {
     const scriptUrl = `https://${
       env === "sandbox" ? "sandbox." : ""
     }src.mastercard.com/srci/integration/2/lib.js?srcDpaId=${srcDpaId}&locale=${dpaLocale}`;
 
+    this.env = env;
+    this.srcDpaId = srcDpaId;
+    this.dpaLocale = dpaLocale;
+
     await loadScript(scriptUrl, "click2pay-sdk");
-    this.masterCardScriptUrl = scriptUrl;
 
     this.masterCard = new window.MastercardCheckoutServices();
     return this.masterCard.init({
+      ...options,
       srcDpaId,
       dpaLocale,
-      ...options,
+      checkoutExperience: "PAYMENT_SETTINGS",
+      dpaTransactionOptions: {
+        ...dpaTransactionOptions,
+        confirmPayment: false,
+        authenticationPreferences: {
+          payloadRequested: "AUTHENTICATED",
+        },
+        paymentOptions: [
+          {
+            dynamicDataType: "CARD_APPLICATION_CRYPTOGRAM_SHORT_FORM",
+          },
+        ],
+      },
     });
   }
 
@@ -142,9 +180,10 @@ export default class Click2Pay {
   /**
    * Check out with an identified card.
    */
-  async checkoutWithCard(
-    options: CheckoutWithCardOptions,
-  ): Promise<CheckoutResponse> {
+  async checkoutWithCard({
+    dpaTransactionOptions,
+    ...options
+  }: CheckoutWithCardOptions): Promise<CheckoutResponse> {
     const width = 480;
     const height = 700;
 
@@ -159,6 +198,19 @@ export default class Click2Pay {
     try {
       const result = await this.masterCard.checkoutWithCard({
         ...options,
+        dpaTransactionOptions: {
+          ...dpaTransactionOptions,
+          confirmPayment: false,
+          authenticationPreferences: {
+            payloadRequested: "AUTHENTICATED",
+          },
+          paymentOptions: [
+            {
+              dynamicDataType: "CARD_APPLICATION_CRYPTOGRAM_SHORT_FORM",
+            },
+          ],
+        },
+        complianceSettings: this.complianceSettings,
         windowRef,
       });
 
@@ -254,8 +306,9 @@ export default class Click2Pay {
     const iframe = document.createElement("iframe");
 
     url.searchParams.set("host", btoa(window.location.origin)); // the application that is using the SDK
-    if (this.masterCardScriptUrl)
-      url.searchParams.set("c2p_script_url", this.masterCardScriptUrl);
+    if (this.env) url.searchParams.set("env", this.env);
+    if (this.srcDpaId) url.searchParams.set("srcDpaId", this.srcDpaId);
+    if (this.dpaLocale) url.searchParams.set("dpaLocale", this.dpaLocale);
 
     iframe.id = "moneyhash-c2p-token-iframe";
     iframe.src = url.toString();
@@ -285,9 +338,10 @@ export default class Click2Pay {
    * Enrolls a new card during checkout.
    * This card will be enrolled to the profile identified by the session, unless this is a guest checkout.
    */
-  async checkoutWithNewCard(
-    options?: CheckoutWithNewCardOptions,
-  ): Promise<CheckoutResponse> {
+  async checkoutWithNewCard({
+    dpaTransactionOptions,
+    ...options
+  }: CheckoutWithNewCardOptions): Promise<CheckoutResponse> {
     const missingCardElement = getMissingCardElement(this.mountedCardElements);
     throwIf(
       !!missingCardElement,
@@ -310,6 +364,19 @@ export default class Click2Pay {
     try {
       const result = await this.masterCard.checkoutWithNewCard({
         ...options,
+        dpaTransactionOptions: {
+          ...dpaTransactionOptions,
+          confirmPayment: false,
+          authenticationPreferences: {
+            payloadRequested: "AUTHENTICATED",
+          },
+          paymentOptions: [
+            {
+              dynamicDataType: "CARD_APPLICATION_CRYPTOGRAM_SHORT_FORM",
+            },
+          ],
+        },
+        complianceSettings: this.complianceSettings,
         encryptedCard,
         cardBrand,
         windowRef,
