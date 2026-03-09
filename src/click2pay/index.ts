@@ -225,7 +225,7 @@ export default class Click2Pay {
    *  Make sure to include a `<div />` element in your HTML with the id `mh-src-otp-container`.
    * @example
    * ```html
-   * <div id="mh-src-otp-container" style="height: 422px; width: 100%; display: none"></div>
+   * <div id="mh-src-otp-container" style="height: 480px; width: 100%; display: none"></div>
    * ```
    */
   async authenticate({

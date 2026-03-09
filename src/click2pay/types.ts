@@ -712,6 +712,9 @@ export type Click2PayAuthenticateResult =
       action: "OTP_SEND_FAILED";
     }
   | {
+      /**
+       * User clicks on Not You button to enter new email or phone number.
+       */
       action: "NOT_YOU";
     };
 
