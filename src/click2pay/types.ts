@@ -1,4 +1,4 @@
-export type CardBrand = "mastercard" | "maestro" | "visa" | "amex" | "discover";
+export type CardBrand = "mastercard" | "maestro" | "visa" | "amex";
 
 type DpaAddress = {
   /**
