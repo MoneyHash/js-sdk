@@ -1469,6 +1469,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("fontWeight", `${styles?.fontWeight}`);
     url.searchParams.set("fontStyle", styles?.fontStyle || "");
     url.searchParams.set("padding", styles?.padding || "");
+    if (styles?.bodyBackgroundColor) {
+      url.searchParams.set("bodyBackgroundColor", styles.bodyBackgroundColor);
+    }
 
     const fieldIframe = document.createElement("iframe");
 
