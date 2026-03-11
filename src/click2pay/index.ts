@@ -266,13 +266,13 @@ export default class Click2Pay {
 
       if (result.cards.length === 0) {
         deferredPromise.resolve({ action: "CONSUMER_NOT_PRESENT" });
+      } else {
+        deferredPromise.resolve({
+          action: "AUTHENTICATED",
+          cards: result.cards,
+          recognitionToken: result.recognitionToken,
+        });
       }
-
-      deferredPromise.resolve({
-        action: "AUTHENTICATED",
-        cards: result.cards,
-        recognitionToken: result.recognitionToken,
-      });
     } catch (error: any) {
       otpContainer.style.setProperty("display", "none");
       iframe.remove();
