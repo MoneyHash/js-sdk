@@ -56,6 +56,9 @@ type VariantStyle =
 
 export type ElementStyles = {
   color?: VariantStyle;
+  /**
+   * Input background color
+   */
   backgroundColor?: string;
   placeholderColor?: string;
   fontSize?: string;
@@ -69,6 +72,10 @@ export type ElementStyles = {
   height?: string;
   direction?: "ltr" | "rtl";
   textAlign?: "left" | "right" | "center";
+  /**
+   * Document `<body />` background color
+   */
+  bodyBackgroundColor?: string;
 };
 
 export type ElementEvents =
