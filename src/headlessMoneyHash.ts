@@ -1,3 +1,4 @@
+import Click2Pay from "./click2pay";
 import SDKApiHandler from "./sdkApiHandler";
 import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import DeferredPromise from "./standaloneFields/utils/DeferredPromise";
@@ -42,8 +43,7 @@ import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
 
-export * from "./types";
-export * from "./types/headless";
+export type * from "./types";
 
 const supportedProceedWithTypes = new Set([
   "method",
@@ -63,6 +63,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   private sdkApiHandler = new SDKApiHandler();
 
+  click2Pay: Click2Pay;
+
   private sdkEmbed: SDKEmbed<TType>;
 
   private vaultSubmitListener: {
@@ -76,6 +78,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
+    this.click2Pay = new Click2Pay({
+      sdkApiHandler: this.sdkApiHandler,
+      mountedCardElements: this.mountedCardElements,
+      lang: this.sdkEmbed.lang,
+    });
     if (isBrowser()) {
       this.#setupVaultSubmitListener(this.vaultSubmitListener);
     }
