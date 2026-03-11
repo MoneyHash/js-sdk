@@ -441,7 +441,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     throwIf(!options.selector, "selector is required for renderForm");
     throwIf(!options.intentId, "intentId is required for renderForm");
 
-    await this.sdkEmbed.render(options);
+    const iframe = await this.sdkEmbed.render(options);
 
     const resultDefPromise = new DeferredPromise<
       Promise<IntentDetails<TType>>
@@ -451,6 +451,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       if (event.origin !== getIframeUrl()) return;
       const { type, data } = event.data;
       if (type === "onComplete" || type === "onFail") {
+        iframe.remove();
         resultDefPromise.resolve(data);
         window.removeEventListener("message", onReceiveMessage);
       }
