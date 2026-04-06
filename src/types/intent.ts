@@ -305,14 +305,21 @@ type FormFields = {
 export type InstallmentPlan = {
   id: string;
   installmentPeriod: number;
-  interestRate: number | null;
+  interestRate: string | null;
   amount: {
     value: string;
     formatted: number;
-    currency: number;
+    currency: string;
   };
-  upfrontFees: number | null;
-  issuerCode?: string;
+  upfrontFees: string | null;
+  issuerCode: string | null;
+  issuerNameEn: string | null;
+  issuerNameAr: string | null;
+  issuerLogoEn: string | null;
+  issuerLogoAr: string | null;
+  processingFeesType: string | null;
+  processingFeesAmount: string | null;
+  feeDisplayValue: string | null;
 };
 
 export type InstallmentPlanPayload = {
