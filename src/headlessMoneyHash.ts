@@ -9,6 +9,8 @@ import type {
   InstallmentPlan,
   InstallmentPlanPayload,
   IntentType,
+  LoyaltyPayload,
+  LoyaltyProvider,
   PaymentMethodSlugs,
   SubscriptionPlan,
   SubscriptionPlanGroupsResponse,
@@ -243,6 +245,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     useWalletBalance,
     metaData,
     installmentPlanData,
+    loyaltyData,
   }: {
     type: "method" | "customerBalance" | "savedCard" | "savedBankAccount";
     intentId: string;
@@ -252,6 +255,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       cvv: string;
     };
     installmentPlanData?: InstallmentPlanPayload;
+    loyaltyData?: LoyaltyPayload;
   }) {
     throwIf(
       !supportedProceedWithTypes.has(type),
@@ -271,6 +275,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         useWalletBalance,
         metaData,
         installmentPlanData,
+        loyaltyData: loyaltyData
+          ? {
+              provider_id: loyaltyData.providerId,
+              identifier_type: loyaltyData.identifierType,
+              identifier: loyaltyData.identifier,
+            }
+          : undefined,
       },
     });
   }
@@ -904,6 +915,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       billingData,
       shippingData,
       installmentPlanData,
+      loyaltyData,
     }: {
       intentId: string;
       cardData: CardData;
@@ -911,6 +923,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       billingData?: Record<string, unknown>;
       shippingData?: Record<string, unknown>;
       installmentPlanData?: InstallmentPlanPayload;
+      loyaltyData?: LoyaltyPayload;
     }) =>
       this.sdkApiHandler.request<IntentDetails<TType>>({
         api: "sdk:submitNativeForm",
@@ -923,6 +936,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
           cardEmbed: cardData,
           saveCard,
           installmentPlanData,
+          loyaltyData: loyaltyData
+            ? {
+                provider_id: loyaltyData.providerId,
+                identifier_type: loyaltyData.identifierType,
+                identifier: loyaltyData.identifier,
+              }
+            : undefined,
         },
       }),
     createCardToken: async ({
@@ -994,6 +1014,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     saveCard,
     paymentMethod = "CARD",
     installmentPlanData,
+    loyaltyData,
   }: {
     intentId: string;
     accessToken?: string | null;
@@ -1002,6 +1023,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     saveCard?: boolean;
     paymentMethod?: PaymentMethodSlugs;
     installmentPlanData?: InstallmentPlanPayload;
+    loyaltyData?: LoyaltyPayload;
   }): Promise<IntentDetails<TType>> {
     let cardEmbedData;
 
@@ -1033,6 +1055,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         cardEmbed: cardEmbedData,
         saveCard,
         installmentPlanData,
+        loyaltyData: loyaltyData
+          ? {
+              provider_id: loyaltyData.providerId,
+              identifier_type: loyaltyData.identifierType,
+              identifier: loyaltyData.identifier,
+            }
+          : undefined,
       },
     });
 
@@ -1068,7 +1097,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
-   * Get list of the instalment plan for the intent
+   * Get list of the instalment plan for an account.
    * @example
    * ```
    * await moneyHash.getInstallmentPlans({ first6Digits: '<card-bin>', amount: <amount>, currency: '<currency>' });
@@ -1198,6 +1227,59 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Get list of the loyalty providers for an account.
+   * @example
+   * ```
+   * const loyaltyProviders = await moneyHash.getLoyaltyProviders();
+   * ```
+   */
+  async getLoyaltyProviders(): Promise<Array<LoyaltyProvider>> {
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to get loyalty providers!",
+    );
+
+    return this.sdkApiHandler.request<Array<LoyaltyProvider>>({
+      api: "sdk:getLoyaltyProviders",
+      payload: {
+        publicApiKey: this.options.publicApiKey,
+      },
+    });
+  }
+
+  /**
+   * Check if the account is eligible for loyalty programs.
+   * @example
+   * ```
+   * const { eligible } = await moneyHash.checkLoyaltyEligibility({
+   *   providerId: "<providerId>",
+   *   identifierType: "<identifierType>",
+   *   identifier: "<identifier>",
+   * });
+   * ```
+   */
+  async checkLoyaltyEligibility({
+    providerId,
+    identifierType,
+    identifier,
+  }: LoyaltyPayload): Promise<{ eligible: boolean }> {
+    throwIf(
+      !this.options.publicApiKey,
+      "publicApiKey on MoneyHash instance is required to check loyalty eligibility!",
+    );
+
+    return this.sdkApiHandler.request<{ eligible: boolean }>({
+      api: "sdk:checkLoyaltyEligibility",
+      payload: {
+        publicApiKey: this.options.publicApiKey,
+        providerId,
+        identifier,
+        identifierType,
+      },
+    });
+  }
+
+  /**
    * Submits the CVV for the tokenized card
    *
    * @example
@@ -1211,10 +1293,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     intentId,
     cvv,
     installmentPlanData,
+    loyaltyData,
   }: {
     intentId: string;
     cvv: string;
     installmentPlanData?: InstallmentPlanPayload;
+    loyaltyData?: LoyaltyPayload;
   }): Promise<IntentDetails<TType>> {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:submitCardCvv",
@@ -1222,6 +1306,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         intentId,
         cvv,
         installmentPlanData,
+        loyaltyData: loyaltyData
+          ? {
+              provider_id: loyaltyData.providerId,
+              identifier_type: loyaltyData.identifierType,
+              identifier: loyaltyData.identifier,
+            }
+          : undefined,
         lang: this.sdkEmbed.lang,
       },
     });
