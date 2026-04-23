@@ -380,14 +380,17 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @param methodId - Apple pay method id from nativePayData
    * @param validationURL - Apple pay validation url you get from `ApplePaySession.onvalidatemerchant`
+   * @param merchantIdentifier - (Optional) For payment platforms registering merchants through the {@link https://developer.apple.com/documentation/ApplePayWebMerchantRegistrationAPI Apple Pay Web Merchant Registration API}, this should be the partnerInternalMerchantIdentifier defined for each registered merchant.
    * @returns
    */
   async validateApplePayMerchantSession({
     methodId,
     validationUrl,
+    merchantIdentifier,
   }: {
     methodId: string;
     validationUrl: string;
+    merchantIdentifier?: string;
   }) {
     return this.sdkApiHandler.request<ApplePayMerchantSession>({
       api: "sdk:applePaySession",
@@ -395,6 +398,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
         methodId,
         validationUrl,
         parentOrigin: window.location.origin,
+        merchantIdentifier,
       },
     });
   }
