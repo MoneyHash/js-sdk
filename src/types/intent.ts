@@ -372,3 +372,18 @@ export type SubscriptionStatus =
   | "ENDED"
   | "TERMINATED"
   | "PAUSED";
+
+export type LoyaltyProvider = {
+  id: string;
+  name: string;
+  identifierType: "PHONE_NUMBER" | "NATIONAL_ID" | "EMAIL";
+};
+
+export type LoyaltyPayload = {
+  providerId: string;
+  identifierType: LoyaltyProvider["identifierType"];
+  /**
+   *  e.g. email, phone number or customer national id based on the identifier type
+   */
+  identifier: string;
+};
