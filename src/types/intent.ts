@@ -60,7 +60,9 @@ export type IntentState =
   | "SAVED_CARD_CVV"
   | "INSTALLMENT_PLANS"
   // v2.x.x new states
-  | "PROCESSING";
+  | "PROCESSING"
+  // v3.x.x new states
+  | "OTP_FORM";
 
 export type UrlRenderStrategy = "IFRAME" | "POPUP_IFRAME" | "REDIRECT";
 
@@ -69,6 +71,8 @@ export type CardInfo = {
   brandIconUrl: string;
   last4Digits: string;
 };
+
+export type IntentOtpData = Record<string, unknown>;
 
 export type IntentStateDetails<TType extends IntentState> =
   TType extends "FORM_FIELDS"
@@ -83,6 +87,11 @@ export type IntentStateDetails<TType extends IntentState> =
     : TType extends "INSTALLMENT_PLANS"
     ? {
         plans: InstallmentPlan[];
+      }
+    : TType extends "OTP_FORM"
+    ? {
+        otpLength: number;
+        intentOtpData: IntentOtpData;
       }
     : null;
 
