@@ -8,6 +8,7 @@ import type {
   CardData,
   InstallmentPlan,
   InstallmentPlanPayload,
+  IntentOtpData,
   IntentType,
   LoyaltyPayload,
   LoyaltyProvider,
@@ -1317,6 +1318,36 @@ export default class MoneyHashHeadless<TType extends IntentType> {
               identifier: loyaltyData.identifier,
             }
           : undefined,
+        lang: this.sdkEmbed.lang,
+      },
+    });
+  }
+
+  /**
+   * Submits the OTP form.
+   *
+   * @example
+   * ```
+   * await moneyHash.submitOtp({ intentId: '<intent-id>', otp: '<otp>', intentOtpData: stateDetails.intentOtpData });
+   * ```
+   *
+   * @returns { Promise<IntentDetails<TType>> }
+   */
+  async submitOtp({
+    intentId,
+    otp,
+    intentOtpData,
+  }: {
+    intentId: string;
+    otp: string;
+    intentOtpData: IntentOtpData;
+  }): Promise<IntentDetails<TType>> {
+    return this.sdkApiHandler.request<IntentDetails<TType>>({
+      api: "sdk:submitOtp",
+      payload: {
+        intentId,
+        otp,
+        intentOtpData,
         lang: this.sdkEmbed.lang,
       },
     });
