@@ -611,6 +611,18 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   }
 
   /**
+   * Set the intent token to authorize intent requests.
+   *
+   * @example
+   * ```
+   * moneyHash.setIntentToken("payin_54db4579...");
+   * ```
+   */
+  setIntentToken(intentToken: string) {
+    this.sdkApiHandler.setIntentToken(intentToken);
+  }
+
+  /**
    * Cleanup all listeners set by the SDK
    * @returns Promise<void>
    */
