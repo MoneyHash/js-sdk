@@ -13,6 +13,11 @@ window.MoneyHash = window.MoneyHash || MoneyHash;
 
 const intentDetails: IntentDetails<"payment"> | null = null;
 console.log(intentDetails);
+const moneyHash = new MoneyHash({
+  type: "payment",
+});
+
+moneyHash.setIntentSecret("asdasdas");
 
 // const moneyHash: MoneyHash<"payment"> = new MoneyHash({
 //   type: "payment",
