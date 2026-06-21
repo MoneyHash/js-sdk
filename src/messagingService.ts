@@ -7,9 +7,9 @@ export type MessagePayload = {
   type: string;
   data?: Record<string, unknown>;
   /**
-   * Per-request intent token
+   * Per-request intent secret
    */
-  intentToken?: string;
+  intentSecret?: string;
 };
 
 export default class MessagingService<T extends Array<MessagePayload>> {
