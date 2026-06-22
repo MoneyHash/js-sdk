@@ -30,6 +30,7 @@ import type {
   RenderOptions,
   CardTokenId,
 } from "./types/headless";
+import { IFrameSandboxOptions } from "./types/headless";
 import {
   ElementEvents,
   ElementProps,
@@ -1381,7 +1382,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     this.sdkApiHandler.postMessage("SDKRenderUrl");
     switch (renderStrategy) {
       case "IFRAME":
-        return this.#renderUrlInIframe({ url, intentId });
+        return this.#renderUrlInIframe({ url, intentId, options });
       case "POPUP_IFRAME":
         return this.#renderUrlInPopUpIframe({ url, intentId, options });
       case "REDIRECT":
@@ -1394,9 +1395,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async #renderUrlInIframe({
     intentId,
     url,
+    options,
   }: {
     intentId: string;
     url: string;
+    options?: RenderOptions;
   }) {
     const container = document.querySelector("#rendered-url-iframe-container");
 
@@ -1407,6 +1410,13 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
     const iframe = document.createElement("iframe");
     iframe.src = url;
+    if (options?.sandbox) {
+      options.sandbox.forEach(option => {
+        if (IFrameSandboxOptions.includes(option)) {
+          iframe.sandbox.add(option);
+        }
+      });
+    }
     iframe.style.setProperty("border", "0", "important");
     iframe.style.setProperty("width", "100%", "important");
     iframe.style.setProperty("height", "100%", "important");

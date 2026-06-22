@@ -153,6 +153,11 @@ export type RenderOptions = {
     left?: number;
     top?: number;
   };
+  /**
+   * Sandbox token(s) applied to the iframe for `renderStrategy: "IFRAME"`
+   * @example ["allow-scripts", "allow-same-origin", "allow-forms"]
+   */
+  sandbox?: IFrameSandboxOptionsType[];
 };
 
 export type GetMethodsOptions = {
