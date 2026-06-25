@@ -17,6 +17,18 @@ export default class MoneyHash<TType extends IntentType> {
   }
 
   /**
+   * Set the intent secret to authorize intent requests.
+   *
+   * @example
+   * ```
+   * moneyHash.setIntentSecret("54db4579...");
+   * ```
+   */
+  setIntentSecret(intentSecret: string) {
+    this.sdkEmbed.setIntentSecret(intentSecret);
+  }
+
+  /**
    * Render SDK embed and let MoneyHash handle everything for you
    *
    * @description you can listen for completion or failure of an intent by providing `onComplete` `onFail` callbacks on MoneyHash instance.

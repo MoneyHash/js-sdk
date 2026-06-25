@@ -487,9 +487,11 @@ export default class MoneyHashHeadless<TType extends IntentType> {
   async renderSubscriptionEmbed({
     intentId,
     selector,
+    moneyHashIntentSecret,
   }: {
     intentId: string;
     selector: string;
+    moneyHashIntentSecret?: string;
   }): Promise<IntentDetails<TType>> {
     const resultDefPromise = new DeferredPromise<
       Promise<IntentDetails<TType>>
@@ -508,6 +510,9 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
+    if (moneyHashIntentSecret) {
+      url.searchParams.set("mh_intent_secret", moneyHashIntentSecret);
+    }
 
     const iframe = document.createElement("iframe");
     iframe.style.setProperty("border", "0", "important");
@@ -615,11 +620,12 @@ export default class MoneyHashHeadless<TType extends IntentType> {
    *
    * @example
    * ```
-   * moneyHash.setIntentSecret("payin_54db4579...");
+   * moneyHash.setIntentSecret("54db4579...");
    * ```
    */
   setIntentSecret(intentSecret: string) {
     this.sdkApiHandler.setIntentSecret(intentSecret);
+    this.sdkEmbed.setIntentSecret(intentSecret);
   }
 
   /**
@@ -1231,8 +1237,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     planGroupId: string;
     customerId: string;
     planId: string;
-  }): Promise<IntentDetails<"payment">> {
-    return this.sdkApiHandler.request<IntentDetails<"payment">>({
+  }): Promise<IntentDetails<"payment"> & { moneyHashIntentSecret?: string }> {
+    return this.sdkApiHandler.request({
       api: "sdk:selectSubscriptionPlan",
       payload: {
         planId,
