@@ -6,6 +6,10 @@ type ConstructorOptions = {
 export type MessagePayload = {
   type: string;
   data?: Record<string, unknown>;
+  /**
+   * Per-request intent secret
+   */
+  intentSecret?: string;
 };
 
 export default class MessagingService<T extends Array<MessagePayload>> {

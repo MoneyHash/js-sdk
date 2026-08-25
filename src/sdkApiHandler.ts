@@ -8,10 +8,16 @@ export default class SDKApiHandler {
 
   private static isCommunicationReady: Promise<void>;
 
+  private intentSecret?: string;
+
   constructor() {
     if (isBrowser()) {
       this.initSDKCommunicationIframe();
     }
+  }
+
+  setIntentSecret(intentSecret: string) {
+    this.intentSecret = intentSecret;
   }
 
   private initSDKCommunicationIframe() {
@@ -57,6 +63,7 @@ export default class SDKApiHandler {
       SDKApiHandler.messagingService?.send({
         type: api,
         data: payload,
+        ...(this.intentSecret ? { intentSecret: this.intentSecret } : {}),
       });
 
       const handleReceive = (event: MessageEvent<MessagePayload>) => {

@@ -61,6 +61,8 @@ export interface SDKEmbedOptions<TType extends IntentType> {
 export default class SDKEmbed<TType extends IntentType> {
   private options: SDKEmbedOptions<TType> & { headless?: boolean };
 
+  private intentSecret?: string;
+
   messagingService: MessagingService<MessagePayload[]> | null = null;
 
   iframe: HTMLIFrameElement | null = null;
@@ -84,6 +86,10 @@ export default class SDKEmbed<TType extends IntentType> {
     return language || "en";
   }
 
+  setIntentSecret(intentSecret: string) {
+    this.intentSecret = intentSecret;
+  }
+
   async render({
     selector,
     intentId,
@@ -104,6 +110,8 @@ export default class SDKEmbed<TType extends IntentType> {
     url.searchParams.set("sdk", "true");
     url.searchParams.set("parent", window.location.origin);
     url.searchParams.set("version", SDK_VERSION);
+    if (this.intentSecret)
+      url.searchParams.set("mh_intent_secret", this.intentSecret);
     if (onHeightChange) url.searchParams.set("onDimensionsChange", "true");
 
     const lang = this.options.locale?.split("-")[0];
