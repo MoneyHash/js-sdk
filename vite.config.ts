@@ -12,6 +12,7 @@ export default defineConfig({
       entry: {
         index: "./src/index.ts",
         headless: "./src/headlessMoneyHash.ts",
+        agentic: "./src/agentic/index.ts",
       },
       name: "MoneyHash",
       fileName: (ext, entry) => `${entry}.${ext}.js`,
