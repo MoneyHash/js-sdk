@@ -50,13 +50,11 @@ export default class Agentic implements MoneyHashPlugin<"agentic"> {
    * always check the result before treating the ceremony as successful.
    *
    * The returned promise rejects with a `DOMException` — switch on
-   * `error.name` (messages vary per browser):
+   * `error.name`
    *
    * - `NotAllowedError` — the user dismissed/cancelled the passkey prompt,
    *   the options `timeout` expired, or the call wasn't triggered by a user
-   *   gesture. In `authentication` mode, browsers also report a missing
-   *   credential this way (indistinguishable from cancellation, by design).
-   *   Safe to treat as "not completed" — offer a retry or a fallback flow.
+   *   gesture.
    * - `AbortError` — the passed `signal` was aborted. Expected when you
    *   cancel a pending prompt yourself (e.g. superseding it with a new one),
    *   not a failure.
