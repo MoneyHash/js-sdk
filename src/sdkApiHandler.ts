@@ -2,7 +2,16 @@ import MessagingService, { MessagePayload } from "./messagingService";
 import getIframeUrl from "./utils/getIframeUrl";
 import isBrowser from "./utils/isBrowser";
 
-export default class SDKApiHandler {
+export interface SDKApiHandlerInterface {
+  request<TResponse>(args: {
+    api: `sdk:${string}`;
+    payload: Record<string, unknown>;
+  }): Promise<TResponse>;
+  postMessage(message: string): void;
+  setIntentSecret(intentSecret: string): void;
+}
+
+export default class SDKApiHandler implements SDKApiHandlerInterface {
   private static messagingService: MessagingService<MessagePayload[]> | null =
     null;
 

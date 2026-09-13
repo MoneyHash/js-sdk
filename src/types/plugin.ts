@@ -1,12 +1,12 @@
 import type { IntentType } from ".";
-import type SDKApiHandler from "../sdkApiHandler";
+import type { SDKApiHandlerInterface } from "../sdkApiHandler";
 
 /**
  * Live view into the host MoneyHash instance, handed to each plugin via
  * `register(context)`.
  */
 export interface PluginContext {
-  readonly sdkApiHandler: SDKApiHandler;
+  readonly sdkApiHandler: SDKApiHandlerInterface;
   readonly publicApiKey: string | undefined;
   readonly lang: string;
   readonly intentType: IntentType;
