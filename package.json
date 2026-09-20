@@ -1,6 +1,6 @@
 {
   "name": "@moneyhash/js-sdk",
-  "version": "2.15.0-agentic.1",
+  "version": "2.15.0-agentic.2",
   "description": "MoneyHash JavaScript SDK",
   "type": "module",
   "files": [
