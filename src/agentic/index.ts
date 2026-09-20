@@ -115,7 +115,7 @@ export default class Agentic implements MoneyHashPlugin<"agentic"> {
    * with the MoneyHash backend, completing the passkey ceremony.
    *
    * Resolves only on successful verification — the response `status` is
-   * always `"AUTHORIZED"`, with the `mode` of the ceremony that was completed.
+   * always `"AUTHORIZED"`, alongside the `consentId` that was verified.
    *
    * If verification fails (invalid signature, challenge mismatch, unknown or
    * expired `consentId`), the backend responds with a `4xx` and the returned
@@ -125,7 +125,7 @@ export default class Agentic implements MoneyHashPlugin<"agentic"> {
    * @example
    * ```ts
    * try {
-   *   const { status, mode } = await moneyHash.agentic.verifyPassKeyAuthentication({
+   *   const { status, consentId } = await moneyHash.agentic.verifyPassKeyAuthentication({
    *     consentId,
    *     credential,
    *   });

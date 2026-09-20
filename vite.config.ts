@@ -22,7 +22,7 @@ export default defineConfig({
     target: "es2015",
   },
   plugins: [
-    dts({ insertTypesEntry: true, rollupTypes: true }),
+    dts({ insertTypesEntry: true, bundleTypes: true }),
     // basicSsl()
   ],
   define: {
