@@ -20,6 +20,11 @@ import type {
 } from "./types";
 
 import type {
+  MoneyHashPlugin,
+  PluginContext,
+  PluginInstances,
+} from "./types/plugin";
+import type {
   ApplePayMerchantSession,
   BinLookUpData,
   CardIntentDetails,
@@ -46,7 +51,7 @@ import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
 
-export type * from "./types";
+export * from "./types";
 
 const supportedProceedWithTypes = new Set([
   "method",
@@ -61,8 +66,14 @@ export interface MoneyHashHeadlessOptions<TType extends IntentType>
   publicApiKey?: string;
 }
 
-export default class MoneyHashHeadless<TType extends IntentType> {
-  private options: MoneyHashHeadlessOptions<TType>;
+/** Options as received by the class at runtime, including the raw plugins list. */
+type MoneyHashHeadlessInternalOptions<TType extends IntentType> =
+  MoneyHashHeadlessOptions<TType> & {
+    plugins?: MoneyHashPlugin[];
+  };
+
+class MoneyHashHeadless<TType extends IntentType> {
+  private options: MoneyHashHeadlessInternalOptions<TType>;
 
   private sdkApiHandler = new SDKApiHandler();
 
@@ -78,7 +89,7 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   private mountedCardElements: Array<ElementType> = [];
 
-  constructor(options: MoneyHashHeadlessOptions<TType>) {
+  constructor(options: MoneyHashHeadlessInternalOptions<TType>) {
     this.options = options;
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
     this.click2Pay = new Click2Pay({
@@ -86,9 +97,31 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       mountedCardElements: this.mountedCardElements,
       lang: this.sdkEmbed.lang,
     });
+    this.#registerPlugins();
     if (isBrowser()) {
       this.#setupVaultSubmitListener(this.vaultSubmitListener);
     }
+  }
+
+  #registerPlugins() {
+    const host = this;
+    const context: PluginContext = {
+      sdkApiHandler: host.sdkApiHandler,
+      get publicApiKey() {
+        return host.options.publicApiKey;
+      },
+      get lang() {
+        return host.sdkEmbed.lang;
+      },
+      get intentType() {
+        return host.options.type;
+      },
+    };
+
+    this.options.plugins?.forEach(plugin => {
+      plugin.register(context);
+      (this as Record<string, unknown>)[plugin.name] = plugin;
+    });
   }
 
   /**
@@ -1742,3 +1775,30 @@ export default class MoneyHashHeadless<TType extends IntentType> {
     return () => clearInterval(timerId);
   }
 }
+
+/**
+ * Construct signature that derives the instance type from the exact `plugins`
+ * passed to a given `new` call. Only instances constructed with a plugin get
+ * the corresponding property (e.g. `moneyHash.agentic`) — instances without
+ * `plugins` never expose it.
+ */
+interface MoneyHashHeadlessConstructor {
+  new <
+    TType extends IntentType,
+    TPlugins extends readonly MoneyHashPlugin[] = [],
+  >(
+    options: MoneyHashHeadlessOptions<TType> & {
+      plugins?: readonly [...TPlugins];
+    },
+  ): MoneyHashHeadless<TType> & PluginInstances<TPlugins>;
+}
+
+// The runtime value is the class; the default export is retyped with only the
+// plugin-aware construct signature (dropping the class' plain one so the
+// plugin-derived overload always wins). The named `MoneyHashHeadless` export
+// above stays usable as a type (`MoneyHashHeadless<"payment">`).
+const MoneyHashHeadlessWithPlugins =
+  MoneyHashHeadless as unknown as MoneyHashHeadlessConstructor;
+
+export { MoneyHashHeadless };
+export default MoneyHashHeadlessWithPlugins;
