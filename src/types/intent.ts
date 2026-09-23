@@ -93,6 +93,23 @@ export type IntentStateDetails<TType extends IntentState> =
         otpLength: number;
         intentOtpData: IntentOtpData;
       }
+    : TType extends "TRANSACTION_FAILED"
+    ? {
+        /**
+         * Will be available if Apple/Google Pay payment failed. with auto recovery Allow re-authorization enabled.
+         * and the failed reason is eligible for auto recovery.
+         */
+        autoRecovery: {
+          /**
+           * MoneyHash error code
+           */
+          errorCode: string | null;
+          /**
+           * MoneyHash error message
+           */
+          errorMessage: string | null;
+        } | null;
+      }
     : null;
 
 export type PurchaseOperationStatus =
