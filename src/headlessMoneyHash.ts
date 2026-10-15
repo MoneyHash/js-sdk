@@ -1590,6 +1590,15 @@ export default class MoneyHashHeadless<TType extends IntentType> {
       url.searchParams.set("cardNumberValidation", `${validationEnabled}`);
     }
 
+    if ("mask" in elementOptions && elementOptions.mask) {
+      throwIf(
+        elementType !== "cardCvv",
+        '"mask" is allowed only for "cardCvv".',
+      );
+
+      url.searchParams.set("mask", "true");
+    }
+
     url.searchParams.set("placeholder", elementOptions.placeholder ?? "");
     url.searchParams.set("inputMode", elementOptions.inputMode ?? "");
     url.searchParams.set("lang", this.sdkEmbed.lang);

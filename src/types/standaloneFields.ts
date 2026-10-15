@@ -130,6 +130,18 @@ export type ElementProps =
           cardNumber?: boolean;
         };
       };
+    }
+  | {
+      elementType: "cardCvv";
+      elementOptions: CommonElementOptions & {
+        validation?: never;
+        /**
+         * Hide the entered security code like a password field.
+         *
+         * @default false
+         */
+        mask?: boolean;
+      };
     };
 
 type CommonElementOptions = {
