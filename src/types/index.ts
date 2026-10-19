@@ -4,3 +4,5 @@ export type * from "./styles";
 export type * from "./standaloneFields";
 export type * from "./headless";
 export type * from "../click2pay/types";
+
+export type Region = "sa";
