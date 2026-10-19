@@ -15,7 +15,6 @@ const intentDetails: IntentDetails<"payment"> | null = null;
 console.log(intentDetails);
 const moneyHash = new MoneyHash({
   type: "payment",
-  region: "sa",
 });
 
 moneyHash.setIntentSecret("asdasdas");
