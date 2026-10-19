@@ -1,5 +1,6 @@
 import SDKEmbed, { SDKEmbedOptions, supportedLanguages } from "./sdkEmbed";
 import type { IntentType, SupportedLanguages } from "./types";
+import RegionConfig from "./utils/region";
 import throwIf from "./utils/throwIf";
 import warnIf from "./utils/warnIf";
 
@@ -13,6 +14,7 @@ export default class MoneyHash<TType extends IntentType> {
 
   constructor(options: MoneyHashOptions<TType>) {
     this.options = options;
+    RegionConfig.setRegion(options.region);
     this.sdkEmbed = new SDKEmbed(options);
   }
 
