@@ -85,6 +85,14 @@ export interface BankAccount {
   logo: string;
 }
 
+export interface CustomerLastUsedMethod {
+  // Payment method ID
+  method: PaymentMethodSlugs;
+  type: "saved_card" | "payment_method" | "customer_balance";
+  // Saved Card ID if type is "saved_card" or Payment Method ID
+  id: PaymentMethodSlugs | (string & {});
+}
+
 export type CustomerBalances = [
   {
     id: "SELFSERVE_WALLET";
@@ -101,6 +109,7 @@ export type IntentMethods<TType extends IntentType> = TType extends "payment"
       savedCards: Card[];
       savedBankAccounts: BankAccount[];
       customerBalances: CustomerBalances;
+      customerLastUsedMethod: CustomerLastUsedMethod | null;
     }
   : {
       payoutMethods: Method[];
