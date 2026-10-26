@@ -42,6 +42,7 @@ import {
 import getIframeUrl from "./utils/getIframeUrl";
 import getMissingCardElement from "./utils/getMissingCardElement";
 import isBrowser from "./utils/isBrowser";
+import RegionConfig from "./utils/region";
 import throwIf from "./utils/throwIf";
 import waitForSeconds from "./utils/waitForSeconds";
 import warnIf from "./utils/warnIf";
@@ -64,7 +65,7 @@ export interface MoneyHashHeadlessOptions<TType extends IntentType>
 export default class MoneyHashHeadless<TType extends IntentType> {
   private options: MoneyHashHeadlessOptions<TType>;
 
-  private sdkApiHandler = new SDKApiHandler();
+  private sdkApiHandler: SDKApiHandler;
 
   click2Pay: Click2Pay;
 
@@ -80,6 +81,8 @@ export default class MoneyHashHeadless<TType extends IntentType> {
 
   constructor(options: MoneyHashHeadlessOptions<TType>) {
     this.options = options;
+    RegionConfig.setRegion(options.region);
+    this.sdkApiHandler = new SDKApiHandler();
     this.sdkEmbed = new SDKEmbed({ ...options, headless: true });
     this.click2Pay = new Click2Pay({
       sdkApiHandler: this.sdkApiHandler,
