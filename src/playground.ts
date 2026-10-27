@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import MoneyHash, { IntentDetails } from "./headlessMoneyHash";
+import ChatWidget from "./chatWidget";
 
 declare global {
   interface Window {
@@ -18,6 +19,56 @@ const moneyHash = new MoneyHash({
 });
 
 moneyHash.setIntentSecret("asdasdas");
+
+const chatWidget = new ChatWidget({
+  assistantName: "Acme Concierge",
+  logoUrl:
+    "https://thumb.wikimedia.org/wikipedia/en/thumb/6/6a/Tamatem_Games_2022_Logo.svg/330px-Tamatem_Games_2022_Logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
+  // logoUrl:
+  //   "https://avatars.usepylon.com/c800ddd6-5de2-4fc3-94d8-dd12233e0024/chat-widget-avatars/8ed5986b-4e99-430d-abce-9a026fd07f49-1743156265408",
+  quickPrompts: ["Show me new arrivals", "Track my order"],
+  cartPopularPicks: [{ label: "Sneakers", prompt: "Show me sneakers" }],
+  theme: "dark",
+  appearance: {
+    // borderRadius: 14,
+    colors: {
+      light: {
+        background: "#fffaf2",
+        foreground: "#1c1612",
+        primary: "#e5482d",
+        primaryForeground: "#ffffff",
+        muted: "#f6ece4",
+        mutedForeground: "#7c6f66",
+        border: "#eddfd4",
+        success: "#16a34a",
+      },
+      dark: {
+        background: "#14100e",
+        foreground: "#f6eee8",
+        primary: "#ff6a4d",
+        primaryForeground: "#1b0f0b",
+        muted: "#231b17",
+        mutedForeground: "#a89c94",
+        border: "#30261f",
+        success: "#4ade80",
+      },
+    },
+  },
+});
+chatWidget.render();
+
+document
+  .getElementById("chat-show")
+  ?.addEventListener("click", () => chatWidget.show());
+document
+  .getElementById("chat-hide")
+  ?.addEventListener("click", () => chatWidget.hide());
+document
+  .getElementById("chat-open")
+  ?.addEventListener("click", () => chatWidget.open());
+document
+  .getElementById("chat-close")
+  ?.addEventListener("click", () => chatWidget.close());
 
 // const moneyHash: MoneyHash<"payment"> = new MoneyHash({
 //   type: "payment",

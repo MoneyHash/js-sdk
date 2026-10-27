@@ -24,6 +24,11 @@
       "import": "./dist/agentic.es.js",
       "require": "./dist/agentic.cjs.js",
       "types": "./dist/agentic.d.ts"
+    },
+    "./chat-widget": {
+      "import": "./dist/chat-widget.es.js",
+      "require": "./dist/chat-widget.cjs.js",
+      "types": "./dist/chat-widget.d.ts"
     }
   },
   "typesVersions": {
@@ -36,6 +41,9 @@
       ],
       "agentic": [
         "dist/agentic.d.ts"
+      ],
+      "chat-widget": [
+        "dist/chat-widget.d.ts"
       ]
     }
   },
@@ -49,9 +57,10 @@
     "build": "tsc && vite build --mode development",
     "build:staging": "tsc && vite build --mode staging",
     "build:production": "tsc && vite build --mode production",
-    "build:umd": "yarn build:index:umd && yarn build:headless:umd",
+    "build:umd": "yarn build:index:umd && yarn build:headless:umd && yarn build:chat-widget:umd",
     "build:index:umd": "vite build --mode production --config vite.config.umd.ts",
     "build:headless:umd": "UMD=HEADLESS vite build --mode production --config vite.config.umd.ts",
+    "build:chat-widget:umd": "UMD=CHAT_WIDGET vite build --mode production --config vite.config.umd.ts",
     "preview": "vite preview",
     "eslint:check": "eslint . --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore --report-unused-disable-directives --max-warnings 0",
     "eslint:fix": "eslint . --fix --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore --report-unused-disable-directives --max-warnings 0",

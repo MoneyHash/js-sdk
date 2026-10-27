@@ -13,6 +13,7 @@ export default defineConfig({
         index: "./src/index.ts",
         headless: "./src/headlessMoneyHash.ts",
         agentic: "./src/agentic/index.ts",
+        "chat-widget": "./src/chatWidget/index.ts",
       },
       name: "MoneyHash",
       fileName: (ext, entry) => `${entry}.${ext}.js`,
