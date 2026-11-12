@@ -22,15 +22,15 @@ moneyHash.setIntentSecret("asdasdas");
 
 const chatWidget = new ChatWidget({
   assistantName: "Acme Concierge",
-  logoUrl:
-    "https://thumb.wikimedia.org/wikipedia/en/thumb/6/6a/Tamatem_Games_2022_Logo.svg/330px-Tamatem_Games_2022_Logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
   // logoUrl:
-  //   "https://avatars.usepylon.com/c800ddd6-5de2-4fc3-94d8-dd12233e0024/chat-widget-avatars/8ed5986b-4e99-430d-abce-9a026fd07f49-1743156265408",
+  //   "https://thumb.wikimedia.org/wikipedia/en/thumb/6/6a/Tamatem_Games_2022_Logo.svg/330px-Tamatem_Games_2022_Logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
+  logoUrl:
+    "https://avatars.usepylon.com/c800ddd6-5de2-4fc3-94d8-dd12233e0024/chat-widget-avatars/8ed5986b-4e99-430d-abce-9a026fd07f49-1743156265408",
   quickPrompts: ["Show me new arrivals", "Track my order"],
   cartPopularPicks: [{ label: "Sneakers", prompt: "Show me sneakers" }],
   theme: "dark",
   appearance: {
-    // borderRadius: 14,
+    borderRadius: 14,
     colors: {
       light: {
         background: "#fffaf2",
