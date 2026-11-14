@@ -11,6 +11,7 @@ import {
   LoaderStyle,
   OnCompleteEventOptions,
   OnFailEventOptions,
+  Region,
   SupportedLanguages,
 } from "./types";
 import getIframeUrl from "./utils/getIframeUrl";
@@ -28,6 +29,12 @@ export interface SDKEmbedOptions<TType extends IntentType> {
    * Locale of rendered embed. Can be changed programmatically with `moneyHash.setLocale`
    */
   locale?: string;
+
+  /**
+   * MoneyHash region to connect to, e.g. `sa`.
+   * Defaults to the global (EU) region when omitted.
+   */
+  region?: Region;
 
   /**
    * Listen for intent completion. e.g. successful transaction, intent closed, intent expired ...etc
