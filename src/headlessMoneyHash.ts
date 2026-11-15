@@ -440,9 +440,11 @@ class MoneyHashHeadless<TType extends IntentType> {
   submitPaymentReceipt({
     intentId,
     nativeReceiptData,
+    methodId,
   }: {
     intentId: string;
     nativeReceiptData: NativeReceiptData;
+    methodId?: string;
   }) {
     return this.sdkApiHandler.request<IntentDetails<TType>>({
       api: "sdk:submitReceipt",
@@ -451,6 +453,7 @@ class MoneyHashHeadless<TType extends IntentType> {
         lang: this.sdkEmbed.lang,
         receipt: nativeReceiptData.receipt,
         receiptBillingData: nativeReceiptData.receiptBillingData,
+        methodId,
       },
     });
   }
