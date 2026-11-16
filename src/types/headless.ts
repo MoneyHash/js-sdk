@@ -207,6 +207,8 @@ export type BinLookUpData = {
   issuerCountry: string | null;
   issuerCountryCode: string | null;
   product: string | null;
+  localScheme: string | null;
+  allBrands: { brand: string }[];
 };
 
 export const IFrameSandboxOptions = [

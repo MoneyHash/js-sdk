@@ -2,10 +2,11 @@ import { ElementType } from "../types/standaloneFields";
 
 export default function getMissingCardElement(
   mountedElements: Array<ElementType>,
+  { skipCvv = false }: { skipCvv?: boolean } = {},
 ) {
   const requiredElements: Array<ElementType> = [
     "cardNumber",
-    "cardCvv",
+    ...(skipCvv ? [] : (["cardCvv"] as const)),
     "cardExpiryMonth",
     "cardExpiryYear",
   ];
