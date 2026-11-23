@@ -6,9 +6,9 @@ const umdBuilds = {
     entry: { headlessMoneyHash: "./src/headlessMoneyHash.ts" },
     name: "MoneyHash",
   },
-  CHAT_WIDGET: {
-    entry: { "chat-widget": "./src/chatWidget/index.ts" },
-    name: "MoneyHashChatWidget",
+  AGENTIC_COMMERCE: {
+    entry: { "agentic-commerce": "./src/chatWidget/index.ts" },
+    name: "MoneyHashAgenticCommerce",
   },
 };
 

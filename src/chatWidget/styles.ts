@@ -112,6 +112,52 @@ export const CHAT_WIDGET_STYLES = `
     background: transparent;
     color-scheme: normal;
   }
+  .passkey-confirm {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    background: rgb(0 0 0 / 0.4);
+  }
+  .passkey-dialog {
+    box-sizing: border-box;
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--mh-border);
+    border-radius: calc(var(--mh-panel-radius) / 1.4);
+    background: var(--mh-background);
+    color: var(--mh-foreground);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .passkey-title {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .passkey-approve,
+  .passkey-cancel {
+    height: 40px;
+    border: 0;
+    border-radius: calc(var(--mh-panel-radius) / 1.8);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .passkey-approve {
+    background: var(--mh-primary);
+    color: var(--mh-background);
+  }
+  .passkey-cancel {
+    background: transparent;
+    color: var(--mh-foreground);
+  }
+  .passkey-approve:focus-visible,
+  .passkey-cancel:focus-visible {
+    outline: 2px solid var(--mh-primary);
+    outline-offset: 2px;
+  }
 
   @media (max-width: 639px) {
     .panel,
